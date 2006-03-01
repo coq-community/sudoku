@@ -1,0 +1,13 @@
+Name:Sudoku
+Title: A certified Sudoku solver
+Author: Laurent Théry
+Email: thery@sophia.inria.fr
+Homepage:http://www-sop.inria.fr/lemme/personnel/Laurent.Thery/me.html
+Institution: INRIA Sophia-Antipolis
+Address: 2004, route des Lucioles  Sophia Antipolis France
+Date: February 2006
+Description: A formalisation of Sudoku in Coq. It implements a naive
+Davis-Putnam procedure to solve sudokus.
+Url:ftp://ftp-sop.inria.fr/lemme/Laurent.Thery/Sudoku.zip
+Keywords: soduko, solver, constraint
+Require:
