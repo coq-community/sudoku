@@ -77,16 +77,16 @@ Ltac case_eq name :=
 
 Ltac eq_tac := 
  match goal with
-      |-  (?f _ = ?f _) => apply f_equal with (f := f)
- |     |-  (?f ?X _ = ?f  ?X _) => apply f_equal with (f := f  X)
- |     |-  (?f _ _ = ?f  _ _) => apply f_equal2 with (f := f)
- |     |-  (?f ?X ?Y _ = ?f ?X ?Y _) => apply f_equal with (f := f X Y)
- |     |-  (?f ?X _ _ = ?f ?X _ _) => apply f_equal2 with (f := f X)
- |     |-  (?f _ _ _ = ?f _ _ _) => apply f_equal3 with (f := f)
- |     |-  (?f ?X ?Y ?Z _ = ?f ?X ?Y ?Z _) => apply f_equal with (f := f X Y Z)
- |     |-  (?f ?X ?Y _ _ = ?f ?X ?Y _ _) => apply f_equal2 with (f := f X Y)
- |     |-  (?f ?X _ _ _ = ?f ?X _ _ _) => apply f_equal3 with (f := f X)
- |     |-  (?f _ _ _ _ _ = ?f _ _ _ _) => apply f_equal4 with (f := f)
+    |-  (?f' _ = ?f' _) => apply f_equal with (f := f')
+ |  |-  (?f' ?X _ = ?f'  ?X _) => apply f_equal with (f := f'  X)
+ |  |-  (?f' _ _ = ?f'  _ _) => apply f_equal2 with (f := f')
+ |  |-  (?f' ?X ?Y _ = ?f' ?X ?Y _) => apply f_equal with (f := f' X Y)
+ |  |-  (?f' ?X _ _ = ?f' ?X _ _) => apply f_equal2 with (f := f' X)
+ |  |-  (?f' _ _ _ = ?f' _ _ _) => apply f_equal3 with (f := f')
+ |  |-  (?f' ?X ?Y ?Z _ = ?f' ?X ?Y ?Z _) => apply f_equal with (f := f' X Y Z)
+ |  |-  (?f' ?X ?Y _ _ = ?f' ?X ?Y _ _) => apply f_equal2 with (f := f' X Y)
+ |  |-  (?f' ?X _ _ _ = ?f' ?X _ _ _) => apply f_equal3 with (f := f' X)
+ |  |-  (?f' _ _ _ _ _ = ?f' _ _ _ _) => apply f_equal4 with (f := f')
  end.
 
 (************************************** 
