@@ -733,6 +733,7 @@ rewrite mult_1_r.
 rewrite (mult_comm w).
 rewrite <- (mult_1_l ((h - 1) * w)).
 repeat apply mult_le_compat; auto with arith.
+case h; simpl; intros; try rewrite <- minus_n_O; auto with arith.
 generalize U2; case w; simpl; intros; try rewrite <- minus_n_O; auto with arith.
 Qed.
 
