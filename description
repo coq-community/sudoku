@@ -8,7 +8,7 @@ Address: 2004, route des Lucioles  Sophia Antipolis France
 Date: February 2006
 Description: A formalisation of Sudoku in Coq. It implements a naive
 Davis-Putnam procedure to solve sudokus.
-URL:ftp://ftp-sop.inria.fr/lemme/Laurent.Thery/Sudoku.zip
+Url:ftp://ftp-sop.inria.fr/lemme/Laurent.Thery/Sudoku.zip
 Keywords: sudoku, puzzles, Davis-Putnam
 Require:
 Category: Miscellaneous/Logical Puzzles and Entertainment
