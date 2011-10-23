@@ -1268,7 +1268,7 @@ match type of Hb with In ?X cross =>
  case (cross_correct X); intros tmp _; case (tmp Hb); clear tmp
 end.
 intros i1 (j1, (H4, (H5, H6))); exists i1; exists j1; 
-  injection H6; intros; subst; auto with arith.
+  intros; subst; auto with arith.
 case H1; intros i1 (j1, (H2, (H3, H4))); clear H1.
 rewrite H2.
 match goal with |- In (v (Pos (?X + ?Y) (?Z + ?T)) ?U) ?V =>
