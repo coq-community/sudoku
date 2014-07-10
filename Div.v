@@ -131,7 +131,9 @@ apply eq_add_S.
 rewrite plus_n_Sm; auto.
 Qed.
 
-Definition mod n m := match m with O => O | S m1 => mod_aux n m m1 n n end.
+Definition modulo n m := match m with O => O | S m1 => mod_aux n m m1 n n end.
+Notation "'mod'" := modulo.
+
 
 Theorem div_mod_correct: forall n m, 0 < m -> n = div n m * m + mod n m. 
 intros n m; case m; simpl; auto with arith.
