@@ -2060,7 +2060,7 @@ match goal with
       intros tmp _; case (tmp H); clear tmp H; auto 
 end.
 intros z2 (Hz1, Hz2); injection Hz1.
-intros; subst; subst z2; auto.
+intros; subst; auto.
 intros H1.
 exists (v (Pos x y) (get (Pos x y) s)); split; auto.
 match goal with 
