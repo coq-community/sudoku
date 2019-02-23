@@ -84,19 +84,19 @@ See `Sudoku.v`
 
 The contribution includes:
 
-`ListOp.v`         some basic functions on list
-`Sudoku.v`         main file
-`Test.v`           test file
+* `ListOp.v`         some basic functions on list
+* `Sudoku.v`         main file
+* `Test.v`           test file
 
 
 The following files should be in the libraries of Coq:
 
-`Tactic.v`         contradict tactic
-`Div.v`            division and modulo for nat
-`Permutation.v`    permutation
-`UList.v`          unique list
-`ListAux.v`        auxillary facts on lists
-`OrderedList.v`    ordered list
+* `Tactic.v`         contradict tactic
+* `Div.v`            division and modulo for nat
+* `Permutation.v`    permutation
+* `UList.v`          unique list
+* `ListAux.v`        auxillary facts on lists
+* `OrderedList.v`    ordered list
 
 
 Laurent Théry (Laurent.Thery@inria.fr)
