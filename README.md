@@ -1,8 +1,12 @@
+[![Build Status](https://travis-ci.org/thery/sudoku.svg?branch=master)](https://travis-ci.org/thery/sudoku)
+
+## Sudoku
+
 
 A formalisation of Sudoku in Coq. It implements a naive
-Davis-Putnam procedure to solve sudokus. 
+Davis-Putnam procedure to solve sudokus.
 
-A sudoku is represented as a mono-dimensional list of natural 
+A sudoku is represented as a mono-dimensional list of natural
 numbers. Zeros are used to represent empty cells. For example,
 for 3x3 sudokus:
 
@@ -15,7 +19,7 @@ for 3x3 sudokus:
   -------------------------------------
   |   |   | 5 |   |   |   |   |   | 6 |
   -------------------------------------
-  | 8 | 9 |   |   |   |   |   | 3 | 7 | 
+  | 8 | 9 |   |   |   |   |   | 3 | 7 |
   -------------------------------------
   | 1 |   |   |   |   |   | 4 |   |   |
   -------------------------------------
@@ -23,7 +27,7 @@ for 3x3 sudokus:
   -------------------------------------
   |   |   | 2 |   | 7 |   | 5 |   |   |
   -------------------------------------
-  |   |   | 7 |   | 4 | 9 | 3 |   |   | 
+  |   |   | 7 |   | 4 | 9 | 3 |   |   |
   -------------------------------------
 
 is represented as
@@ -32,7 +36,7 @@ is represented as
   0 :: 0 :: 4 :: 0 :: 5 :: 0 :: 2 :: 0 :: 0 ::
   9 :: 7 :: 0 :: 0 :: 0 :: 8 :: 0 :: 4 :: 5 ::
   0 :: 0 :: 5 :: 0 :: 0 :: 0 :: 0 :: 0 :: 6 ::
-  8 :: 9 :: 0 :: 0 :: 0 :: 0 :: 0 :: 3 :: 7 :: 
+  8 :: 9 :: 0 :: 0 :: 0 :: 0 :: 0 :: 3 :: 7 ::
   1 :: 0 :: 0 :: 0 :: 0 :: 0 :: 4 :: 0 :: 0 ::
   3 :: 6 :: 0 :: 5 :: 0 :: 0 :: 0 :: 8 :: 4 ::
   0 :: 0 :: 2 :: 0 :: 7 :: 0 :: 5 :: 0 :: 0 ::
@@ -58,7 +62,7 @@ Corresponding correctness theorems are:
 
 find_one_correct 3 3
      : forall s,
-       length s = 81 -> 
+       length s = 81 ->
        match find_one 3 3 s with
        | Some s1 => refine 3 3 s s1 /\ sudoku 3 3 s1
        | None =>
@@ -74,7 +78,7 @@ See Sudoku.v
 
 The contribution includes:
 
-ListOp.v         some basic functions on list 
+ListOp.v         some basic functions on list
 Sudoku.v         main file
 Test.v           test file
 
@@ -83,11 +87,10 @@ The following files should be in the libraries of Coq:
 
 Tactic.v         contradict tactic
 Div.v            division and modulo for nat
-Permutation.v    permutation 
+Permutation.v    permutation
 UList.v          unique list
 ListAux.v        auxillary facts on lists
 OrderedList.v    ordered list
 
 
-Laurent Théry (Laurent.Thery@inria.fr)
-
+Laurent ThÃ©ry (Laurent.Thery@inria.fr)
