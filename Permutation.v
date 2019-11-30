@@ -439,7 +439,7 @@ Defined.
 Definition permutation_dec1 :
   (forall a b : A, {a = b} + {a <> b}) ->
   forall l1 l2 : list A, {permutation l1 l2} + {~ permutation l1 l2}.
-intros dec; fix 1; intros l1; case l1.
+intros dec; fix permutation_dec1 1; intros l1; case l1.
 intros l2; case l2.
 left; auto.
 intros a l3; right; intros H; generalize (permutation_length _ _ H); 
@@ -483,11 +483,11 @@ Hint Resolve permutation_app_swap.
    Implicits
    **************************************)
 
-Implicit Arguments permutation [A].
-Implicit Arguments split_one [A].
-Implicit Arguments all_permutations [A].
-Implicit Arguments permutation_dec [A].
-Implicit Arguments permutation_dec1 [A].
+Arguments permutation [A].
+Arguments split_one [A].
+Arguments all_permutations [A].
+Arguments permutation_dec [A].
+Arguments permutation_dec1 [A].
 
 (************************************** 
    Permutation is compatible with map

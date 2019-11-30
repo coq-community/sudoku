@@ -279,7 +279,7 @@ intros j i H1 H2 H3 H4; inversion H3; auto with arith.
 Qed.
 
 End UniqueList.
-Implicit Arguments ulist [A].
+Arguments ulist [A].
 Hint Constructors ulist .
  
 Theorem ulist_map:

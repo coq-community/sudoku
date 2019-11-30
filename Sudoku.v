@@ -758,7 +758,7 @@ Definition sudoku l := length l = size * size /\
 (* A function that check that a predicate P holds for i smaller than n *)
 Definition check_P: forall (P: nat -> Prop) (P_dec: forall i, {P i} + {~ P i}) n,
                       {forall i, i < n -> P i} + {~forall i, i < n -> P i}.
-intros P P_dec; fix 1.
+intros P P_dec; fix check_P 1.
 intros n1; case n1; clear n1.
 left; intros i tmp; contradict tmp; auto with arith.
 intros n2; case (check_P n2); intros H.

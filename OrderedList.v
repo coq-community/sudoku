@@ -630,7 +630,7 @@ End ordered.
 
 (* Computable equality test *)
 Definition eq_nat: forall x y: nat, {x = y} + {x <> y}.
-fix 2; intros x y; case x; case y.
+fix eq_nat 2; intros x y; case x; case y.
 left; auto.
 intros y1; right; intros; discriminate.
 intros x1; right; intros; discriminate.
