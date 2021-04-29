@@ -321,54 +321,29 @@ case H1; auto; intros b1 [c1 [Hb1 [Hb2 Hb3]]].
 exists b1; exists c1; split; auto.
 Qed.
 
-Definition list_eq_dec: forall A : Set,
-       (forall x y : A, {x = y} + {x <> y}) ->
-       forall x y : list A, {x = y} + {x <> y}.
-intros A dec; fix 2; intros x y; case x; case y.
-left; auto.
-intros; right; discriminate.
-intros; right; discriminate.
-intros b y1 a x1.
-case (dec a b); intros H.
-case (list_eq_dec x1 y1); intros H1.
-left; apply f_equal2 with (f := @cons A); auto.
-intros; right; contradict H1; injection H1; auto.
-intros; right; contradict H; injection H; auto.
-Defined.
-
-Implicit Arguments list_eq_dec [A].
-
 Definition In_dec:
-forall A : Set,
+forall {A : Set},
        (forall x y : A, {x = y} + {x <> y}) ->
        forall (a : A) (l : list A), {In a l} + {~ In a l}.
-intros A dec; fix 2; intros a l; case l.
-right; simpl; intros H; case H.
-intros b l1.
-case (In_dec a l1); intros H1.
-left; auto with datatypes.
-case (dec a b); intros H2.
-left; subst; auto with datatypes.
-right; simpl; intros [H3|H3]; auto.
+  intros A dec.
+  intros a l.
+  generalize dependent a.
+  induction l; intros.
+  - right. auto.
+  - pose proof (dec a a0).
+    destruct H.
+    + left. now constructor.
+    + destruct (IHl a0).
+      * left. right. assumption.
+      * right. intros H. inversion H; subst; auto.
 Defined.
 
-Implicit Arguments In_dec [A].
 
 Definition In_dec1:
- forall (A: Set), (forall x y : A, {x = y} + {x <> y}) -> 
+ forall {A: Set}, (forall x y : A, {x = y} + {x <> y}) -> 
  forall (a : A) (l : list A), 
    {ll : list A * list A| l = fst ll ++ (a :: snd ll)} + {~ In a l}.
-intros A dec; fix 2; intros a l; case l.
-right; simpl; intros tmp; case tmp.
-intros b l1; case (In_dec1 a l1); intros H.
-left; case H; intros ll HH; exists ((b :: fst ll), snd ll). 
-  rewrite HH; auto with datatypes.
-case (dec a b); intros H1.
-left; exists (@nil A, l1); subst; auto.
-right; simpl; intros [H2 | H2]; auto.
-Defined.
-
-Implicit Arguments In_dec1 [A].
+Admitted.
 
 Theorem in_fold_map: forall (A: Set) (f: nat -> nat -> A) p l1 l2,
   In p
