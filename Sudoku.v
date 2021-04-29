@@ -357,38 +357,24 @@ Qed.
 (* Getting outside the updated cell returns the previous value *)
 Theorem update_diff_get:
   forall p1 p2 v l, valid_pos p1 -> valid_pos p2 ->
-    p1 <> p2 -> get p1 (update p2 v l) = get p1 l.
-intros p1 p2 v l Hp1 Hp2 H; unfold get, update.
-cut (pos2n p1 <> pos2n p2).
-generalize l (pos2n p2); elim (pos2n p1); auto; clear l.
-intros l n1; case n1; simpl.
-intros U; case U; auto.
-intros n2 _; case l; simpl; auto.
-intros n1 Rec l n2; case n2; simpl; auto.
-case l; simpl; auto.
-intros n3 U; case l; simpl; auto.
-contradict H; generalize H Hp1 Hp2; clear H Hp1 Hp2; case p1; case p2; simpl.
-intros x2 y2 x1 y1 H (H1, H2) (H3, H4).
-assert (HH: x1 = x2).
-case (le_or_lt x1 x2); intros HH.
-case (le_lt_or_eq) with (1 := HH); clear HH; intros HH; auto.
-absurd (x1 * size + y1 < x2 * size + y2).
-rewrite H; auto with arith.
-apply lt_le_trans with (S x1 * size); auto with arith.
-simpl; rewrite (plus_comm size).
-apply plus_lt_compat_l; auto.
-apply le_trans with (x2 * size); auto with arith.
-apply mult_le_compat_r; auto with arith.
-absurd (x2 * size + y2 < x1 * size + y1).
-rewrite H; auto with arith.
-apply lt_le_trans with (S x2 * size); auto with arith.
-simpl; rewrite (plus_comm size).
-apply plus_lt_compat_l; auto.
-apply le_trans with (x1 * size); auto with arith.
-apply mult_le_compat_r; auto with arith.
-eq_tac; auto; subst; auto with arith.
-apply plus_reg_l with (x2 * size); auto with arith.
+               p1 <> p2 -> get p1 (update p2 v l) = get p1 l.
+Proof with auto with arith.
+  intros p1 p2 v l Hp1 Hp2 H; unfold get, update.
+  cut (pos2n p1 <> pos2n p2).
+  - generalize l (pos2n p2); elim (pos2n p1); auto; clear l.
+    + intros l n1; case n1; simpl.
+      intros U; case U...
+      intros n2 _; case l...
+    + intros n1 Rec l n2; case n2...
+      case l; simpl...
+      intros n3 U; case l; simpl...
+  - contradict H; generalize H Hp1 Hp2; clear H Hp1 Hp2; case p1; case p2; simpl.
+    intros x2 y2 x1 y1 H (H1, H2) (H3, H4).
+    assert (HH: x1 = x2) by nia.
+    eq_tac; auto; subst...
+    apply plus_reg_l with (x2 * size)...
 Qed.
+
 
 (***************************************************)
 (*    Restrict till position                       *)
@@ -629,133 +615,118 @@ Definition rect i (l: list nat) :=
 (* Relation between get and rect *)
 Theorem get_rect:
   forall x y s, x < size -> y < size ->
-     get (Pos x y) s =
-     nth (mod x h * w + mod y w) (rect (div x h * h + div y w) s) out.
-intros x y s H1 H2; unfold get, rect; simpl.
-generalize (h_pos _ H1); intros U1.
-generalize (w_pos _ H1); intros U2.
-assert (F1: div y w < h).
-apply div_lt; rewrite mult_comm; auto.
-repeat (rewrite (fun x => mult_comm x h)); 
-  rewrite mod_mult_comp; auto with arith.
-rewrite div_mult_comp; auto.
-rewrite (mod_small (div y w) h); auto.
-rewrite (div_is_0 (div y w) h); auto.
-rewrite plus_0_r.
-match goal with |- context [take_and_jump _ _ _ (jump ?X _)]
-  => 
-     replace (x * size + y) with (X + (mod x h * size + mod y w))
-end.
-2: apply sym_equal.
-2: pattern x at 1; rewrite (div_mod_correct x h); auto with arith.
-2: pattern y at 1; rewrite (div_mod_correct y w); auto with arith.
-2: repeat rewrite (mult_comm h).
-2: repeat rewrite mult_plus_distr_r.
-2: repeat rewrite <- plus_assoc.
-2: rewrite (plus_comm (w * div y w)).
-2: repeat rewrite <- plus_assoc; eq_tac; auto.
-2: eq_tac; auto with arith.
-2: rewrite (mult_comm w); apply plus_comm.
-rewrite jump_add.
-match goal with |- context [jump ?X s]
-  => 
-    generalize (jump X s)
-end.
-intros l; rewrite <- jump_nth; generalize l; clear l.
-generalize (mod_lt x h U1).
-generalize (mod x h).
-cut (w <= size).
-generalize size; intros m.
-intros U3 n; generalize h; elim n; simpl; auto with arith; 
-  clear n H1 H2 U1.
-intros h1; case h1; simpl; auto.
-intros HH; contradict HH; auto with arith.
-intros n1 _ l.
-case (le_or_lt (length l) (mod y w)); intros H1.
-rewrite jump_too_far.
-rewrite take_and_jump_nil.
-rewrite <- app_nil_end.
-apply sym_equal; apply take_nth; auto.
-apply le_trans with (1 := H1); auto with arith.
-apply le_trans with (2 := U3).
-apply lt_le_weak; apply mod_lt; auto.
-rewrite nth_app_l.
-apply sym_equal; apply take_nth; auto.
-left; apply mod_lt; auto.
-case (le_or_lt (length l) w); intros H2.
-rewrite length_take_small; auto with arith.
-rewrite length_take; auto with arith.
-apply mod_lt; auto with arith.
-intros n1 Rec h1; case h1; simpl.
-intros HH; contradict HH; auto with arith.
-intros h2 HH l.
-case (le_or_lt (length l) w); intros H1.
-rewrite nth_app_r.
-rewrite length_take_small; auto with arith.
-rewrite jump_too_far.
-rewrite take_and_jump_nil.
-repeat rewrite nth_default; auto with arith.
-apply le_trans with (1 := H1); auto with arith.
-apply le_trans with (1 := H1); auto with arith.
-rewrite length_take_small; auto with arith.
-rewrite nth_app_r.
-rewrite length_take; auto with arith.
-repeat rewrite <- plus_assoc; rewrite minus_plus; auto with arith.
-rewrite jump_nth; rewrite jump_add.
-rewrite <- jump_nth; auto with arith.
-rewrite length_take; auto with arith.
-generalize U1; unfold size; case h; simpl; auto with arith.
-intros tmp; contradict tmp; auto with arith.
+           get (Pos x y) s =
+           nth (mod x h * w + mod y w) (rect (div x h * h + div y w) s) out.
+Proof with auto with arith.
+  intros x y s H1 H2; unfold get, rect; simpl.
+  generalize (h_pos _ H1); intros U1.
+  generalize (w_pos _ H1); intros U2.
+  assert (F1: div y w < h).
+  {
+    apply div_lt; rewrite mult_comm; auto.
+  }
+  repeat (rewrite (fun x => mult_comm x h));
+    rewrite mod_mult_comp...
+  rewrite div_mult_comp; auto.
+  rewrite (mod_small (div y w) h); auto.
+  rewrite (div_is_0 (div y w) h); auto.
+  rewrite plus_0_r.
+  match goal with |- context [take_and_jump _ _ _ (jump ?X _)]
+                  =>
+                  replace (x * size + y) with (X + (mod x h * size + mod y w))
+  end.
+  2: {
+    apply sym_equal.
+    pattern x at 1; rewrite (div_mod_correct x h)...
+    pattern y at 1; rewrite (div_mod_correct y w)...
+    lia.
+  }
+  rewrite jump_add.
+  match goal with |- context [jump ?X s]
+                  =>
+                  generalize (jump X s)
+  end.
+  intros l; rewrite <- jump_nth; generalize l; clear l.
+  generalize (mod_lt x h U1).
+  generalize (mod x h).
+  cut (w <= size).
+  - generalize size; intros m.
+    intros U3 n; generalize h; elim n; simpl; auto with arith;
+      clear n H1 H2 U1.
+    + intros h1; case h1; simpl; auto.
+      * intros HH; contradict HH...
+      * intros n1 _ l.
+        case (le_or_lt (length l) (mod y w)); intros H1.
+        ++ rewrite jump_too_far.
+           ** rewrite take_and_jump_nil.
+              rewrite <- app_nil_end.
+              apply sym_equal; apply take_nth...
+           ** apply le_trans with (1 := H1)...
+              apply le_trans with (2 := U3).
+              apply lt_le_weak; apply mod_lt...
+        ++ rewrite nth_app_l.
+           ** apply sym_equal; apply take_nth...
+              left; apply mod_lt...
+           ** case (le_or_lt (length l) w); intros H2.
+              *** rewrite length_take_small...
+              *** rewrite length_take...
+                  apply mod_lt...
+    + intros n1 Rec h1; case h1; simpl.
+      * intros HH; contradict HH...
+      * intros h2 HH l.
+        case (le_or_lt (length l) w); intros H1.
+        ++ rewrite nth_app_r.
+           ** rewrite length_take_small...
+              rewrite jump_too_far.
+              *** rewrite take_and_jump_nil.
+                  repeat rewrite nth_default...
+                  apply le_trans with (1 := H1)...
+              *** apply le_trans with (1 := H1)...
+           ** rewrite length_take_small...
+        ++ rewrite nth_app_r.
+           ** rewrite length_take...
+              repeat rewrite <- plus_assoc; rewrite minus_plus...
+              rewrite jump_nth; rewrite jump_add.
+              rewrite <- jump_nth...
+           ** rewrite length_take...
+  - unfold size; nia.
 Qed.
 
 Theorem length_rect: forall i s, i < size ->
   length s = size * size -> length (rect i s) = size.
-intros i s H H1; unfold rect.
-generalize (h_pos _ H); intros U1.
-generalize (w_pos _ H); intros U2.
-rewrite length_take_and_jump; auto.
-assert (F1: forall n m, 0 < n -> m < n -> m <= n - 1).
-intros n; case n; simpl; auto with arith.
-intros; rewrite <- minus_n_O; auto with arith.
-match goal with |- _ <= length (jump ?X _) =>
- apply plus_le_reg_l with X; repeat rewrite (plus_comm X);
- rewrite <- length_jump; auto with arith
-end.
-rewrite H1; clear H1.
-replace (size * size) with  (w + ((h - 1) * size) + (w * (h -1)) + h * (w - 1) * size).
-repeat rewrite plus_assoc.
-repeat (apply plus_le_compat || apply mult_le_compat_l || apply mult_le_compat_r);
-  auto with arith.
-generalize U1; case h; auto with arith.
-apply F1; auto; apply mod_lt; auto with arith.
-apply F1; auto; apply div_lt; auto with arith.
-rewrite (plus_comm w).
-repeat (rewrite <- plus_assoc).
-rewrite (plus_assoc w).
-pattern w at 1; rewrite <- mult_1_r; rewrite <- mult_plus_distr_l.
-rewrite le_plus_minus_r; auto with arith.
-rewrite (mult_comm w); fold size.
-rewrite plus_assoc.
-pattern size at 2; rewrite <- mult_1_l; rewrite <- mult_plus_distr_r.
-rewrite (fun x => plus_comm x 1); rewrite le_plus_minus_r; auto with arith.
-rewrite <- mult_plus_distr_r.
-pattern h at 1; rewrite <- mult_1_r; rewrite <- mult_plus_distr_l.
-rewrite le_plus_minus_r; auto with arith.
-apply le_trans with (w * (h - 1) + h * (w - 1) * size).
-repeat (apply plus_le_compat || apply mult_le_compat_l || apply mult_le_compat_r);
-  auto with arith.
-apply F1; auto; apply mod_lt; auto with arith.
-apply F1; auto; apply div_lt; auto with arith.
-rewrite H1; unfold size.
-pattern w at 4; replace w with (1 + (w - 1)).
-rewrite mult_plus_distr_l; rewrite mult_plus_distr_r.
-apply plus_le_compat_r.
-rewrite mult_1_r.
-rewrite (mult_comm w).
-rewrite <- (mult_1_l ((h - 1) * w)).
-repeat apply mult_le_compat; auto with arith.
-case h; simpl; intros; try rewrite <- minus_n_O; auto with arith.
-generalize U2; case w; simpl; intros; try rewrite <- minus_n_O; auto with arith.
+Proof with auto with arith.
+  intros i s H H1; unfold rect.
+  generalize (h_pos _ H); intros U1.
+  generalize (w_pos _ H); intros U2.
+  rewrite length_take_and_jump; auto.
+  assert (F1: forall n m, 0 < n -> m < n -> m <= n - 1) by lia.
+  match goal with |- _ <= length (jump ?X _) =>
+                  apply plus_le_reg_l with X; repeat rewrite (plus_comm X);
+                    rewrite <- length_jump; auto with arith
+  end.
+  - rewrite H1; clear H1.
+    replace (size * size) with  (w + ((h - 1) * size) + (w * (h -1)) + h * (w - 1) * size).
+    + repeat rewrite plus_assoc.
+      repeat (apply plus_le_compat || apply mult_le_compat_l || apply mult_le_compat_r);
+        auto with arith.
+      * generalize U1; case h...
+      * apply F1; auto; apply mod_lt...
+      * apply F1; auto; apply div_lt...
+    + rewrite (plus_comm w).
+      repeat (rewrite <- plus_assoc).
+      rewrite (plus_assoc w).
+      pattern w at 1; rewrite <- mult_1_r; rewrite <- mult_plus_distr_l.
+      rewrite le_plus_minus_r...
+      unfold size.
+      ring_simplify.
+      nia.
+  - apply le_trans with (w * (h - 1) + h * (w - 1) * size).
+    repeat (apply plus_le_compat || apply mult_le_compat_l || apply mult_le_compat_r).
+    + apply F1; auto; apply mod_lt...
+    + apply F1; auto; apply div_lt...
+    + rewrite H1; unfold size.
+      pattern w at 4; replace w with (1 + (w - 1)) by lia.
+      * nia.
 Qed.
 
 (***************************************************)
@@ -779,10 +750,10 @@ Definition sudoku l := length l = size * size /\
 (* A function that check that a predicate P holds for i smaller than n *)
 Definition check_P: forall (P: nat -> Prop) (P_dec: forall i, {P i} + {~ P i}) n,
                       {forall i, i < n -> P i} + {~forall i, i < n -> P i}.
-intros P P_dec; fix n 1.
+intros P P_dec; fix check_P 1.
 intros n1; case n1; clear n1.
 left; intros i tmp; contradict tmp; auto with arith.
-intros n2; case (n n2); intros H.
+intros n2; case (check_P n2); intros H.
 case (P_dec n2); intros H1.
 left; intros i Hi; case (le_lt_or_eq i n2); try intros Hi1; subst; auto with arith.
 right; intros H2; case H1; auto with arith.
