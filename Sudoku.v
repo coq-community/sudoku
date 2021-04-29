@@ -291,15 +291,26 @@ Qed.
 
 (* Relation between get and next *)
 Theorem get_next: forall p a s, get (next p) (a :: s) = get p s.
-  Admitted.
-(* intros p a s; case p; simpl. *)
-(* intros x y; case (eq_nat (S y) size); intros H. *)
-(* unfold get; simpl. *)
-(* pattern size at 1; rewrite <- H; simpl. *)
-(* rewrite plus_0_r; rewrite (plus_comm y); auto. *)
-(* unfold get; simpl. *)
-(* rewrite <- plus_n_Sm; auto. *)
-(* Qed. *)
+Proof.
+  intros p a s.
+  induction p.
+  - simpl.
+    destruct (eq_nat (S n0) size).
+    + rewrite <- !e.
+      destruct (eq_nat n0 n0); try lia.
+      unfold get.
+      simpl.
+      rewrite <- !e.
+      simpl. f_equal.
+      f_equal. lia.
+    + case_eq size.
+      * intros. unfold get.
+        simpl. rewrite <- plus_n_Sm. simpl. reflexivity.
+      * intros.
+        destruct (eq_nat n0 n2); try lia.
+        unfold get.
+        simpl. rewrite <- plus_n_Sm. simpl. reflexivity.
+Qed.
 
 (* mk_0 is full of zero *)
 Theorem get_mk_0: forall n p, get p (mk_0 out n) = out.
@@ -768,28 +779,15 @@ Definition sudoku l := length l = size * size /\
 (* A function that check that a predicate P holds for i smaller than n *)
 Definition check_P: forall (P: nat -> Prop) (P_dec: forall i, {P i} + {~ P i}) n,
                       {forall i, i < n -> P i} + {~forall i, i < n -> P i}.
-Admitted.
-(*   intros P P_dec n. *)
-(*   destruct n. *)
-(*   - left. lia. *)
-(*   - destruct (P_dec n). *)
-(*     + left.intros. *)
-(*       pose proo *)
-(*     left. *)
-(*     intros i H. *)
-(*     destruct (P_dec) *)
-(*     pose proof (P_dec) *)
-
-
-(*   intros P P_dec; fix 1. *)
-(* intros n1; case n1; clear n1. *)
-(* left; intros i tmp; contradict tmp; auto with arith. *)
-(* intros n2; case (check_P n2); intros H. *)
-(* case (P_dec n2); intros H1. *)
-(* left; intros i Hi; case (le_lt_or_eq i n2); try intros Hi1; subst; auto with arith. *)
-(* right; intros H2; case H1; auto with arith. *)
-(* right; contradict H; auto with arith. *)
-(* Defined. *)
+intros P P_dec; fix n 1.
+intros n1; case n1; clear n1.
+left; intros i tmp; contradict tmp; auto with arith.
+intros n2; case (n n2); intros H.
+case (P_dec n2); intros H1.
+left; intros i Hi; case (le_lt_or_eq i n2); try intros Hi1; subst; auto with arith.
+right; intros H2; case H1; auto with arith.
+right; contradict H; auto with arith.
+Defined.
 
 
 (* A function that checks is a list is a sudoku *)
