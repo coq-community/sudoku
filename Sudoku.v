@@ -194,18 +194,22 @@ Theorem next_pos: forall p, pos2n (next p) = S (pos2n p).
 Qed.
 
 Theorem valid_pos_next: forall p,
-  valid_pos p -> pos2n (next p) < size * size -> valid_pos (next p).
-  intros (x, y); simpl; case (eq_nat (S y) size); simpl.
-Admitted.
-  (* rewrite plus_0_r; intros H1 (H2, H3) H4; split. *)
-(* case (le_or_lt size (S x)); auto; intros H5. *)
-(* absurd (size * size <= (S x) * size); auto. *)
-(* apply lt_not_le; auto. *)
-(* apply mult_le_compat_r; auto. *)
-(* apply le_lt_trans with (2 := H2); auto with arith. *)
-(* intros H1 (H2, H3) H4; split; auto. *)
-(* case (le_lt_or_eq (S y) size); auto with arith. *)
-(* intros H5; case H1; auto. *)
+    valid_pos p -> pos2n (next p) < size * size -> valid_pos (next p).
+Proof.
+  intros (x, y).
+  destruct (eq_nat (S y) size); simpl.
+  - rewrite <- !e.
+    intros H H0.
+    all: destruct (eq_nat y y); simpl; try nia.
+    simpl in *.
+    nia.
+  - intros.
+    destruct size eqn:E.
+    + lia.
+    + destruct (eq_nat y n0); try lia.
+      simpl in *.
+      lia.
+Qed.
 
 Theorem valid_pos2n: 
   forall p (s: list nat), valid_pos p -> length s = size * size -> 
