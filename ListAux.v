@@ -338,13 +338,6 @@ forall {A : Set},
       * right. intros H. inversion H; subst; auto.
 Defined.
 
-
-Definition In_dec1:
- forall {A: Set}, (forall x y : A, {x = y} + {x <> y}) -> 
- forall (a : A) (l : list A), 
-   {ll : list A * list A| l = fst ll ++ (a :: snd ll)} + {~ In a l}.
-Admitted.
-
 Theorem in_fold_map: forall (A: Set) (f: nat -> nat -> A) p l1 l2,
   In p
     (fold_right
