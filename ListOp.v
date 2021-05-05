@@ -245,12 +245,12 @@ Qed.
 
 End list_op.
 
-Implicit Arguments jump [A].
-Implicit Arguments take [A].
-Implicit Arguments take_and_jump [A].
-Implicit Arguments subst [A].
-Implicit Arguments restrict [A].
-Implicit Arguments mk_0 [A].
+Arguments jump [A].
+Arguments take [A].
+Arguments take_and_jump [A].
+Arguments subst [A].
+Arguments restrict [A].
+Arguments mk_0 [A].
 
 (* Build the list [m; m+1; ...; m+n] *) 
 Fixpoint progression (n m: nat) {struct n}: list nat :=
