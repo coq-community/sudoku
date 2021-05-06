@@ -85,55 +85,38 @@ intros n; elim n; simpl; auto.
 Qed.
 
 Theorem in_ex_nth: forall (a b: A) l,
-  In a l <-> exists n, n < length l /\ a = nth n l b.
-intros a b l; elim l; simpl; auto; clear l.
-split; [intros H; case H | intros (k, (H, _))]; 
-  contradict H; auto with arith.
-intros c l (Rec1, Rec2); split.
-intros [H1 | H1]; subst.
-exists 0; auto with arith.
-case Rec1; auto.
-intros n (H2, H3); exists (S n); auto with arith.
-intros tmp; case tmp; clear tmp.
-intros n; case n; auto.
-intros (H1, H2); auto.
-intros n1 (H1, H2); right; apply Rec2.
-exists n1; auto with arith.
+    In a l <-> exists n, n < length l /\ a = nth n l b.
+Proof.
+  intros a b l.
+  split; intros H.
+  - pose proof (In_nth l a b H).
+    destruct H0 as [n [H1 H2]].
+    exists n; auto.
+  - destruct H as [n [H1 H2]].
+    pose proof (nth_In _ b H1); subst; auto.
 Qed.
 
 
 Theorem nth_app_l: forall i r (l1 l2: list A), i < length l1 -> nth i (l1 ++ l2) r = nth i l1 r.
-intros i r l1; generalize i; elim l1; simpl; auto; clear i l1.
-intros i l2 H; contradict H; auto with arith.
-intros a l Rec i; case i; simpl; auto with arith.
+Proof.
+  intros; apply app_nth1; auto.
 Qed.
 
 Theorem nth_app_r: forall i r (l1 l2: list A), length l1 <= i -> nth i (l1 ++ l2) r = nth (i - length l1) l2 r.
-intros i r l1; generalize i; elim l1; simpl; auto; clear i l1.
-intros; rewrite <- minus_n_O; auto.
-intros a l Rec i; case i; simpl; auto with arith.
-intros l2 HH; contradict HH; auto with arith.
+Proof.
+  intros; apply app_nth2; auto.
 Qed.
 
 Theorem nth_default: forall i r (l: list A), length l <= i -> nth i l r = r.
-intros i r l; generalize i; elim l; clear i l; simpl; auto.
-intros i; case i; auto.
-intros a l Rec i; case i; auto with arith.
-intros HH; contradict HH; auto with arith.
+Proof.
+  intros; apply nth_overflow; auto.
 Qed.
 
 Theorem list_nth_eq: forall (r: A) l1 l2, 
   length l1 = length l2 ->
   (forall n, nth n l1 r = nth n l2 r) -> l1 = l2.
-intros r l1; elim l1; simpl; auto; clear l1.
-intros l2; case l2; clear l2; auto.
-intros b l2 H; discriminate.
-intros a l1 Rec l2; case l2; auto; clear l2.
-intros H; discriminate.
-intros b l2 H1 H2; eq_tac; auto; simpl in H1.
-apply (H2 0); auto.
-apply Rec; auto with arith.
-intros n; generalize (H2 (S n)); simpl; auto.
+Proof.
+  intros; eapply nth_ext; auto.
 Qed.
 
 (**************************************
@@ -141,30 +124,9 @@ Qed.
 **************************************)
  
 Theorem length_app:
- forall (l1 l2 : list A),  length (l1 ++ l2) = length l1 + length l2.
-intros l1; elim l1; simpl; auto.
-Qed.
- 
-Theorem app_inv_head:
- forall (l1 l2 l3 : list A), l1 ++ l2 = l1 ++ l3 ->  l2 = l3.
-intros l1; elim l1; simpl; auto.
-intros a l H l2 l3 H0; apply H; injection H0; auto.
-Qed.
- 
-Theorem app_inv_tail:
- forall (l1 l2 l3 : list A), l2 ++ l1 = l3 ++ l1 ->  l2 = l3.
-intros l1 l2; generalize l1; elim l2; clear l1 l2; simpl; auto.
-intros l1 l3; case l3; auto.
-intros b l H; absurd (length ((b :: l) ++ l1) <= length l1).
-simpl; rewrite length_app; auto with arith.
-rewrite <- H; auto with arith.
-intros a l H l1 l3; case l3.
-simpl; intros H1; absurd (length (a :: (l ++ l1)) <= length l1).
-simpl; rewrite length_app; auto with arith.
-rewrite H1; auto with arith.
-simpl; intros b l0 H0; injection H0.
-intros H1 H2; eq_tac; auto.
-apply H with ( 1 := H1 ); auto.
+  forall (l1 l2 : list A), length (l1 ++ l2) = length l1 + length l2.
+Proof.
+  apply app_length.
 Qed.
  
 Theorem app_inv_app:
@@ -226,12 +188,12 @@ Qed.
  
 Theorem in_map_inv:
  forall (b : B) (l : list A),
- In b (map f l) ->  (exists a : A , In a l /\ b = f a ).
-intros b l; elim l; simpl; auto.
-intros tmp; case tmp.
-intros a0 l0 H [H1|H1]; auto.
-exists a0; auto.
-case (H H1); intros a1 [H2 H3]; exists a1; auto.
+   In b (map f l) ->  (exists a : A , In a l /\ b = f a ).
+Proof.
+  intros b l H.
+  rewrite in_map_iff in H.
+  destruct H as [x [H1 H2]].
+  eauto.
 Qed.
  
 Theorem in_map_fst_inv:
@@ -245,12 +207,8 @@ case H; auto; intros l1 Hl1; exists l1; auto.
 Qed.
  
 Theorem length_map: forall l,  length (map f l) = length l.
-intros l; elim l; simpl; auto.
-Qed.
- 
-Theorem map_app: forall l1 l2,  map f (l1 ++ l2) = map f l1 ++ map f l2.
-intros l; elim l; simpl; auto.
-intros a l0 H l2; eq_tac; auto.
+Proof.
+  apply map_length.
 Qed.
  
 Theorem map_length_decompose:
@@ -325,17 +283,9 @@ Definition In_dec:
 forall {A : Set},
        (forall x y : A, {x = y} + {x <> y}) ->
        forall (a : A) (l : list A), {In a l} + {~ In a l}.
-  intros A dec.
-  intros a l.
-  generalize dependent a.
-  induction l; intros.
-  - right. auto.
-  - pose proof (dec a a0).
-    destruct H.
-    + left. now constructor.
-    + destruct (IHl a0).
-      * left. right. assumption.
-      * right. intros H. inversion H; subst; auto.
+Proof.
+  intros A H a l.
+  apply in_dec; auto.
 Defined.
 
 Theorem in_fold_map: forall (A: Set) (f: nat -> nat -> A) p l1 l2,
