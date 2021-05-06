@@ -41,14 +41,12 @@ Definition size := h * w.
 
 Theorem h_pos: forall x, x < size -> 0 < h.
 Proof.
-  intros x; unfold size; case h; auto with arith.
-  intros HH; contradict HH; auto with arith.
+  cbv; destruct h; lia.
 Qed.
 
 Theorem w_pos: forall x, x < size -> 0 < w.
 Proof.
-  intros x; unfold size; rewrite mult_comm; case w; auto with arith.
-  intros HH; contradict HH; auto with arith.
+  intros x; unfold size; destruct w; lia.
 Qed.
 
 (* The reference list [1; 2; ...; size] *)
@@ -56,12 +54,12 @@ Definition ref_list := progression size 1.
 
 Theorem ref_list_ulist : ulist ref_list.
 Proof.
-  refine (progression_list _ _).
+  apply progression_list.
 Qed.
 
 Theorem ref_list_length: length ref_list = size.
 Proof.
-  unfold ref_list; generalize 1; elim size; simpl; auto.
+  unfold ref_list; generalize 1; induction size; simpl; auto.
 Qed.
 
 (* The position indexes [0; 1; 2; ...; size -1] *)
@@ -71,9 +69,8 @@ Definition indexes := progression size 0.
 Theorem in_indexes: forall i, In i indexes <-> i < size.
 Proof.
   intros i; unfold indexes.
-  case (in_progression size 0 i); intros H1 H2; 
-    rewrite plus_0_r in H1; split; auto with arith.
-  intros H; case H1; auto.
+  destruct (in_progression size 0 i).
+  rewrite plus_0_r in H; split; intros; destruct H; auto with arith.
 Qed.
 
 (* An element outside the ref_list *)
@@ -93,7 +90,7 @@ Definition init := mk_0 out (size * size).
 (* Its length is size * size *)
 Theorem length_init: length init = size * size.
 Proof.
-  unfold init; elim (size * size); simpl; auto.
+  unfold init; induction (size * size); simpl; auto.
 Qed.
 
 (***************************************************)
@@ -140,7 +137,7 @@ Proof.
 Qed.
 
 (* pos_test is antisymetric *)
-Theorem pos_test_anti_sym: forall p1 p2, 
+Theorem pos_test_anti_sym: forall p1 p2,
     pos_test p1 p2 = opp (pos_test p2 p1).
 Proof.
   intros p1 p2; case p1; case p2; simpl; auto.
@@ -166,7 +163,7 @@ Definition pos_dec: forall p1 p2: pos, {p1 = p2} + {p1 <> p2}.
 Defined.
 
 (* Shift a position *)
-Definition shift p x y := 
+Definition shift p x y :=
   match p with Pos x1 y1 => Pos (x + x1) (y + y1)
   end.
 
@@ -187,8 +184,8 @@ Proof.
 Qed.
 
 (* Find the next position *)
-Definition next p := 
-  match p with Pos x y => 
+Definition next p :=
+  match p with Pos x y =>
                if eq_nat (S y) size then Pos (S x) 0 else Pos x (S y)
   end.
 
@@ -223,8 +220,8 @@ Proof.
       lia.
 Qed.
 
-Theorem valid_pos2n: 
-  forall p (s: list nat), valid_pos p -> length s = size * size -> 
+Theorem valid_pos2n:
+  forall p (s: list nat), valid_pos p -> length s = size * size ->
                    pos2n p < length s.
 Proof.
   intros (x, y) s; simpl; intros (H1, H2) H3; rewrite H3; clear H3.
@@ -368,7 +365,7 @@ Qed.
 Theorem update_get:
   forall p v l, pos2n p < length l -> get p (update p v l) = v .
 Proof.
-  intros p v l; unfold get, update; generalize (pos2n p); 
+  intros p v l; unfold get, update; generalize (pos2n p);
     elim l; simpl; clear l p.
   intros n H; contradict H; auto with arith.
   intros a l1 Rec n; case n; clear n; simpl; auto with arith.
@@ -402,7 +399,7 @@ Qed.
 
 Definition prestrict p := restrict out (pos2n p).
 
-Theorem prestrict_0: forall l, 
+Theorem prestrict_0: forall l,
     prestrict (Pos 0 0) l = mk_0 out (length l).
 Proof.
   intros s; unfold prestrict; simpl; apply restrict_0.
@@ -453,7 +450,7 @@ Definition refine s1 s2 :=
   forall p, valid_pos p -> In (get p s1) ref_list -> get p s1 = get p s2.
 
 (* Refinement is transitive *)
-Theorem refine_trans: forall s1 s2 s3, 
+Theorem refine_trans: forall s1 s2 s3,
     refine s1 s2 -> refine s2 s3 -> refine s1 s3.
 Proof.
   intros s1 s2 s3 (H, (H1, H2)) (H3, (H4, H5)); split; auto.
@@ -474,15 +471,15 @@ Proof.
 Qed.
 
 (* update is a refinement *)
-Theorem refine_update: 
-  forall p v s, ~ In (get p s) ref_list -> 
+Theorem refine_update:
+  forall p v s, ~ In (get p s) ref_list ->
            length s = size * size -> refine s (update p v s).
 Proof.
   intros p1 v s H H1; split; auto.
   split; auto.
   unfold update; rewrite length_subst; auto.
   intros p2  _.
-  generalize H; unfold get, update; generalize (pos2n p1) (pos2n p2); 
+  generalize H; unfold get, update; generalize (pos2n p1) (pos2n p2);
     clear p1 p2 H.
   elim s; simpl; auto.
   intros n1 n2; case n1; case n2; auto.
@@ -648,7 +645,7 @@ Qed.
 (***************************************************)
 
 (* The subrectangles *)
-Definition rect i (l: list nat) := 
+Definition rect i (l: list nat) :=
   take_and_jump w size h (jump (w * (mod i h) +  h * (div i  h) * size) l).
 
 (* Relation between get and rect *)
@@ -775,7 +772,7 @@ Qed.
 
 (* To be a sudoku, the list should be of the proper size,
    rows, columns and subrectangle should be a permutation of the reference list
- *) 
+ *)
 Definition sudoku l := length l = size * size /\
                        (forall i, i < size -> permutation (row i l) ref_list) /\
                        (forall i, i < size -> permutation (column i l) ref_list) /\
@@ -861,7 +858,7 @@ Proof.
 Qed.
 
 (* lit_test is anti symetric *)
-Theorem lit_test_anti_sym: forall l1 l2, 
+Theorem lit_test_anti_sym: forall l1 l2,
     lit_test l1 l2 = opp (lit_test l2 l1).
 Proof.
   intros l1 l2; case l1; case l2; simpl; auto.
@@ -882,7 +879,7 @@ Proof.
 Qed.
 
 (* A clause is a list of literals, most of the time it
-   is intepretated as a disjunction *) 
+   is intepretated as a disjunction *)
 Definition clause:= list lit.
 
 (* Check if a literal is in a clause *)
@@ -936,34 +933,34 @@ Fixpoint clauses_update (l: lit) (c: list lit) (cs: clauses) {struct cs}: clause
 (***************************************************)
 
 (* Generate the clause that indicates that the value z appears in
-   the row i 
+   the row i
  *)
-Definition gen_row i z := 
+Definition gen_row i z :=
   fold_right (fun y l => lit_insert (v (Pos i y) z) l) nil indexes.
 
 
 (* Generate the clause that indicates that the value z appears in
-   the column i 
+   the column i
  *)
-Definition gen_column i z := 
+Definition gen_column i z :=
   fold_right (fun x l => lit_insert (v (Pos x i) z) l) nil indexes.
 
 (* Generate the clause that indicates that the value z appears in
-   the rectangle i 
+   the rectangle i
  *)
 Definition gen_rect i z :=
   let x := h * div i h in
   let y := w * mod i h in
-  fold_right (fun p l => lit_insert (v (shift p x y) z) l) nil cross. 
+  fold_right (fun p l => lit_insert (v (shift p x y) z) l) nil cross.
 
 (* Generate the clause that indicates that the cell (x, y) contains
    a value in the ref_list
  *)
 Definition gen_cell p :=
-  fold_right (fun z l => lit_insert (v p z) l) nil ref_list. 
+  fold_right (fun z l => lit_insert (v p z) l) nil ref_list.
 
 (* Generate the list of clauses that all cells contains a value
-  in the reference list 
+  in the reference list
  *)
 Definition all_cell :=
   let c0 := cross2 in
@@ -977,13 +974,13 @@ Definition all_cell :=
      - every cell should contain a number of the reference list
  *)
 Definition init_c :=
-  let c1 := cross1 in 
+  let c1 := cross1 in
   fold_right (fun iz l => let res := gen_row (fst iz) (snd iz) in
-                       clause_insert res l) 
+                       clause_insert res l)
              (fold_right (fun iz l => let res := gen_column (fst iz) (snd iz) in
-                                   clause_insert res l) 
+                                   clause_insert res l)
                          (fold_right (fun iz l => let res := gen_rect (fst iz) (snd iz) in
-                                               clause_insert res l) 
+                                               clause_insert res l)
                                      all_cell c1) c1) c1.
 
 (* Given a literal that we know that holds generate the list of literals
@@ -998,20 +995,20 @@ Definition anti_literals l :=
                                              (lit_rm c (gen_cell k))))
   end.
 
-(* Auxillary function that updates the list of clauses c with 
+(* Auxillary function that updates the list of clauses c with
    the list s, interpreting the first element of s as in position (x,y)
-   the update is performed only for the elements of s that are in l 
+   the update is performed only for the elements of s that are in l
  *)
 Fixpoint gen_init_clauses_aux (s: list nat) (p: pos) (c: clauses) {struct s} :
   clauses :=
-  match s with 
+  match s with
     nil => c
-  | a :: s1 => 
+  | a :: s1 =>
     let p1 := next p in
-    let ll := v p a in 
+    let ll := v p a in
     if (In_dec eq_nat a ref_list) then
-      let c1 := clauses_update ll (anti_literals ll) c in 
-      gen_init_clauses_aux s1 p1 c1 
+      let c1 := clauses_update ll (anti_literals ll) c in
+      gen_init_clauses_aux s1 p1 c1
     else gen_init_clauses_aux s1 p1 c
   end.
 
@@ -1024,18 +1021,18 @@ Definition gen_init_clauses s := gen_init_clauses_aux s (Pos 0 0) init_c.
 (***************************************************)
 
 (* Try to satisfy one of the literal of list l calling after
-   the continuation f 
+   the continuation f
  *)
-Fixpoint try_one (s: list nat) (c: clause) 
-         (cs: clauses) 
+Fixpoint try_one (s: list nat) (c: clause)
+         (cs: clauses)
          (f: list nat -> clauses -> option (list nat))
-         {struct c}: 
+         {struct c}:
   option (list nat) :=
   match c with
     nil => None
   | (v p z) as k:: c1 =>
     let s1 := update p z s in
-    let cs1 := clauses_update k (anti_literals k) cs in   
+    let cs1 := clauses_update k (anti_literals k) cs in
     match f s1 cs1 with
       None => try_one s c1 cs f
     | Some c1 => Some c1
@@ -1045,14 +1042,14 @@ Fixpoint try_one (s: list nat) (c: clause)
 (* An auxillary function to find a solution by iteratively trying
    to satisfy the first clause of the list of clauses c
  *)
-Fixpoint find_one_aux (n: clauses) (s: list nat) 
-         (cs: clauses) {struct n}: 
+Fixpoint find_one_aux (n: clauses) (s: list nat)
+         (cs: clauses) {struct n}:
   option (list nat) :=
   match cs with
     nil => Some s
   | (_, nil) :: _  => None
-  | (_, p) :: cs1 => 
-    match n with 
+  | (_, p) :: cs1 =>
+    match n with
       nil => None
     | _ :: n1 =>
       try_one s p cs1 (find_one_aux n1)
@@ -1072,31 +1069,31 @@ Definition find_one s :=
 Definition merges := merge _ (lexico _ test).
 
 (* Find all the literals of list l that can be satisfied calling after
-   the continuation f 
+   the continuation f
  *)
-Fixpoint try_all (s: list nat) (c: clause) 
-         (cs: clauses) 
+Fixpoint try_all (s: list nat) (c: clause)
+         (cs: clauses)
          (f: list nat -> clauses -> list (list nat))
-         {struct c}: 
+         {struct c}:
   list (list nat) :=
   match c with
     nil => nil
   | (v p z) as k:: l1 =>
     let s1 := update p z s in
-    let cs1 := clauses_update k (anti_literals k) cs in   
+    let cs1 := clauses_update k (anti_literals k) cs in
     merges (f s1 cs1) (try_all s l1 cs f)
   end.
 
 (* An auxillary function to find all solutions by iteratively trying
    to satisfy the first clause of the list of clauses c
  *)
-Fixpoint find_all_aux (n: clauses) (s: list nat) (cs: clauses) {struct n}: 
+Fixpoint find_all_aux (n: clauses) (s: list nat) (cs: clauses) {struct n}:
   list (list nat) :=
   match cs with
     nil => s :: nil
   | (_, nil) :: _  => nil
-  | (_, p) :: cs1 => 
-    match n with 
+  | (_, p) :: cs1 =>
+    match n with
       nil => nil
     | _ :: n1 =>
       try_all s p cs1 (find_all_aux n1)
@@ -1113,14 +1110,14 @@ Definition find_all s :=
 (***************************************************)
 
 (* Adding a clause increments the length *)
-Theorem length_clause_insert: forall c cs, 
+Theorem length_clause_insert: forall c cs,
     length (clause_insert c cs) = S (length cs).
 Proof.
   intros c cs; unfold clause_insert; apply ocons_length.
 Qed.
 
 (* Addding two classes adds their length *)
-Theorem length_clauses_merge: forall cs1 cs2, 
+Theorem length_clauses_merge: forall cs1 cs2,
     length (clauses_merge cs1 cs2) = length cs1 + length cs2.
 Proof.
   intros cs1 cs2; unfold clauses_merge; apply add_length.
@@ -1137,7 +1134,7 @@ Qed.
 
 Theorem length_indexes: length indexes = size.
 Proof.
-  unfold indexes; generalize 0; elim size; simpl; auto.
+  unfold indexes; generalize 0; induction size; simpl; auto.
 Qed.
 
 (***************************************************)
@@ -1190,7 +1187,7 @@ Proof.
 Qed.
 
 Theorem gen_row_correct:
-  forall l i z, 
+  forall l i z,
     In l (gen_row i z) <-> exists j, l = v (Pos i j) z /\ j < size.
 Proof.
   unfold gen_row, indexes.
@@ -1205,7 +1202,7 @@ Proof.
   intros (j, (_, (H1, H2))); contradict H2; rewrite plus_0_r; auto with arith.
   intros size1 Rec1 a l i z; split.
   intros H1.
-  match type of H1 with In ?X (lit_insert ?Y ?Z) => 
+  match type of H1 with In ?X (lit_insert ?Y ?Z) =>
                         case (lit_insert_in X Y Z); intros tmp _; case (tmp H1); clear tmp
   end; intros H2; subst.
   exists a; split; auto with arith.
@@ -1215,7 +1212,7 @@ Proof.
   intros j (H3, (H4, H5)); exists j; split; auto with arith.
   rewrite <- plus_n_Sm; split; auto with arith.
   intros (j, (H3, (H4, H5))).
-  match goal with |- In ?X (lit_insert ?Y ?Z) => 
+  match goal with |- In ?X (lit_insert ?Y ?Z) =>
                   case (lit_insert_in X Y Z); intros _ tmp; apply tmp; clear tmp
   end; auto.
   case le_lt_or_eq with (1 := H4); clear H4; intros H4; auto.
@@ -1231,7 +1228,7 @@ Proof.
 Qed.
 
 Theorem gen_column_correct:
-  forall l j z, 
+  forall l j z,
     In l (gen_column j z) <-> exists i, l = v (Pos i j) z /\ i < size.
 Proof.
   unfold gen_column, indexes.
@@ -1246,7 +1243,7 @@ Proof.
   intros (i, (_, (H1, H2))); contradict H2; rewrite plus_0_r; auto with arith.
   intros size1 Rec1 a l j z; split.
   intros H1.
-  match type of H1 with In ?X (lit_insert ?Y ?Z) => 
+  match type of H1 with In ?X (lit_insert ?Y ?Z) =>
                         case (lit_insert_in X Y Z); intros tmp _; case (tmp H1); clear tmp
   end; intros H2; subst.
   exists a; split; auto with arith.
@@ -1256,7 +1253,7 @@ Proof.
   intros i (H3, (H4, H5)); exists i; split; auto with arith.
   rewrite <- plus_n_Sm; split; auto with arith.
   intros (i, (H3, (H4, H5))).
-  match goal with |- In ?X (lit_insert ?Y ?Z) => 
+  match goal with |- In ?X (lit_insert ?Y ?Z) =>
                   case (lit_insert_in X Y Z); intros _ tmp; apply tmp; clear tmp
   end; auto.
   case le_lt_or_eq with (1 := H4); clear H4; intros H4; auto.
@@ -1271,18 +1268,18 @@ Proof.
     auto with arith.
 Qed.
 
-Theorem fold_insert1: forall (A: Set) (f: A -> lit) a l, 
+Theorem fold_insert1: forall (A: Set) (f: A -> lit) a l,
     In a l -> In (f a) (fold_right (fun p l => lit_insert (f p) l) nil l).
 Proof.
   intros A f a l; elim l; simpl; auto with arith; clear l.
   intros b l1 Rec [H | H]; subst;
-    match goal with |- In ?X (lit_insert ?Y ?Z) => 
+    match goal with |- In ?X (lit_insert ?Y ?Z) =>
                     case (lit_insert_in X Y Z); intros _ tmp; apply tmp; clear tmp; auto
     end.
 Qed.
 
 Theorem fold_insert2:
-  forall (A: Set) (f: A -> lit)  a l,  
+  forall (A: Set) (f: A -> lit)  a l,
     In a (fold_right (fun p l => lit_insert (f p) l) nil l)
     ->
     (exists b, In b l /\ a = f b).
@@ -1290,7 +1287,7 @@ Proof.
   intros A f a l; elim l; simpl; auto with arith; clear l.
   intros H; case H.
   intros b l1 Rec H1.
-  match goal with H1:  In ?X (lit_insert ?Y ?Z) |- _ => 
+  match goal with H1:  In ?X (lit_insert ?Y ?Z) |- _ =>
                   case (lit_insert_in X Y Z); intros tmp _; case (tmp H1); clear tmp H1; auto;
                     intros H1; subst
   end.
@@ -1301,25 +1298,25 @@ Proof.
 Qed.
 
 Theorem gen_rect_correct:
-  forall l i z, 
+  forall l i z,
     i < size ->
-    (In l (gen_rect i z) <-> 
-     exists i1, exists j1, l = v (Pos (h * div i h + i1) (w * mod i h + j1)) z 
+    (In l (gen_rect i z) <->
+     exists i1, exists j1, l = v (Pos (h * div i h + i1) (w * mod i h + j1)) z
                  /\ i1 < h /\ j1 < w).
 Proof.
   intros ((x, y), z1) i z H; unfold gen_rect; split; intros H1.
-  generalize (fold_insert2 _ 
+  generalize (fold_insert2 _
                            (fun p => (v (shift p (h * div i h) (w * mod i h)) z))  _ _ H1).
   clear H1; intros (b, (Hb, Hb1)).
-  match type of Hb with In ?X cross => 
+  match type of Hb with In ?X cross =>
                         case (cross_correct X); intros tmp _; case (tmp Hb); clear tmp
   end.
-  intros i1 (j1, (H4, (H5, H6))); exists i1; exists j1; 
+  intros i1 (j1, (H4, (H5, H6))); exists i1; exists j1;
     intros; subst; auto with arith.
   case H1; intros i1 (j1, (H2, (H3, H4))); clear H1.
   rewrite H2.
   match goal with |- In (v (Pos (?X + ?Y) (?Z + ?T)) ?U) ?V =>
-                  change (In (v (shift (Pos Y T) X Z) U) V) 
+                  change (In (v (shift (Pos Y T) X Z) U) V)
   end.
   apply fold_insert1 with (f := (fun p => (v (shift p (h * div i h) (w * mod i h)) z))); auto.
   case (cross_correct (Pos i1 j1)); intros _ tmp; apply tmp; clear tmp.
@@ -1327,8 +1324,8 @@ Proof.
 Qed.
 
 Theorem gen_cell_correct:
-  forall l x y, 
-    (In l (gen_cell (Pos x y)) <-> 
+  forall l x y,
+    (In l (gen_cell (Pos x y)) <->
      exists z, l = v (Pos x y) z /\ (In z ref_list)).
 Proof.
   intros l x y; unfold gen_cell; split.
@@ -1346,7 +1343,7 @@ Qed.
 (* An ordered clauses *)
 Definition ordered_clause (c: clause) := olist _ lit_test c.
 
-Definition ordered (cs: clauses):= 
+Definition ordered (cs: clauses):=
   forall n c, In (n, c) cs -> ordered_clause c.
 
 (*  lit_insert is ordered *)
@@ -1360,7 +1357,7 @@ Qed.
 
 (* Specification of clause_merge *)
 Theorem clause_merge_ordered:
-  forall c1 c2, ordered_clause c1 -> ordered_clause c2 -> 
+  forall c1 c2, ordered_clause c1 -> ordered_clause c2 ->
            ordered_clause (clause_merge c1 c2).
 Proof.
   intros c1 c2 H1 H2; unfold ordered_clause, clause_merge;
@@ -1438,7 +1435,7 @@ Proof.
   intros a l Rec p; apply lit_insert_ordered; auto.
 Qed.
 
-Theorem fold_clause_insert_ordered: forall (A: Set) (f: A -> clause) l1 l2, 
+Theorem fold_clause_insert_ordered: forall (A: Set) (f: A -> clause) l1 l2,
     (forall l, ordered_clause (f l)) -> ordered l1 ->
     ordered (fold_right (fun p l => clause_insert (f p) l) l1 l2).
 Proof.
@@ -1470,9 +1467,9 @@ Qed.
 Theorem anti_literals_ordered: forall p, ordered_clause (anti_literals p).
 Proof.
   intros ((x, y), z); simpl.
-  repeat apply clause_merge_ordered; auto; 
+  repeat apply clause_merge_ordered; auto;
     generalize (lit_rm_ordered (v (Pos x y) z :: nil)); simpl;
-      intros tmp; apply tmp; clear tmp; auto; 
+      intros tmp; apply tmp; clear tmp; auto;
         try (red; apply olist_one).
   apply gen_row_ordered.
   apply gen_column_ordered.
@@ -1534,7 +1531,7 @@ Proof.
                          case (clause_merge_in X Y Z); intros _ tmp; apply tmp;
                            clear tmp; right
          end.
-  match goal with |- In ?X (lit_rm ?Y ?Z) => 
+  match goal with |- In ?X (lit_rm ?Y ?Z) =>
                   case (lit_rm_in X Y Z); try (intros _ tmp; apply tmp; clear tmp)
   end.
   red; apply olist_one.
@@ -1552,7 +1549,7 @@ Qed.
 (***************************************************)
 
 (* A valid lit *)
-Definition valid_lit l s := 
+Definition valid_lit l s :=
   match l with v p z => ~ In (get p s) ref_list /\ valid_pos p /\ In z ref_list end.
 
 (* A valid clause *)
@@ -1563,7 +1560,7 @@ Definition valid (cs: clauses) s:= forall n c, In (n, c) cs -> valid_clause c s.
 
 (* Validity of literals works the other way than refinement *)
 Theorem valid_lit_refine:
-  forall l s1 s2, refine s1 s2 -> 
+  forall l s1 s2, refine s1 s2 ->
              valid_lit l s2 -> valid_lit l s1.
 Proof.
   intros (p, z) s1 s2 H (H0, (H1, H2)); split; auto.
@@ -1573,7 +1570,7 @@ Qed.
 
 (* Validity works the other way than refinement *)
 Theorem valid_refine:
-  forall cs s1 s2, refine s1 s2 -> 
+  forall cs s1 s2, refine s1 s2 ->
               valid cs s2 -> valid cs s1.
 Proof.
   intros cs s1 s2 H H1 n c Hn l Hl.
@@ -1594,7 +1591,7 @@ Proof.
   intro tmp; subst; case (H2 z1); auto.
 Qed.
 
-Theorem lit_insert_valid: forall l c s, 
+Theorem lit_insert_valid: forall l c s,
     valid_lit l s -> valid_clause c s -> valid_clause (lit_insert l c) s.
 Proof.
   intros l; case l; simpl.
@@ -1606,7 +1603,7 @@ Proof.
 Qed.
 
 Theorem clause_merge_valid:
-  forall c1 c2 s, valid_clause c1 s -> valid_clause c2 s -> 
+  forall c1 c2 s, valid_clause c1 s -> valid_clause c2 s ->
              valid_clause (clause_merge c1 c2) s.
 Proof.
   intros c1 c2 s H H1 l Hl.
@@ -1644,12 +1641,12 @@ Proof.
 Qed.
 
 Theorem clauses_update_valid:
-  forall p z c cs s, valid_lit (v p z) s -> ordered cs -> 
+  forall p z c cs s, valid_lit (v p z) s -> ordered cs ->
                 ordered_clause c ->
                 (forall z1, In z1 ref_list -> z1 <> z -> In (v p z1) c) ->
                 valid cs s -> valid (clauses_update (v p z) c cs) (update p z s).
 Proof.
-  intros p z c cs s (H1, (H2, H3)) H4 H5 H6; generalize H4; 
+  intros p z c cs s (H1, (H2, H3)) H4 H5 H6; generalize H4;
     elim cs; simpl; auto; clear cs H4.
   intros _ _ n1 c1 H7; case H7.
   intros (n1, c1) cs Rec H4 H7.
@@ -1677,13 +1674,13 @@ Proof.
 Qed.
 
 
-Theorem fold_clause_insert1: forall (A: Set) (f: A -> clause) l1 l2 a, 
-    In a (fold_right (fun p l => clause_insert (f p) l) l2 l1) -> 
+Theorem fold_clause_insert1: forall (A: Set) (f: A -> clause) l1 l2 a,
+    In a (fold_right (fun p l => clause_insert (f p) l) l2 l1) ->
     (exists b, exists n, In b l1 /\ a = (n, f b)) \/ In a l2.
 Proof.
   intros A f l1 l2 (n, l); generalize l2; elim l1; simpl; auto; clear l1 l2.
   intros a l1 Rec l2 H1.
-  match goal with 
+  match goal with
     H: In ?p (clause_insert ?c ?cs) |- _ =>
     case (clause_insert_in p c cs); intros tmp _; case (tmp H); clear tmp H
   end.
@@ -1697,7 +1694,7 @@ Theorem valid_init_c:
   forall s, length s = size * size -> empty s -> valid init_c s.
 Proof.
   unfold init_c; intros s H H1 n c Hn l Hl.
-  case (fold_clause_insert1 _ (fun iz => gen_row (fst iz) (snd iz))) 
+  case (fold_clause_insert1 _ (fun iz => gen_row (fst iz) (snd iz)))
     with (1 := Hn); clear Hn.
   intros ((x,z), (n1, (HH1, HH2))); simpl in HH2.
   injection HH2; intros; subst; clear HH2.
@@ -1708,7 +1705,7 @@ Proof.
   intros tmp _; case (tmp Hl); clear tmp.
   intros y1 (Hl1, Hy); subst.
   repeat (split; auto); case (in_indexes x1); auto.
-  intros Hn; case (fold_clause_insert1 _ (fun iz => gen_column (fst iz) (snd iz))) 
+  intros Hn; case (fold_clause_insert1 _ (fun iz => gen_column (fst iz) (snd iz)))
                with (1 := Hn); clear Hn.
   intros ((y,z), (n1, (HH1, HH2))); simpl in HH2.
   injection HH2; intros; subst; clear HH2.
@@ -1719,7 +1716,7 @@ Proof.
   intros tmp _; case (tmp Hl); clear tmp.
   intros x1 (Hl1, Hy); subst.
   repeat (split; auto); case (in_indexes y1); auto.
-  intros Hn; case (fold_clause_insert1 _ (fun iz => gen_rect (fst iz) (snd iz))) 
+  intros Hn; case (fold_clause_insert1 _ (fun iz => gen_rect (fst iz) (snd iz)))
                with (1 := Hn); clear Hn.
   intros ((i,z), (n1, (HH1, HH2))); simpl in HH2.
   injection HH2; intros; subst; clear HH2.
@@ -1745,7 +1742,7 @@ Proof.
   case (cross2_correct (Pos x y)); intros tmp _;
     case (tmp HH1); clear tmp HH1.
   intros H2 H3.
-  case (gen_cell_correct l x y); intros tmp _; 
+  case (gen_cell_correct l x y); intros tmp _;
     case (tmp Hl); clear tmp.
   intros z (V1, V2); subst.
   repeat (split; auto).
@@ -1756,9 +1753,9 @@ Theorem gen_init_clauses_valid: forall s, length s = size * size  ->
                                      valid (gen_init_clauses s) s.
 Proof.
   assert (Eq:
-            forall s1 s p cs,  
+            forall s1 s p cs,
               length s = size * size ->
-              s1 = jump (pos2n p) s -> 
+              s1 = jump (pos2n p) s ->
               valid_pos p ->
               ordered cs ->
               valid cs (prestrict p s) ->
@@ -1869,19 +1866,19 @@ Qed.
 (***************************************************)
 
 (* A state satisfies a literal, if the corresponding cell c
-   contains the value in the literal 
+   contains the value in the literal
  *)
 Definition lit_sat l s :=
   match l with v p z => get p s = z end.
 
 (* A state satisfies a clause if it satisfies at least one literal *)
-Definition clause_sat c s := 
+Definition clause_sat c s :=
   exists l, In l c /\ lit_sat l s.
 
-(* A state satisfies a list of clauses if it satisfies 
+(* A state satisfies a list of clauses if it satisfies
    all its clauses
  *)
-Definition sat (cs: clauses) s := 
+Definition sat (cs: clauses) s :=
   forall n c, In (n, c) cs -> clause_sat c s.
 
 (* Satisifability is preserved by refinement *)
@@ -1943,7 +1940,7 @@ Proof.
   apply (H1 n c); auto.
 Qed.
 
-Theorem clauses_update_sat: forall l c cs s, ordered_clause c -> lit_sat l s -> 
+Theorem clauses_update_sat: forall l c cs s, ordered_clause c -> lit_sat l s ->
                                         ordered cs -> sat (clauses_update l c cs) s -> sat cs s.
 Proof.
   intros l c cs s H1 H2 H3; generalize H3; elim cs; simpl; auto; clear H3.
@@ -1974,7 +1971,7 @@ Proof.
 Qed.
 
 
-Theorem clauses_update_sat_rev: forall l c cs s, ordered_clause c -> lit_sat l s -> 
+Theorem clauses_update_sat_rev: forall l c cs s, ordered_clause c -> lit_sat l s ->
                                             ordered cs -> (forall l, In l c -> ~ lit_sat l s) ->
                                             sat cs s -> sat (clauses_update l c cs) s.
 Proof.
@@ -2052,7 +2049,7 @@ Proof.
 Qed.
 
 Theorem gen_rect_sat:
-  forall i z s, length s = size * size -> i < size -> 
+  forall i z s, length s = size * size -> i < size ->
            (clause_sat (gen_rect i z) s <-> In z (rect i s)).
 Proof.
   intros i z s H H0.
@@ -2082,12 +2079,12 @@ Proof.
   match goal with |- mod ?X ?Y <= ?T =>
                   generalize (mod_lt X Y V1); auto with arith
   end.
-  case h; auto with arith; intros; simpl minus; 
+  case h; auto with arith; intros; simpl minus;
     repeat rewrite <- minus_n_O; auto with arith.
   match goal with |- mod ?X ?Y <= ?T =>
                   generalize (mod_lt X Y V2); auto with arith
   end.
-  case w; auto with arith; intros; simpl minus; 
+  case w; auto with arith; intros; simpl minus;
     repeat rewrite <- minus_n_O; auto with arith.
   rewrite length_rect; auto with arith.
   replace size with ((h - 1) * w + w); auto with arith.
@@ -2114,7 +2111,7 @@ Proof.
   rewrite get_rect.
   eq_tac; auto; [idtac | eq_tac]; auto.
   rewrite length_rect in Hj1; auto.
-  rewrite (mult_comm (div i h)); rewrite (mult_comm (mod i h)); 
+  rewrite (mult_comm (div i h)); rewrite (mult_comm (mod i h));
     repeat rewrite mod_mult_comp; auto.
   rewrite mod_small.
   rewrite mod_small.
@@ -2122,7 +2119,7 @@ Proof.
   apply mod_lt; auto.
   apply div_lt; auto.
   rewrite (mult_comm w); auto with arith.
-  rewrite (mult_comm (div i h)); rewrite (mult_comm (mod i h)); 
+  rewrite (mult_comm (div i h)); rewrite (mult_comm (mod i h));
     repeat rewrite div_mult_comp; auto.
   rewrite (fun x y => div_is_0 (div x y)); auto with arith.
   rewrite (fun x y => div_is_0 (mod x y)); auto with arith.
@@ -2134,23 +2131,23 @@ Proof.
   apply div_lt; auto.
   rewrite (mult_comm w); rewrite length_rect in Hj1; auto with arith.
   unfold size; apply mult_lt_plus; auto with arith.
-Qed. 
+Qed.
 
 Theorem gen_cell_sat:
   forall p s, valid_pos p -> (clause_sat (gen_cell p) s <-> In (get p s) ref_list).
 Proof.
   intros (x, y) s (H, H0); split; simpl.
   intros (((x1, y1), z1), (Hj1, Hj2)); simpl in Hj2.
-  match goal with 
+  match goal with
     H: In ?l (gen_cell (Pos ?x ?y)) |- _ =>
     case (gen_cell_correct l x y); auto;
-      intros tmp _; case (tmp H); clear tmp H; auto 
+      intros tmp _; case (tmp H); clear tmp H; auto
   end.
   intros z2 (Hz1, Hz2); injection Hz1.
   intros; subst; auto.
   intros H1.
   exists (v (Pos x y) (get (Pos x y) s)); split; auto.
-  match goal with 
+  match goal with
     |- In ?l (gen_cell (Pos ?x ?y)) =>
     case (gen_cell_correct l x y); auto;
       intros _ tmp; apply tmp; clear tmp
@@ -2159,25 +2156,25 @@ Proof.
   red; auto.
 Qed.
 
-Theorem fold_clause_insert2: forall (A: Set) (f: A -> clause) l1 l2 a, 
+Theorem fold_clause_insert2: forall (A: Set) (f: A -> clause) l1 l2 a,
     In a l2 -> In a (fold_right (fun p l => clause_insert (f p) l) l2 l1).
 Proof.
   intros A f l1 a l2; generalize l2; elim l1; simpl; auto; clear l1 l2.
   intros b l1 Rec l2 H1.
-  match goal with 
+  match goal with
     |- In ?p (clause_insert ?c ?cs) =>
     case (clause_insert_in p c cs); intros _ tmp; apply tmp; clear tmp; auto
   end.
 Qed.
 
 
-Theorem fold_clause_insert3: forall (A: Set) (f: A -> clause) l1 l2 a, 
+Theorem fold_clause_insert3: forall (A: Set) (f: A -> clause) l1 l2 a,
     In a l1 -> In (length (f a), (f a)) (fold_right (fun p l => clause_insert (f p) l) l2 l1).
 Proof.
   intros A f l1 a l2; generalize l2; elim l1; simpl; auto; clear l1 l2.
   intros l2 H; case H.
   intros b l1 Rec l2 [H | H]; subst;
-    match goal with 
+    match goal with
       |- In ?p (clause_insert ?c ?cs) =>
       case (clause_insert_in p c cs); intros _ tmp; apply tmp; clear tmp; auto
     end.
@@ -2214,7 +2211,7 @@ Qed.
 
 Theorem init_c_sat:
   forall s, length s = size * size ->
-       (sat init_c s <-> 
+       (sat init_c s <->
         (forall i, i < size -> incl ref_list (row i s)) /\
         (forall i, i < size -> incl ref_list (column i s)) /\
         (forall i, i < size -> incl ref_list (rect i s)) /\
@@ -2225,7 +2222,7 @@ Proof.
   intros i Hi z Hz.
   case (gen_row_sat i z s); auto; intros tmp _; apply tmp; clear tmp.
   case (H (length (gen_row i z)) (gen_row i z)); auto; clear H.
-  replace (gen_row i z) with 
+  replace (gen_row i z) with
       ((fun iz => gen_row (fst iz) (snd iz)) (i,z)); auto.
   apply fold_clause_insert3 with
       (f := (fun iz => gen_row (fst iz) (snd iz))); simpl; auto.
@@ -2236,9 +2233,9 @@ Proof.
   intros i Hi z Hz.
   case (gen_column_sat i z s); auto; intros tmp _; apply tmp; clear tmp.
   case (H (length (gen_column i z)) (gen_column i z)); auto; clear H.
-  apply fold_clause_insert2 with 
+  apply fold_clause_insert2 with
       (f := (fun iz => gen_row (fst iz) (snd iz))); auto.
-  replace (gen_column i z) with 
+  replace (gen_column i z) with
       ((fun iz => gen_column (fst iz) (snd iz)) (i,z)); auto.
   apply fold_clause_insert3 with
       (f := (fun iz => gen_column (fst iz) (snd iz))); simpl; auto.
@@ -2249,11 +2246,11 @@ Proof.
   intros i Hi z Hz.
   case (gen_rect_sat i z s); auto; intros tmp _; apply tmp; clear tmp.
   case (H (length (gen_rect i z)) (gen_rect i z)); auto; clear H.
-  apply fold_clause_insert2 with 
+  apply fold_clause_insert2 with
       (f := (fun iz => gen_row (fst iz) (snd iz))); auto.
-  apply fold_clause_insert2 with 
+  apply fold_clause_insert2 with
       (f := (fun iz => gen_column (fst iz) (snd iz))); auto.
-  replace (gen_rect i z) with 
+  replace (gen_rect i z) with
       ((fun iz => gen_rect (fst iz) (snd iz)) (i,z)); auto.
   apply fold_clause_insert3 with
       (f := (fun iz => gen_rect (fst iz) (snd iz))); simpl; auto.
@@ -2264,11 +2261,11 @@ Proof.
   case (all_cell_sat s); auto; intros tmp _; apply tmp; clear tmp.
   intros n c H1.
   case (H n c); auto.
-  apply fold_clause_insert2 with 
+  apply fold_clause_insert2 with
       (f := (fun iz => gen_row (fst iz) (snd iz))); auto.
-  apply fold_clause_insert2 with 
+  apply fold_clause_insert2 with
       (f := (fun iz => gen_column (fst iz) (snd iz))); auto.
-  apply fold_clause_insert2 with 
+  apply fold_clause_insert2 with
       (f := (fun iz => gen_rect (fst iz) (snd iz))); auto.
   intros l (Hl1, Hl2); exists l; auto.
   intros (H1, (H2, (H3, H4))).
@@ -2357,7 +2354,7 @@ Proof.
   pattern (div x1 h) at 1; rewrite Eq2; auto.
 Qed.
 
-Theorem anti_literals_sat: 
+Theorem anti_literals_sat:
   forall p z s, sudoku s -> valid_pos p -> get p s = z -> ~ clause_sat (anti_literals (v p z)) s.
 Proof.
   generalize ref_list_ulist; intros Eq1.
@@ -2371,19 +2368,19 @@ Proof.
   generalize div_lt; intros U5.
   generalize mod_lt; intros U6.
   repeat match goal with
-           H: In ?X (clause_merge ?Y ?Z) |- _  => 
-           case (clause_merge_in X Y Z); intros tmp _; case (tmp H); 
+           H: In ?X (clause_merge ?Y ?Z) |- _  =>
+           case (clause_merge_in X Y Z); intros tmp _; case (tmp H);
              clear tmp H; auto; intros H
          end.
   case H1; clear H1; intros V1 (V2, _).
   case (gen_row_correct l x z); intros tmp _; case tmp; auto; clear tmp.
-  apply (rm_incl _ lit_test) with 
-      (l1 := v (Pos x y) z::nil) 
+  apply (rm_incl _ lit_test) with
+      (l1 := v (Pos x y) z::nil)
       (l2 := gen_row x z); auto.
   intros y1 (H5, H6); subst l.
   simpl in H4; absurd (y = y1).
   intros H7; apply (rm_not_in _ lit_test) with (a := v (Pos x y) z)
-                                               (l1 := v (Pos x y) z::nil) 
+                                               (l1 := v (Pos x y) z::nil)
                                                (l2 := gen_row x z); subst; auto with datatypes.
   exact lit_test_trans.
   intros; apply lit_test_anti_sym.
@@ -2398,13 +2395,13 @@ Proof.
   repeat rewrite <- get_row; try rewrite H2; auto.
   case H1; clear H1; intros V1 (_, (V2, _)).
   case (gen_column_correct l y z); intros tmp _; case tmp; auto; clear tmp.
-  apply (rm_incl _ lit_test) with 
-      (l1 := v (Pos x y) z::nil) 
+  apply (rm_incl _ lit_test) with
+      (l1 := v (Pos x y) z::nil)
       (l2 := gen_column y z); auto.
   intros x1 (H5, H6); subst l.
   simpl in H4; absurd (x = x1).
   intros H7; apply (rm_not_in _ lit_test) with (a := v (Pos x y) z)
-                                               (l1 := v (Pos x y) z::nil) 
+                                               (l1 := v (Pos x y) z::nil)
                                                (l2 := gen_column y z); subst; auto with datatypes.
   exact lit_test_trans.
   intros; apply lit_test_anti_sym.
@@ -2420,12 +2417,12 @@ Proof.
   case (gen_rect_correct l (div x h * h + div y w) z).
   apply rect_aux1; auto.
   intros tmp _; case tmp; auto; clear tmp.
-  apply (rm_incl _ lit_test) with 
+  apply (rm_incl _ lit_test) with
       (l1 := v (Pos x y) z::nil); auto.
   intros x1 (y1, (H5, (H6, H7))); subst l.
   simpl in H4.
   match type of H4 with
-    get (Pos ?X ?Y) _ = _ => 
+    get (Pos ?X ?Y) _ = _ =>
     generalize H3 H4; clear H3 H4;
       replace (Pos X Y) with
           (Pos (h * div x h + x1) (w * div y w + y1));
@@ -2474,10 +2471,10 @@ Proof.
   rewrite (div_is_0 x1); auto with arith.
   rewrite (div_is_0 y1); auto with arith.
   case H; clear H; intros V1 V2; rewrite V1 in H3; rewrite V2 in H3.
-  match goal with 
-    H:(In ?X _) |- _ => 
+  match goal with
+    H:(In ?X _) |- _ =>
     apply (rm_not_in _ lit_test) with (a := X)
-                                      (l1 := X::nil) 
+                                      (l1 := X::nil)
                                       (l2 := gen_rect (div x h * h + div y w) z);
       auto with datatypes
   end.
@@ -2494,14 +2491,14 @@ Proof.
   apply div_lt; rewrite (mult_comm w); auto.
   apply div_lt; rewrite (mult_comm w); auto.
   case (gen_cell_correct l x y); auto; intros tmp; case tmp; auto; clear tmp.
-  apply (rm_incl _ lit_test) with 
-      (l1 := v (Pos x y) z::nil) 
+  apply (rm_incl _ lit_test) with
+      (l1 := v (Pos x y) z::nil)
       (l2 := gen_cell (Pos x y)); auto.
   intros z1 (H5, H6); subst l.
   intros H7.
   simpl in H4.
   apply (rm_not_in _ lit_test) with (a := v (Pos x y) z)
-                                    (l1 := v (Pos x y) z::nil) 
+                                    (l1 := v (Pos x y) z::nil)
                                     (l2 := gen_cell (Pos x y)); subst; auto with datatypes.
   exact lit_test_trans.
   intros; apply lit_test_anti_sym.
@@ -2729,10 +2726,10 @@ Proof.
   apply refine_trans with (1 := H1); auto.
 Qed.
 
-Theorem invariant_gen_init_clauses: 
+Theorem invariant_gen_init_clauses:
   forall s, length s = size * size -> invariant (gen_init_clauses s) s.
 Proof.
-  assert (forall s s1 cs p, valid_pos p -> length s = size * size -> 
+  assert (forall s s1 cs p, valid_pos p -> length s = size * size ->
                        invariant cs (prestrict p s) -> s1 = jump (pos2n p) s ->
                        invariant (gen_init_clauses_aux s1 p cs) s).
   intros s s1; generalize s; elim s1; auto; clear s s1.
@@ -2853,7 +2850,7 @@ Proof.
 Qed.
 
 Theorem try_one_sat:
-  forall s n c cs f, 
+  forall s n c cs f,
     invariant ((n, c) :: cs) s ->
     (forall s cs1,
         invariant cs1 s -> length cs1 <= length cs ->
@@ -2866,7 +2863,7 @@ Theorem try_one_sat:
     | Some s1 => sudoku s1 /\ refine s s1
     end.
 Proof.
-  intros s n c cs f H H1; generalize H; elim c; simpl; 
+  intros s n c cs f H H1; generalize H; elim c; simpl;
     auto; clear c H.
   intros H s1 Hs1 H2.
   absurd (clause_sat nil s1).
@@ -2880,10 +2877,10 @@ Proof.
   apply (V2 n (v p1 z1 :: c1)); auto with datatypes.
   match goal with |- context [f ?X ?Y] =>
                   assert (U1: invariant Y X);
-                    [idtac | 
+                    [idtac |
                      generalize (H1 X Y U1); case (f X Y)
                     ]
-  end. 
+  end.
   apply invariant_clauses_update with (1 := H3).
   intros s1 tmp; case tmp; auto; clear tmp.
   apply length_clauses_update; auto.
@@ -2903,9 +2900,9 @@ Proof.
 Qed.
 
 Theorem find_one_aux_sat:
-  forall n s cs, length cs <= length n -> 
+  forall n s cs, length cs <= length n ->
             invariant cs s ->
-            match find_one_aux n s cs with 
+            match find_one_aux n s cs with
               None => forall s1, refine s s1 -> ~ sudoku s1
             | Some s1 => sudoku s1 /\ refine s s1
             end.
@@ -2938,7 +2935,7 @@ Proof.
                   assert (tmp1: length Z <= length c); [
                     idtac |
                     assert (tmp2: invariant Z Y); [
-                      idtac | 
+                      idtac |
                       generalize (H Y Z tmp1 tmp2); case (find_one_aux X Y Z)
                     ]
                   ]
@@ -2967,13 +2964,13 @@ Proof.
   apply invariant_refine with (1 := H1); auto.
   intros; apply H; auto.
   apply le_trans with (1 := H4); auto with arith.
-Qed. 
+Qed.
 
 Theorem try_all_olist:
-  forall s c cs f, 
+  forall s c cs f,
     (forall s cs1,
-        olist _ (lexico _ test) (f s cs1) 
-    ) -> 
+        olist _ (lexico _ test) (f s cs1)
+    ) ->
     olist _ (lexico _ test) (try_all s c cs f).
 Proof.
   intros s c cs f H; elim c; simpl; auto.
@@ -3003,7 +3000,7 @@ Theorem try_all_sat:
                     (forall s1,
                         refine s s1 -> sudoku s1 -> sat cs s1 ->
                         exists s2, In s2 (f s cs1) /\ refine s2 s1)
-                ) -> 
+                ) ->
                 olist _ (lexico _ test) (try_all s c cs f) /\
                 (forall s1,
                     In s1 (try_all s c cs f) -> refine s s1 /\  sat ((n, c) :: cs) s1) /\
@@ -3158,7 +3155,7 @@ Theorem find_all_aux_sat:
             (forall s1,
                 In s1 (find_all_aux n s cs) -> refine s s1 /\  sat cs s1) /\
             (forall s1,
-                refine s s1 -> sudoku s1 -> sat cs s1 -> 
+                refine s s1 -> sudoku s1 -> sat cs s1 ->
                 (exists s2, refine s2 s1 /\ In s2 (find_all_aux n s cs))).
 Proof.
   intros n; elim n; clear n.
@@ -3208,7 +3205,7 @@ Proof.
   split; auto.
   intros s1 V4 V5 V6; case (V3 s1); auto.
   intros s2 (V7, V8); exists s2; auto.
-Qed. 
+Qed.
 
 (***************************************************)
 (*    Main theorems about sudoku                   *)
@@ -3229,7 +3226,7 @@ Proof.
   rewrite length_rect; auto.
   apply HH1; clear HH0 HH1.
   case H1; clear H1; intros H0 (H1, (H2, H3)).
-  repeat split; try (intros i Hi j Hj; apply permutation_in with (2 := Hj); 
+  repeat split; try (intros i Hi j Hj; apply permutation_in with (2 := Hj);
                      try apply permutation_sym; auto).
   intros (x, y) (HH1, HH2).
   apply permutation_in with (row x s); auto.
@@ -3238,7 +3235,7 @@ Qed.
 
 Theorem find_one_correct:
   forall s, length s = size * size ->
-       match find_one s with 
+       match find_one s with
          None => forall s1, refine s s1 -> ~ sudoku s1
        | Some s1 => refine s s1 /\ sudoku s1
        end.
