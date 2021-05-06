@@ -511,20 +511,11 @@ Theorem empty_jump:
   forall n s, empty s -> empty (jump n s).
 Proof.
   intros n; elim n; simpl; auto.
-  assert (H: forall n, (forall s0 : list nat, empty s0 -> empty (jump n s0)) ->
-               forall s0 : list nat,
-                 empty s0 -> empty match s0 with
-                   | nil => nil
-                    | _ :: l => jump n l
-                   end).
-  {
-    intros n0 Rec s0; case s0; auto.
-    intros a s1 H; apply Rec.
-    intros p; case p; intros x y.
-    generalize (H (Pos x (S y))); unfold get; simpl.
-    rewrite <- plus_n_Sm; simpl; auto.
-  }
-  intros s; case s; auto.
+  intros n0 Rec s0; case s0; auto.
+  intros a s1 H; apply Rec.
+  intros p; case p; intros x y.
+  generalize (H (Pos x (S y))); unfold get; simpl.
+  rewrite <- plus_n_Sm; simpl; auto.
 Qed.
 
 (* A state that start with an element not in the ref_list
