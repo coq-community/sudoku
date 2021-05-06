@@ -221,7 +221,6 @@ Arguments ulist [A].
 Hint Unfold ulist : core.
 Hint Constructors NoDup : core.
 
-Search NoDup.
 Theorem ulist_map:
   forall (A B : Set) (f : A ->  B) l,
     (forall x y, (In x l) -> (In y l) ->  f x = f y ->  x = y) -> ulist l ->  ulist (map f l).
