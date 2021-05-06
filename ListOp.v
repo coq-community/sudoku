@@ -33,19 +33,18 @@ Variable A: Set.
 Variable o: A.
 
 (* Take the first n elements of l *)
-Fixpoint take (n: nat) (l: list A) {struct n}: list A :=
-match l with
-     nil => nil
-| a::l1 => match n with  O => nil  | S n1 => a:: take n1 l1 end
-end. 
+Definition take n (l : list A) := firstn n l.
+Hint Unfold take : core.
 
 (* Taking for an empty list gives an empty list *)
 Theorem take_nil: forall n, take n nil = nil.
-intros n; elim n; simpl; auto.
+Proof.
+  apply firstn_nil.
 Qed.
 
 Theorem take_nth: forall i j r l, 
-   i < j \/ length l <= i -> nth i (take j l) r = nth i l r.
+    i < j \/ length l <= i -> nth i (take j l) r = nth i l r.
+Proof.
 intros i j r l; generalize i j r; elim l; simpl; auto with arith;
   clear i j r l.
 intros i j r; case i; auto; intros; rewrite take_nil; auto.
@@ -73,22 +72,20 @@ intros a l Rec i; case i; simpl; auto with arith.
 Qed.
 
 Theorem length_take1: forall i s, 
-  i <= length s -> length (take i s) = i.
-intros i; elim i; simpl; auto; clear i.
-intros s; case s; simpl; auto.
-intros i Rec s; case s; simpl; clear s; auto with arith.
+    i <= length s -> length (take i s) = i.
+Proof.
+  intros i s H.
+  apply firstn_length_le; auto.
 Qed.
 
 (* Jump the first n elements of l *)
-Fixpoint jump (n: nat) (l: list A) {struct n}: list A :=
-match l with
-   nil => nil
-|  a::l1 => match n with O => l | S n1 => jump n1 l1 end
-end.
+Definition jump (n: nat) (l: list A) := skipn n l.
+Hint Unfold jump : core.
 
 (* A jump on an empty list is an empty list *)
 Theorem jump_nil: forall n, jump n nil = nil.
-intros n; elim n; simpl; auto.
+Proof.
+  apply skipn_nil.
 Qed.
 
 (* the relation between jump and nth *)
@@ -109,19 +106,22 @@ Qed.
 
 (* Jump is additive *)
 Theorem jump_add: forall a b l, jump (a + b) l = jump b (jump a l).
-intros a; elim a; simpl; auto; clear a.
-intros b l; case l; auto.
-intros a Rec b l; case l; simpl; auto; clear l.
-apply sym_equal; apply jump_nil.
+Proof.
+  intros a.
+  induction a; auto; intros b l.
+  - destruct l; simpl.
+    + rewrite jump_nil. reflexivity.
+    + apply IHa.
 Qed.
 
 Theorem length_jump: forall i s, 
-  i <= length s -> length s = length (jump i s) + i.
-intros i; elim i; simpl; auto; clear i.
-intros s; case s; simpl; auto.
-intros i Rec s; case s; simpl; clear s; auto.
-intros H; contradict H; auto with arith.
-intros _ l H; rewrite <- plus_n_Sm; auto with arith.
+    i <= length s -> length s = length (jump i s) + i.
+Proof.
+  intros i.
+  induction i; auto; intros s H; simpl.
+  - destruct s.
+    + inversion H.
+    + simpl. rewrite <- plus_n_Sm; auto with arith.
 Qed.
 
 (* Take from l t elements and then jump j elements n times *) 
