@@ -98,5 +98,6 @@ The following files should be in the libraries of Coq:
 * `ListAux.v`        auxillary facts on lists
 * `OrderedList.v`    ordered list
 
+A note about this formalisation is available [here](https://hal.inria.fr/hal-03277886).
 
 Laurent Théry (Laurent.Thery@inria.fr)
