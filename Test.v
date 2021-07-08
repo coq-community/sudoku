@@ -13,162 +13,270 @@
 (* Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA *)
 (* 02110-1301 USA                                                     *)
 
-
-(********************************************************)
-(*            Test.v:                                   *)
-(*     Some tests                                       *)
-(*                               thery@sophia.inria.fr  *)
-(*                                      (2006)          *)
-(********************************************************)
-
 Require Import Sudoku.
+Require Import Print.
+Require Import String.
+Require Import Parse.
+Require Import Extraction.
+Import List.
 
+Definition one_solution n m l :=
+ match find_one n m l with Some c => print n m c 
+                          | _ => "No Solution" end.
+
+Definition solutions n m l := length (find_all n m l).
+
+Definition cr := "
+".
+
+Definition just_one_solution n m l :=
+ match find_just_one n m l with
+   jOne c => print n m c 
+ | jNone => "No Solution" 
+ | jMore c1 c2 => ("More Than One Solution" ++ cr
+                  ++ (print n m c1) ++ cr ++ (print n m c2))%string  
+ end.
 
 (* Compute all the sudoku 2 x 2 *)
-Eval compute in length (find_all 2 2 (init 2 2)).
+Eval vm_compute in solutions 2 2 (init 2 2).
 
-Definition l1 := 
-  0 :: 0 :: 8 :: 1 :: 6 :: 0 :: 9 :: 0 :: 0 ::
-  0 :: 0 :: 4 :: 0 :: 5 :: 0 :: 2 :: 0 :: 0 ::
-  9 :: 7 :: 0 :: 0 :: 0 :: 8 :: 0 :: 4 :: 5 ::
-  0 :: 0 :: 5 :: 0 :: 0 :: 0 :: 0 :: 0 :: 6 ::
-  8 :: 9 :: 0 :: 0 :: 0 :: 0 :: 0 :: 3 :: 7 :: 
-  1 :: 0 :: 0 :: 0 :: 0 :: 0 :: 4 :: 0 :: 0 ::
-  3 :: 6 :: 0 :: 5 :: 0 :: 0 :: 0 :: 8 :: 4 ::
-  0 :: 0 :: 2 :: 0 :: 7 :: 0 :: 5 :: 0 :: 0 ::
-  0 :: 0 :: 7 :: 0 :: 4 :: 9 :: 3 :: 0 :: 0 :: nil.
-
-Ltac solve n m v := 
-  let x := eval compute in (match find_one n m v
-   with None => nil | (Some c) => c end) in
-  exact x.
-
-(* Find a solution of l1 *)
-Definition t1 : list nat.
-solve 3 3 l1.
-Defined.
-Eval compute in (row 3 3 0 t1).
-Eval compute in (row 3 3 1 t1).
-Eval compute in (row 3 3 2 t1).
-Eval compute in (row 3 3 3 t1).
-Eval compute in (row 3 3 4 t1).
-Eval compute in (row 3 3 5 t1).
-Eval compute in (row 3 3 6 t1).
-Eval compute in (row 3 3 7 t1).
-Eval compute in (row 3 3 8 t1).
-
-(* Compute the number of solutions of l1 *)
-Eval compute in length (find_all 3 3 l1).
+Definition os s := one_solution 3 3 (parse s).
+Definition ns s := solutions 3 3 (parse s).
+Definition jos s := just_one_solution 3 3 (parse s).
 
 
-Definition l2 := 
-0 :: 0 :: 6 :: 9 :: 8 :: 0 :: 2 :: 0 :: 0 ::
-0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 ::
-1 :: 0 :: 7 :: 0 :: 4 :: 3 :: 8 :: 0 :: 9 ::
-0 :: 0 :: 2 :: 0 :: 0 :: 0 :: 0 :: 0 :: 1 ::
-5 :: 0 :: 3 :: 0 :: 0 :: 0 :: 4 :: 0 :: 7 ::
-9 :: 0 :: 0 :: 0 :: 0 :: 0 :: 6 :: 0 :: 0 ::
-2 :: 0 :: 8 :: 1 :: 3 :: 0 :: 9 :: 0 :: 5 ::
-0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 ::
-0 :: 0 :: 4 :: 0 :: 7 :: 8 :: 1 :: 0 :: 0 :: nil.
+Time Eval vm_compute in jos
+ "
+   -------------
+   |  8|16 |9  |
+   |  4| 5 |2  |
+   |97 |  8| 45|
+   -------------
+   |  5|   |  6|
+   |89 |   | 37|
+   |1  |   |4  |
+   -------------
+   |36 |5  | 84|
+   |  2| 7 |5  |
+   |  7| 49|3  |
+   -------------".
+Definition l1 := Eval vm_compute in parse
+ "
+   -------------
+   |  8|16 |9  |
+   |  4| 5 |2  |
+   |97 |  8| 45|
+   -------------
+   |  5|   |  6|
+   |89 |   | 37|
+   |1  |   |4  |
+   -------------
+   |36 |5  | 84|
+   |  2| 7 |5  |
+   |  7| 49|3  |
+   -------------".
 
-(* Find a solution of l2 *)
-Definition t2 : list nat.
-  solve 3 3 l2.
-Defined.
-Eval compute in (row 3 3 0 t2).
-Eval compute in (row 3 3 1 t2).
-Eval compute in (row 3 3 2 t2).
-Eval compute in (row 3 3 3 t2).
-Eval compute in (row 3 3 4 t2).
-Eval compute in (row 3 3 5 t2).
-Eval compute in (row 3 3 6 t2).
-Eval compute in (row 3 3 7 t2).
-Eval compute in (row 3 3 8 t2).
 
-(* Find a solution for 3 * 3 *)
-Definition t3 : list nat.
-solve 3 3 (init 3 3).
-Defined.
-Eval compute in (row 3 3 0 t3).
-Eval compute in (row 3 3 1 t3).
-Eval compute in (row 3 3 2 t3).
-Eval compute in (row 3 3 3 t3).
-Eval compute in (row 3 3 4 t3).
-Eval compute in (row 3 3 5 t3).
-Eval compute in (row 3 3 6 t3).
-Eval compute in (row 3 3 7 t3).
-Eval compute in (row 3 3 8 t3).
+
+Time Eval vm_compute in jos
+ "
+     -------------
+     |  6|98 |2  |
+     |   |   |   |
+     |1 7| 43|8 9|
+     -------------
+     |  2|   |  1|
+     |5 3|   |4 7|
+     |9  |   |6  |
+     -------------
+     |2 8|13 |9 5|
+     |   |   |   |
+     |  4| 78|1  |
+     -------------".
+
+Let ppf n m := one_solution n m (init n m).
 
 (* Find a solution for 1 x 1 *)
-Eval compute in find_one 1 1 (init 1 1).
+Time Eval compute in (ppf 1 1).
 
 (* Find a solution for 2 x 1 *)
-Eval compute in find_one 2 1 (init 2 1).
+Time Eval vm_compute in ppf 2 1.
 
 (* Find a solution for 2 x 2 *)
-Eval compute in find_one 2 2 (init 2 2).
+Time Eval vm_compute in ppf 2 2.
 
 (* Find a solution for 3 x 2 *)
-Eval compute in find_one 3 2 (init 3 2).
+Time Eval vm_compute in ppf 3 2.
 
 (* Find a solution for 3 x 3 *)
-Eval compute in find_one 3 3 (init 3 3).
+Time Eval vm_compute in ppf 3 3.
 
 
-Definition l4 := 
-  0 :: 0 :: 0 :: 9 :: 0 :: 0 :: 0 :: 0 :: 1 ::
-  0 :: 0 :: 0 :: 0 :: 4 :: 0 :: 0 :: 2 :: 0 ::
-  0 :: 8 :: 0 :: 0 :: 7 :: 0 :: 0 :: 0 :: 6 ::
-  2 :: 0 :: 1 :: 4 :: 0 :: 0 :: 0 :: 0 :: 0 ::
-  0 :: 0 :: 0 :: 6 :: 0 :: 0 :: 0 :: 0 :: 0 :: 
-  3 :: 0 :: 0 :: 0 :: 0 :: 1 :: 6 :: 0 :: 8 ::
-  5 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 8 :: 0 ::
-  4 :: 9 :: 0 :: 0 :: 5 :: 0 :: 0 :: 0 :: 0 ::
-  0 :: 0 :: 0 :: 0 :: 0 :: 2 :: 0 :: 0 :: 0 :: nil.
+(* A problem with more than one solution *)
+Time Eval vm_compute in jos
+"     -------------
+     |   |9  |  1|
+     |   | 4 | 2 |
+     | 8 | 7 |  6|
+     -------------
+     |2 1|4  |   |
+     |   |6  |   |
+     |3  |  1|6 8|
+     -------------
+     |5  |   | 8 |
+     |49 | 5 |   |
+     |   |  2|   |
+     -------------".
 
-(* Find a solution for l4 *)
-Definition t4 : list nat.
-Time solve 3 3 l4.
-Defined.
-Eval compute in (row 3 3 0 t4).
-Eval compute in (row 3 3 1 t4).
-Eval compute in (row 3 3 2 t4).
-Eval compute in (row 3 3 3 t4).
-Eval compute in (row 3 3 4 t4).
-Eval compute in (row 3 3 5 t4).
-Eval compute in (row 3 3 6 t4).
-Eval compute in (row 3 3 7 t4).
-Eval compute in (row 3 3 8 t4).
+Extraction "Sudoku.ml" find_just_one.
 
-Time Eval compute in length (find_all 3 3 l4).
+Time Eval vm_compute in jos
+"
+    -------------
+    |5  |   |   |
+    | 4 |81 |   |
+    | 93|   |  2|
+    -------------
+    |   |   |2 3|
+    |9  |7  |   |
+    |23 |  6| 7 |
+    -------------
+    |365|1  |   |    |   | 5 |8  |
+    |  1| 7 |6  |
+    -------------".
+
+Time Eval vm_compute in jos
+
+"
+     -------------
+     |   |   | 6 |
+     |43 | 5 |  2|
+     |  7|832|4  |
+     -------------
+     |2  | 43|   |
+     | 81|   |34 |
+     |   |68 |  1|
+     -------------
+     |  3|719|6  |
+     |7  | 6 | 14|
+     | 6 |   |   |
+     -------------".
+
+(* L'escargot *)
+
+Time Eval vm_compute in jos
+" 
+     -------------
+    |1  |  7| 9 |
+    | 3 | 2 |  8|
+    |  9|6  |5  |
+    -------------
+    |  5|3  |9  |
+    | 1 | 8 |  2|
+    |6  |  4|   |
+    -------------
+    |3  |   | 1 |
+    | 4 |   |  7|
+    |  7|   |3  |
+    -------------".
+
+(* Le Monde 4/3/07 *)
+
+Time Eval vm_compute in jos
+
+" 
+    -------------
+    |2  | 68|   |
+    | 69|   |   |
+    |  7|1  |93 |
+    -------------
+    |   |   |8  |
+    |9  |8  |5  |
+    |35 |   | 4 |
+    -------------
+    | 12|7  |   |
+    |   | 2 |6 5|
+    |  5|   |4  |   -------------".
+
+(* Le monde 28/10/07 *)
+
+Time Eval vm_compute in jos
+" 
+    -------------
+    |9  |  8|   |
+    | 52|   |  1|
+    |  4| 6 | 3 |
+    -------------
+    |   |   |   |
+    |2  |1  |6  |
+    |69 | 32| 1 |
+    -------------
+    |  7|5  |   |
+    |   |   |8  |
+    |  6| 93|5  |
+    -------------".
+
+(* Repubblica 6/05/2008 *)
 
 
-Definition l5 := 
-  5 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 ::
-  0 :: 4 :: 0 :: 8 :: 1 :: 0 :: 0 :: 0 :: 0 ::
-  0 :: 9 :: 3 :: 0 :: 0 :: 0 :: 0 :: 0 :: 2 ::
-  0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 2 :: 0 :: 3 ::
-  9 :: 0 :: 0 :: 7 :: 0 :: 0 :: 0 :: 0 :: 0 :: 
-  2 :: 3 :: 0 :: 0 :: 0 :: 6 :: 0 :: 7 :: 0 ::
-  3 :: 6 :: 5 :: 1 :: 0 :: 0 :: 0 :: 0 :: 0 ::
-  0 :: 0 :: 0 :: 0 :: 5 :: 0 :: 8 :: 0 :: 0 ::
-  0 :: 0 :: 1 :: 0 :: 7 :: 0 :: 6 :: 0 :: 0 :: nil.
-
-(* Find a solution for l5 *)
-Definition t5 : list nat.
-Time solve 3 3 l5.
-Defined.
-Eval compute in (row 3 3 0 t5).
-Eval compute in (row 3 3 1 t5).
-Eval compute in (row 3 3 2 t5).
-Eval compute in (row 3 3 3 t5).
-Eval compute in (row 3 3 4 t5).
-Eval compute in (row 3 3 5 t5).
-Eval compute in (row 3 3 6 t5).
-Eval compute in (row 3 3 7 t5).
-Eval compute in (row 3 3 8 t5).
-
-Time Eval compute in length (find_all 3 3 l5).
+Time Eval vm_compute in jos
+" 
+    -------------
+    |   |7  |5  |
+    |   | 63|   |
+    | 8 |  2|  1|
+    -------------
+    |  6|  4|2  |
+    |24 |856| 79|
+    |  3|2  |1  |
+    -------------
+    |7  |3  | 4 |
+    |   |91 |   |
+    |  2|  8|   |
+    -------------".
 
 
+(* TeleStar 12/05/2008 *)
+
+
+Time Eval vm_compute in jos
+" 
+    -------------
+    |  2|  3| 9 |
+    |9  |52 |   |
+    |  3| 8 |4  |
+    -------------
+    |   |   |18 |
+    |7  |   |  3|
+    | 54|  6|   |
+    -------------
+    |  1| 6 |2 8|
+    |   | 42| 1 |
+    -------------
+    |   |   |18 |
+    |7  |   |  3|
+    | 54|  6|   |
+    -------------
+    |  1| 6 |2 8|
+    |   | 42| 1 |
+    | 2 |3  | 7 |
+    -------------".
+
+(* Le monde 7/10/2008 *)
+
+
+Time Eval vm_compute in jos
+" 
+    -------------
+    |5  | 37|1  |
+    |   |   |   |
+    | 16|2  |4 8|
+    -------------
+    |   |   |   |
+    |   |5  |6  |
+    |49 |  6| 35|
+    -------------
+    | 87|   |   |
+    | 5 |38 |  6|
+    |  3| 72|8  |
+    -------------".

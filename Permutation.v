@@ -32,7 +32,7 @@ Variable A : Set.
 
 Definition permutation (l1 l2 : list A) := @Permutation A l1 l2.
 
-Hint Constructors Permutation.
+Hint Constructors Permutation : core.
 
 Definition permutation_trans := perm_trans.
 
@@ -47,7 +47,7 @@ Proof.
   intros a l1 H.
   apply perm_skip with (1 := H).
 Qed.
-Hint Resolve permutation_refl.
+Hint Resolve permutation_refl : core.
 
 (**************************************
  Symmetry
@@ -111,7 +111,7 @@ Proof.
   intros l1 l2 l3 l4 H H0.
   apply Permutation_app; auto.
 Qed.
-Hint Resolve permutation_app_comp.
+Hint Resolve permutation_app_comp : core.
 
 (**************************************
  Swap two sublists
@@ -351,10 +351,10 @@ End permutation.
    Hints
  **************************************)
 
-Hint Constructors Permutation.
-Hint Resolve permutation_refl.
-Hint Resolve permutation_app_comp.
-Hint Resolve permutation_app_swap.
+Global Hint Constructors Permutation : core.
+Global Hint Resolve permutation_refl : core.
+Global Hint Resolve permutation_app_comp : core.
+Global Hint Resolve permutation_app_swap : core.
 
 (**************************************
    Implicits
@@ -377,7 +377,7 @@ Proof.
   intros A B f l1 l2 H.
   apply Permutation_map; auto.
 Qed.
-Hint Resolve permutation_map.
+Global Hint Resolve permutation_map : core.
 
 (**************************************
   Permutation  of a map can be inverted

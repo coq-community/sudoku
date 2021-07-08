@@ -282,3 +282,23 @@ case H1; try rewrite plus_n_Sm; auto with arith.
 case H; intros H3 H4; case le_lt_or_eq with (1 := H3); auto with arith.
 rewrite plus_n_Sm in H4; auto with arith.
 Qed.
+
+Fixpoint list_nat_eq (l1 l2: list nat) {struct l1}: bool :=
+  match l1, l2 with nil, nil => true 
+  | n1::l3, n2::l4 => 
+      if Nat.eqb n1 n2 then list_nat_eq l3 l4 else false
+  | _, _ => false
+  end.
+
+Lemma list_nat_eq_correct l1 l2 :
+  if list_nat_eq l1 l2 then l1 = l2 else l1 <> l2.
+Proof.
+revert l2.
+induction l1 as [| n1 l1 Hrec]; destruct l2 as [| n2 l2]; simpl; 
+  try (intros; discriminate); auto.
+destruct (Nat.eqb_spec n1 n2) as [n1En2|H1].
+  generalize (Hrec l2); case list_nat_eq; intros H2.
+    apply f_equal2 with (f := @cons _); auto.
+  intros HH; case H2; injection HH; auto.
+intros HH; case H1; injection HH; auto.
+Qed.

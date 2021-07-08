@@ -218,8 +218,8 @@ Qed.
 End UniqueList.
 
 Arguments ulist [A].
-Hint Unfold ulist : core.
-Hint Constructors NoDup : core.
+Global Hint Unfold ulist : core.
+Global Hint Constructors NoDup : core.
 
 Theorem ulist_map:
   forall (A B : Set) (f : A ->  B) l,
