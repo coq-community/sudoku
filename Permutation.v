@@ -342,7 +342,33 @@ Defined.
 Definition permutation_dec1 :
   (forall a b : A, {a = b} + {a <> b}) ->
   forall l1 l2 : list A, {permutation l1 l2} + {~ permutation l1 l2}.
-  exact permutation_dec.
+intros dec; fix perm 1; intros l1; case l1.
+intros l2; case l2.
+left; auto.
+intros a l3; right; intros H; generalize (permutation_length _ _ H); 
+ discriminate.
+intros a l3 l2.
+case (In_dec1 dec a l2); intros H1.
+case H1.
+intros x; case x; simpl.
+intros l4 l5 Hl4l5.
+case (perm l3 (l4 ++ l5)); intros H2.
+left; subst.
+apply permutation_trans with ((a::l5) ++ l4); auto.
+simpl; apply perm_skip; auto.
+apply permutation_trans with (1 := H2); auto.
+apply permutation_app_swap.
+apply permutation_app_swap.
+right; contradict H2.
+apply permutation_inv with a.
+apply permutation_trans with (1 := H2).
+rewrite Hl4l5.
+apply permutation_trans with ((a::l5) ++ l4); auto.
+apply permutation_app_swap.
+simpl; apply perm_skip; auto.
+apply permutation_app_swap.
+right; contradict H1.
+apply permutation_in with (1 := H1); auto with datatypes.
 Defined.
 
 End permutation.
