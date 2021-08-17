@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/thery/sudoku.svg?branch=master)](https://travis-ci.org/thery/sudoku)
 
 ## Sudoku
 
