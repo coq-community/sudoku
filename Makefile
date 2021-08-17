@@ -1,16 +1,14 @@
-all: Makefile.coq
-	+make -f Makefile.coq all
-
-clean: Makefile.coq
-	+make -f Makefile.coq clean
-	rm -f Makefile.coq
-
-Makefile.coq: Make
-	$(COQBIN)coq_makefile -f Make -o Makefile.coq
-
-Make: ;
+ifeq "$(COQBIN)" ""
+  COQBIN=$(dir $(shell which coqtop))/
+endif
 
 %: Makefile.coq
-	+make -f Makefile.coq $@
 
-.PHONY: all clean
+Makefile.coq: _CoqProject
+	$(COQBIN)coq_makefile -f _CoqProject -o Makefile.coq
+
+tests: all
+	@$(MAKE) -C tests -s clean
+	@$(MAKE) -C tests -s all
+
+-include Makefile.coq

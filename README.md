@@ -100,4 +100,9 @@ The following files should be in the libraries of Coq:
 
 A note about this formalisation is available [here](https://hal.inria.fr/hal-03277886).
 
+There is an extraction to javascript using
+[js_of_ocaml](https://github.com/ocsigen/js_of_ocaml").
+The files to run it are generated in the [Html directory](./Html/).
+
+
 Laurent Théry (Laurent.Thery@inria.fr)

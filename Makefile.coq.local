@@ -1,0 +1,41 @@
+post-all::
+	$(MAKE) -f $(SELF) Sudoku.mli
+clean::
+	rm -f Sudoku.mli
+Sudoku.mli : Sudoku.vo
+	echo "mli"
+
+post-all::
+		$(MAKE) -f $(SELF) Sudoku.ml
+clean::
+		rm -f Sudoku.ml
+Sudoku.ml : Sudoku.vo
+		echo "ml"
+
+post-all::
+	$(MAKE) -f $(SELF) Sudoku.cmi
+clean::
+	rm -f Sudoku.cmi
+Sudoku.cmi : Sudoku.mli
+	ocamlfind ocamlc Sudoku.mli
+
+post-all::
+	$(MAKE) -f $(SELF) jSudoku.cmi
+clean::
+	rm -f jSudoku.cmi
+jSudoku.cmi :  jSudoku.ml
+	ocamlfind ocamlc jSudoku.mli
+
+post-all::
+	$(MAKE) -f $(SELF) Sudoku.bytes
+clean::
+	rm -f Sudoku.bytes
+Sudoku.bytes :  jSudoku.cmi jSudoku.ml Sudoku.ml Sudoku.cmi
+	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml-ppx -linkpkg -o Sudoku.bytes Sudoku.ml jSudoku.ml
+
+post-all::
+	$(MAKE) -f $(SELF) Sudoku.js
+clean::
+	rm -f Sudoku.js
+Sudoku.js :  Sudoku.bytes
+	js_of_ocaml Sudoku.bytes

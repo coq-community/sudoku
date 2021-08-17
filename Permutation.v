@@ -32,7 +32,7 @@ Variable A : Set.
 
 Definition permutation (l1 l2 : list A) := @Permutation A l1 l2.
 
-Hint Constructors Permutation.
+Hint Constructors Permutation : core.
 
 Definition permutation_trans := perm_trans.
 
@@ -47,7 +47,7 @@ Proof.
   intros a l1 H.
   apply perm_skip with (1 := H).
 Qed.
-Hint Resolve permutation_refl.
+Hint Resolve permutation_refl : core.
 
 (**************************************
  Symmetry
@@ -111,7 +111,7 @@ Proof.
   intros l1 l2 l3 l4 H H0.
   apply Permutation_app; auto.
 Qed.
-Hint Resolve permutation_app_comp.
+Hint Resolve permutation_app_comp : core.
 
 (**************************************
  Swap two sublists
@@ -342,7 +342,33 @@ Defined.
 Definition permutation_dec1 :
   (forall a b : A, {a = b} + {a <> b}) ->
   forall l1 l2 : list A, {permutation l1 l2} + {~ permutation l1 l2}.
-  exact permutation_dec.
+intros dec; fix perm 1; intros l1; case l1.
+intros l2; case l2.
+left; auto.
+intros a l3; right; intros H; generalize (permutation_length _ _ H); 
+ discriminate.
+intros a l3 l2.
+case (In_dec1 dec a l2); intros H1.
+case H1.
+intros x; case x; simpl.
+intros l4 l5 Hl4l5.
+case (perm l3 (l4 ++ l5)); intros H2.
+left; subst.
+apply permutation_trans with ((a::l5) ++ l4); auto.
+simpl; apply perm_skip; auto.
+apply permutation_trans with (1 := H2); auto.
+apply permutation_app_swap.
+apply permutation_app_swap.
+right; contradict H2.
+apply permutation_inv with a.
+apply permutation_trans with (1 := H2).
+rewrite Hl4l5.
+apply permutation_trans with ((a::l5) ++ l4); auto.
+apply permutation_app_swap.
+simpl; apply perm_skip; auto.
+apply permutation_app_swap.
+right; contradict H1.
+apply permutation_in with (1 := H1); auto with datatypes.
 Defined.
 
 End permutation.
@@ -351,10 +377,10 @@ End permutation.
    Hints
  **************************************)
 
-Hint Constructors Permutation.
-Hint Resolve permutation_refl.
-Hint Resolve permutation_app_comp.
-Hint Resolve permutation_app_swap.
+Global Hint Constructors Permutation : core.
+Global Hint Resolve permutation_refl : core.
+Global Hint Resolve permutation_app_comp : core.
+Global Hint Resolve permutation_app_swap : core.
 
 (**************************************
    Implicits
@@ -377,7 +403,7 @@ Proof.
   intros A B f l1 l2 H.
   apply Permutation_map; auto.
 Qed.
-Hint Resolve permutation_map.
+Global Hint Resolve permutation_map : core.
 
 (**************************************
   Permutation  of a map can be inverted

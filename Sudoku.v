@@ -33,6 +33,20 @@ Require Import Psatz.
 
 Section check.
 
+(***********************************************************************)
+(* About the encoding:                                                 *)
+(*  h represents the number of rows of a little rectangle              *)
+(*  w represents the number of colums of a little rectangle            *)
+(*  size represents the number of cells of a litte rectangle           *)
+(* the initial grid is then composed of (size * size) cells            *)
+(* For example for the usual sudoku                                    *)
+(*   h = 3, w = 3, size = 9, the grid = 81 cells                       *)
+(* The grid is represented by a list of (size * size) cells            *)
+(* at the position (x,y) of the list (i.e at the index (x * size + y)) *)
+(* if the cell is empty it contains 0, otherwise its contains one of   *)
+(* the numbers 1,2, ..., size                                          *)
+(***********************************************************************)
+
 (* Height h and width w *)
 Variable h w: nat.
 
@@ -818,13 +832,13 @@ Defined.
 (***************************************************)
 
 (* A literal is composed of two coordonates and a value *)
-Inductive lit: Set := v : pos -> nat -> lit.
+Inductive lit: Set := L (p: pos) (v: nat).
 
 (* A comparison function for literals *)
 Definition lit_test (v1 v2: lit) :=
   match v1 with
-    v p1 v1 => match v2 with
-      v p2 v2 => match pos_test p1 p2 with
+    L p1 v1 => match v2 with
+      L p2 v2 => match pos_test p1 p2 with
         eq =>  test v1 v2
       | r  => r
       end
@@ -935,14 +949,14 @@ Fixpoint clauses_update (l: lit) (c: list lit) (cs: clauses) {struct cs}: clause
    the row i
  *)
 Definition gen_row i z :=
-  fold_right (fun y l => lit_insert (v (Pos i y) z) l) nil indexes.
+  fold_right (fun y l => lit_insert (L (Pos i y) z) l) nil indexes.
 
 
 (* Generate the clause that indicates that the value z appears in
    the column i
  *)
 Definition gen_column i z :=
-  fold_right (fun x l => lit_insert (v (Pos x i) z) l) nil indexes.
+  fold_right (fun x l => lit_insert (L (Pos x i) z) l) nil indexes.
 
 (* Generate the clause that indicates that the value z appears in
    the rectangle i
@@ -950,13 +964,13 @@ Definition gen_column i z :=
 Definition gen_rect i z :=
   let x := h * div i h in
   let y := w * mod i h in
-  fold_right (fun p l => lit_insert (v (shift p x y) z) l) nil cross.
+  fold_right (fun p l => lit_insert (L (shift p x y) z) l) nil cross.
 
 (* Generate the clause that indicates that the cell (x, y) contains
    a value in the ref_list
  *)
 Definition gen_cell p :=
-  fold_right (fun z l => lit_insert (v p z) l) nil ref_list.
+  fold_right (fun z l => lit_insert (L p z) l) nil ref_list.
 
 (* Generate the list of clauses that all cells contains a value
   in the reference list
@@ -987,7 +1001,7 @@ Definition init_c :=
 Definition anti_literals l :=
   let c := l :: nil in
   match l with
-    v ((Pos x y) as k) z =>
+    L ((Pos x y) as k) z =>
     clause_merge (lit_rm c (gen_row x z))
                  (clause_merge (lit_rm c (gen_column y z))
                                (clause_merge (lit_rm c (gen_rect ((div x h) * h + (div y w))  z))
@@ -1004,7 +1018,7 @@ Fixpoint gen_init_clauses_aux (s: list nat) (p: pos) (c: clauses) {struct s} :
     nil => c
   | a :: s1 =>
     let p1 := next p in
-    let ll := v p a in
+    let ll := L p a in
     if (In_dec eq_nat a ref_list) then
       let c1 := clauses_update ll (anti_literals ll) c in
       gen_init_clauses_aux s1 p1 c1
@@ -1029,7 +1043,7 @@ Fixpoint try_one (s: list nat) (c: clause)
   option (list nat) :=
   match c with
     nil => None
-  | (v p z) as k:: c1 =>
+  | (L p z) as k:: c1 =>
     let s1 := update p z s in
     let cs1 := clauses_update k (anti_literals k) cs in
     match f s1 cs1 with
@@ -1077,7 +1091,7 @@ Fixpoint try_all (s: list nat) (c: clause)
   list (list nat) :=
   match c with
     nil => nil
-  | (v p z) as k:: l1 =>
+  | (L p z) as k:: l1 =>
     let s1 := update p z s in
     let cs1 := clauses_update k (anti_literals k) cs in
     merges (f s1 cs1) (try_all s l1 cs f)
@@ -1103,6 +1117,54 @@ Fixpoint find_all_aux (n: clauses) (s: list nat) (cs: clauses) {struct n}:
 Definition find_all s :=
   let cs := gen_init_clauses s in
   find_all_aux cs s cs.
+
+(***************************************************)
+(*  Algorithm that finds one solution and insures  *)
+(*  that it is unique                              *)
+(***************************************************)
+
+Inductive jRes: Set := jNone | jOne (_: list nat) | jMore (_ _: list nat).
+
+Fixpoint try_just_one (s: list nat) (c: clause) 
+                 (cs: clauses) 
+                 (f: list nat -> clauses -> jRes) : jRes :=
+   match c with
+      nil => jNone
+    | (L p v) as k:: c1 =>
+         let s1 := update p v s in
+         let cs1 := clauses_update k (anti_literals k) cs in   
+         match f s1 cs1 with
+           jNone => try_just_one s c1 cs f
+         | jOne s2 => match try_just_one s c1 cs f with
+                    jNone => jOne s2
+                   | jOne s3 => 
+                      if list_nat_eq s2 s3 then jOne s2 else jMore s2 s3
+                   | jMore s1 s2 => jMore s1 s2
+                   end
+         | jMore s1 s2 => jMore s1 s2
+         end
+   end.
+
+(* An auxillary function to find a solution by iteratively trying
+   to satisfy the first clause of the list of clauses c
+ *)
+Fixpoint find_just_one_aux (n: clauses) (s: list nat) 
+                      (cs: clauses) : jRes :=
+match cs with
+   nil => jOne s
+| (_, nil) :: _  => jNone
+| (_, p) :: cs1 => 
+    match n with 
+      nil => jNone
+    | _ :: n1 =>
+       try_just_one s p cs1 (find_just_one_aux n1)
+    end
+end.
+
+(* Find one solution that refines the state s *)
+Definition find_just_one s :=
+  let cs := gen_init_clauses s in
+      find_just_one_aux cs s cs.
 
 (***************************************************)
 (*            length                               *)
@@ -1187,13 +1249,13 @@ Qed.
 
 Theorem gen_row_correct:
   forall l i z,
-    In l (gen_row i z) <-> exists j, l = v (Pos i j) z /\ j < size.
+    In l (gen_row i z) <-> exists j, l = L (Pos i j) z /\ j < size.
 Proof.
   unfold gen_row, indexes.
   assert (Eq1: forall a l i z,
-             In l (fold_right (fun y l => lit_insert (v (Pos i y) z) l)
+             In l (fold_right (fun y l => lit_insert (L (Pos i y) z) l)
                               nil (progression size a)) <->
-             (exists j: nat, l = v (Pos i j) z /\ a <= j < a + size));
+             (exists j: nat, l = L (Pos i j) z /\ a <= j < a + size));
     auto.
   elim size; simpl; auto.
   intros a l i z; split.
@@ -1228,13 +1290,13 @@ Qed.
 
 Theorem gen_column_correct:
   forall l j z,
-    In l (gen_column j z) <-> exists i, l = v (Pos i j) z /\ i < size.
+    In l (gen_column j z) <-> exists i, l = L (Pos i j) z /\ i < size.
 Proof.
   unfold gen_column, indexes.
   assert (Eq1: forall a l j z,
-             In l (fold_right (fun x l => lit_insert (v (Pos x j) z) l)
+             In l (fold_right (fun x l => lit_insert (L (Pos x j) z) l)
                               nil (progression size a)) <->
-             (exists i: nat, l = v (Pos i j) z /\ a <= i < a + size));
+             (exists i: nat, l = L (Pos i j) z /\ a <= i < a + size));
     auto.
   elim size; simpl; auto.
   intros a l j z; split.
@@ -1300,12 +1362,12 @@ Theorem gen_rect_correct:
   forall l i z,
     i < size ->
     (In l (gen_rect i z) <->
-     exists i1, exists j1, l = v (Pos (h * div i h + i1) (w * mod i h + j1)) z
+     exists i1, exists j1, l = L (Pos (h * div i h + i1) (w * mod i h + j1)) z
                  /\ i1 < h /\ j1 < w).
 Proof.
   intros ((x, y), z1) i z H; unfold gen_rect; split; intros H1.
   generalize (fold_insert2 _
-                           (fun p => (v (shift p (h * div i h) (w * mod i h)) z))  _ _ H1).
+                           (fun p => (L (shift p (h * div i h) (w * mod i h)) z))  _ _ H1).
   clear H1; intros (b, (Hb, Hb1)).
   match type of Hb with In ?X cross =>
                         case (cross_correct X); intros tmp _; case (tmp Hb); clear tmp
@@ -1314,10 +1376,10 @@ Proof.
     intros; subst; auto with arith.
   case H1; intros i1 (j1, (H2, (H3, H4))); clear H1.
   rewrite H2.
-  match goal with |- In (v (Pos (?X + ?Y) (?Z + ?T)) ?U) ?V =>
-                  change (In (v (shift (Pos Y T) X Z) U) V)
+  match goal with |- In (L (Pos (?X + ?Y) (?Z + ?T)) ?U) ?V =>
+                  change (In (L (shift (Pos Y T) X Z) U) V)
   end.
-  apply fold_insert1 with (f := (fun p => (v (shift p (h * div i h) (w * mod i h)) z))); auto.
+  apply fold_insert1 with (f := (fun p => (L (shift p (h * div i h) (w * mod i h)) z))); auto.
   case (cross_correct (Pos i1 j1)); intros _ tmp; apply tmp; clear tmp.
   exists i1; exists j1; auto.
 Qed.
@@ -1325,14 +1387,14 @@ Qed.
 Theorem gen_cell_correct:
   forall l x y,
     (In l (gen_cell (Pos x y)) <->
-     exists z, l = v (Pos x y) z /\ (In z ref_list)).
+     exists z, l = L (Pos x y) z /\ (In z ref_list)).
 Proof.
   intros l x y; unfold gen_cell; split.
   intros H2.
-  case (fold_insert2 _ (fun p => (v (Pos x y) p))  _ _ H2);
+  case (fold_insert2 _ (fun p => (L (Pos x y) p))  _ _ H2);
     clear H2; intros b (Hb, Hb1); exists b; auto.
   intros (b, (Hb1, Hb2)); rewrite Hb1; clear Hb1.
-  apply fold_insert1 with (f := (fun p => v (Pos x y) p)); auto.
+  apply fold_insert1 with (f := (fun p => L (Pos x y) p)); auto.
 Qed.
 
 (***************************************************)
@@ -1467,7 +1529,7 @@ Theorem anti_literals_ordered: forall p, ordered_clause (anti_literals p).
 Proof.
   intros ((x, y), z); simpl.
   repeat apply clause_merge_ordered; auto;
-    generalize (lit_rm_ordered (v (Pos x y) z :: nil)); simpl;
+    generalize (lit_rm_ordered (L (Pos x y) z :: nil)); simpl;
       intros tmp; apply tmp; clear tmp; auto;
         try (red; apply olist_one).
   apply gen_row_ordered.
@@ -1522,7 +1584,7 @@ Proof.
 Qed.
 
 Theorem anti_literals_in:
-  forall p z1 z2, In z2 ref_list -> z2 <> z1 -> In (v p z2) (anti_literals (v p z1)).
+  forall p z1 z2, In z2 ref_list -> z2 <> z1 -> In (L p z2) (anti_literals (L p z1)).
 Proof.
   intros (x1, y1) z1 z2 H H1.
   unfold anti_literals.
@@ -1538,7 +1600,7 @@ Proof.
   split.
   simpl; intros [H2 | H2]; case H1; try injection H2; auto.
   case H2.
-  case (gen_cell_correct (v (Pos x1 y1) z2) x1 y1); auto;
+  case (gen_cell_correct (L (Pos x1 y1) z2) x1 y1); auto;
     intros _ tmp; apply tmp; clear tmp.
   exists z2; auto.
 Qed.
@@ -1549,7 +1611,7 @@ Qed.
 
 (* A valid lit *)
 Definition valid_lit l s :=
-  match l with v p z => ~ In (get p s) ref_list /\ valid_pos p /\ In z ref_list end.
+  match l with L p z => ~ In (get p s) ref_list /\ valid_pos p /\ In z ref_list end.
 
 (* A valid clause *)
 Definition valid_clause c s:= forall l, In l c -> valid_lit l s.
@@ -1580,7 +1642,7 @@ Qed.
 (* Updating a valid clause gives a valid clause *)
 Theorem valid_update:
   forall p z c s, valid_clause c s -> valid_pos p ->
-             (forall z, In z ref_list -> ~ In (v p z) c) -> valid_clause c (update p z s).
+             (forall z, In z ref_list -> ~ In (L p z) c) -> valid_clause c (update p z s).
 Proof.
   intros p z c s H H1 H2 l Hl.
   generalize (H l Hl) Hl; clear H Hl.
@@ -1598,7 +1660,7 @@ Proof.
   intros p1 z1 H5.
   unfold lit_insert in H5; case insert_inv with (1 := H5); auto.
   intros tmp; injection tmp; intros; subst; clear tmp; auto.
-  intros H6; apply (H4 (v p1 z1) H6).
+  intros H6; apply (H4 (L p1 z1) H6).
 Qed.
 
 Theorem clause_merge_valid:
@@ -1640,17 +1702,17 @@ Proof.
 Qed.
 
 Theorem clauses_update_valid:
-  forall p z c cs s, valid_lit (v p z) s -> ordered cs ->
+  forall p z c cs s, valid_lit (L p z) s -> ordered cs ->
                 ordered_clause c ->
-                (forall z1, In z1 ref_list -> z1 <> z -> In (v p z1) c) ->
-                valid cs s -> valid (clauses_update (v p z) c cs) (update p z s).
+                (forall z1, In z1 ref_list -> z1 <> z -> In (L p z1) c) ->
+                valid cs s -> valid (clauses_update (L p z) c cs) (update p z s).
 Proof.
   intros p z c cs s (H1, (H2, H3)) H4 H5 H6; generalize H4;
     elim cs; simpl; auto; clear cs H4.
   intros _ _ n1 c1 H7; case H7.
   intros (n1, c1) cs Rec H4 H7.
-  generalize (lit_is_in_correct (v p z) c1);
-    case (lit_is_in (v p z) c1); intros H.
+  generalize (lit_is_in_correct (L p z) c1);
+    case (lit_is_in (L p z) c1); intros H.
   apply Rec; auto.
   intros n2 c2 HH; apply (H4 n2 c2); auto with datatypes.
   intros n2 c2 H8; apply (H7 n2 c2); auto with datatypes.
@@ -1663,9 +1725,9 @@ Proof.
   apply lit_rm_valid; auto.
   intros z1 HH; case (eq_nat z z1); intros H8; subst; auto.
   intros H8; case H; auto.
-  case (lit_rm_in (v p z1) c c1); auto.
+  case (lit_rm_in (L p z1) c c1); auto.
   intros tmp _; case tmp; auto.
-  intros H9; case (lit_rm_in (v p z1) c c1); auto.
+  intros H9; case (lit_rm_in (L p z1) c c1); auto.
   intros tmp _; case tmp; auto.
   apply Rec; auto.
   intros n2 c2 H8; apply (H4 n2 c2); auto with datatypes.
@@ -1794,7 +1856,7 @@ Proof.
   rewrite next_pos in H6; auto with arith.
   simpl.
   intros n c Hn (p1, z1) Hl; simpl.
-  case (H4 n c Hn (v p1 z1)); auto.
+  case (H4 n c Hn (L p1 z1)); auto.
   intros U1 (U2, U3); split; auto.
   case (le_or_lt (pos2n p) (pos2n p1)); intros V1.
   unfold get; rewrite (le_plus_minus (pos2n p) (pos2n p1));
@@ -1831,7 +1893,7 @@ Proof.
   apply valid_pos_next; auto.
   rewrite <- H0; auto.
   intros n c Hn (p1, z1) Hl; simpl.
-  case (H4 n c Hn (v p1 z1)); auto.
+  case (H4 n c Hn (L p1 z1)); auto.
   intros U1 (U2, U3); split; auto.
   case (le_or_lt (pos2n (next p)) (pos2n p1)); intros V1.
   rewrite prestrict_get_default; auto.
@@ -1870,7 +1932,7 @@ Qed.
    contains the value in the literal
  *)
 Definition lit_sat l s :=
-  match l with v p z => get p s = z end.
+  match l with L p z => get p s = z end.
 
 (* A state satisfies a clause if it satisfies at least one literal *)
 Definition clause_sat c s :=
@@ -1889,11 +1951,11 @@ Theorem sat_refine:
 Proof.
   intros cs s1 s2 H1 H2 H3 n c Hn.
   case (H3 n c Hn); intros (p, z) (Hl1, Hl2); simpl in Hl2.
-  exists (v p z); split; simpl; auto.
+  exists (L p z); split; simpl; auto.
   case H1; auto.
   intros H4 (H5, H6); rewrite <- H6; auto.
-  case (H2 n c Hn (v p z) Hl1); intuition.
-  rewrite Hl2; case (H2 n c Hn (v p z) Hl1); intuition.
+  case (H2 n c Hn (L p z) Hl1); intuition.
+  rewrite Hl2; case (H2 n c Hn (L p z) Hl1); intuition.
 Qed.
 
 Theorem lit_rm_sat:
@@ -2015,8 +2077,8 @@ Proof.
   case (in_ex_nth _ z 0 (row i s)); intros tmp _; case tmp; auto; clear tmp.
   intros j (H2, H3).
   rewrite <- get_row in H3; auto.
-  exists (v (Pos i j) z); split; auto.
-  case (gen_row_correct (v (Pos i j) z) i z); intros _ tmp; apply tmp; clear tmp.
+  exists (L (Pos i j) z); split; auto.
+  case (gen_row_correct (L (Pos i j) z) i z); intros _ tmp; apply tmp; clear tmp.
   exists j; split; auto.
   rewrite <- H0; auto.
   red; apply sym_equal; auto.
@@ -2041,8 +2103,8 @@ Proof.
   case (in_ex_nth _ z 0 (column j s)); intros tmp _; case tmp; auto; clear tmp.
   intros i (H2, H3).
   rewrite <- get_column in H3; auto.
-  exists (v (Pos i j) z); split; auto.
-  case (gen_column_correct (v (Pos i j) z) j z); intros _ tmp; apply tmp; clear tmp.
+  exists (L (Pos i j) z); split; auto.
+  case (gen_column_correct (L (Pos i j) z) j z); intros _ tmp; apply tmp; clear tmp.
   exists i; split; auto.
   rewrite <- Eq1; auto.
   red; apply sym_equal; auto.
@@ -2097,7 +2159,7 @@ Proof.
   case (in_ex_nth _ z 0 (rect i s)); intros tmp _ ; case (tmp H1);
     clear tmp H1.
   intros j (Hj1, Hj2).
-  exists (v (Pos (div i h * h + div j w) (mod i h * w  + mod j w)) z); simpl.
+  exists (L (Pos (div i h * h + div j w) (mod i h * w  + mod j w)) z); simpl.
   split.
   match goal with |- In ?l (gen_rect ?i ?z) =>
                   case (gen_rect_correct l i z); auto; intros _ tmp; apply tmp; clear tmp
@@ -2147,7 +2209,7 @@ Proof.
   intros z2 (Hz1, Hz2); injection Hz1.
   intros; subst; auto.
   intros H1.
-  exists (v (Pos x y) (get (Pos x y) s)); split; auto.
+  exists (L (Pos x y) (get (Pos x y) s)); split; auto.
   match goal with
     |- In ?l (gen_cell (Pos ?x ?y)) =>
     case (gen_cell_correct l x y); auto;
@@ -2201,8 +2263,8 @@ Proof.
   subst.
   case (cross2_correct (Pos x y)); intros tmp _; case (tmp H2);
     clear tmp H2; intros H3 H4.
-  exists (v (Pos x y) (get (Pos x y) s)); split.
-  case (gen_cell_correct (v (Pos x y) (get (Pos x y) s)) x y); auto.
+  exists (L (Pos x y) (get (Pos x y) s)); split.
+  case (gen_cell_correct (L (Pos x y) (get (Pos x y) s)) x y); auto.
   intros H1 H2; apply H2; clear H1 H2; simpl; auto.
   exists (get (Pos x y) s); split; auto.
   apply H; split; auto.
@@ -2356,7 +2418,7 @@ Proof.
 Qed.
 
 Theorem anti_literals_sat:
-  forall p z s, sudoku s -> valid_pos p -> get p s = z -> ~ clause_sat (anti_literals (v p z)) s.
+  forall p z s, sudoku s -> valid_pos p -> get p s = z -> ~ clause_sat (anti_literals (L p z)) s.
 Proof.
   generalize ref_list_ulist; intros Eq1.
   intros (x, y) z s; simpl; intros H1 (U1, U2) H2 (l, (H3, H4)).
@@ -2376,12 +2438,12 @@ Proof.
   case H1; clear H1; intros V1 (V2, _).
   case (gen_row_correct l x z); intros tmp _; case tmp; auto; clear tmp.
   apply (rm_incl _ lit_test) with
-      (l1 := v (Pos x y) z::nil)
+      (l1 := L (Pos x y) z::nil)
       (l2 := gen_row x z); auto.
   intros y1 (H5, H6); subst l.
   simpl in H4; absurd (y = y1).
-  intros H7; apply (rm_not_in _ lit_test) with (a := v (Pos x y) z)
-                                               (l1 := v (Pos x y) z::nil)
+  intros H7; apply (rm_not_in _ lit_test) with (a := L (Pos x y) z)
+                                               (l1 := L (Pos x y) z::nil)
                                                (l2 := gen_row x z); subst; auto with datatypes.
   exact lit_test_trans.
   intros; apply lit_test_anti_sym.
@@ -2397,12 +2459,12 @@ Proof.
   case H1; clear H1; intros V1 (_, (V2, _)).
   case (gen_column_correct l y z); intros tmp _; case tmp; auto; clear tmp.
   apply (rm_incl _ lit_test) with
-      (l1 := v (Pos x y) z::nil)
+      (l1 := L (Pos x y) z::nil)
       (l2 := gen_column y z); auto.
   intros x1 (H5, H6); subst l.
   simpl in H4; absurd (x = x1).
-  intros H7; apply (rm_not_in _ lit_test) with (a := v (Pos x y) z)
-                                               (l1 := v (Pos x y) z::nil)
+  intros H7; apply (rm_not_in _ lit_test) with (a := L (Pos x y) z)
+                                               (l1 := L (Pos x y) z::nil)
                                                (l2 := gen_column y z); subst; auto with datatypes.
   exact lit_test_trans.
   intros; apply lit_test_anti_sym.
@@ -2419,7 +2481,7 @@ Proof.
   apply rect_aux1; auto.
   intros tmp _; case tmp; auto; clear tmp.
   apply (rm_incl _ lit_test) with
-      (l1 := v (Pos x y) z::nil); auto.
+      (l1 := L (Pos x y) z::nil); auto.
   intros x1 (y1, (H5, (H6, H7))); subst l.
   simpl in H4.
   match type of H4 with
@@ -2493,13 +2555,13 @@ Proof.
   apply div_lt; rewrite (mult_comm w); auto.
   case (gen_cell_correct l x y); auto; intros tmp; case tmp; auto; clear tmp.
   apply (rm_incl _ lit_test) with
-      (l1 := v (Pos x y) z::nil)
+      (l1 := L (Pos x y) z::nil)
       (l2 := gen_cell (Pos x y)); auto.
   intros z1 (H5, H6); subst l.
   intros H7.
   simpl in H4.
-  apply (rm_not_in _ lit_test) with (a := v (Pos x y) z)
-                                    (l1 := v (Pos x y) z::nil)
+  apply (rm_not_in _ lit_test) with (a := L (Pos x y) z)
+                                    (l1 := L (Pos x y) z::nil)
                                     (l2 := gen_cell (Pos x y)); subst; auto with datatypes.
   exact lit_test_trans.
   intros; apply lit_test_anti_sym.
@@ -2513,12 +2575,12 @@ Definition invariant cs s :=
   forall s1, refine s s1 -> (sudoku s1 <-> sat cs s1).
 
 Theorem invariant_clauses_update: forall n p z c cs s,
-    invariant ((n, v p z :: c) :: cs) s ->
-    invariant (clauses_update (v p z) (anti_literals (v p z)) cs) (update p z s).
+    invariant ((n, L p z :: c) :: cs) s ->
+    invariant (clauses_update (L p z) (anti_literals (L p z)) cs) (update p z s).
 Proof.
   intros n p z c cs s (V1, (V2, (V3, V4))).
-  assert (H: valid_lit (v p z) s); auto.
-  apply (V2 n (v p z :: c)); auto with datatypes.
+  assert (H: valid_lit (L p z) s); auto.
+  apply (V2 n (L p z :: c)); auto with datatypes.
   split; auto.
   apply clauses_update_ordered; auto.
   apply anti_literals_ordered; auto.
@@ -2567,15 +2629,15 @@ Proof.
   intros n2 c2 Hn2; apply (V1 n2); auto with datatypes.
   intros n2 c2; simpl; intros [Hn2 | Hn2].
   injection Hn2; intros; subst.
-  exists (v p (get p s1)); split; auto with datatypes.
+  exists (L p (get p s1)); split; auto with datatypes.
   simpl; auto.
   apply (Heq n2 c2); auto with datatypes.
 Qed.
 
 Theorem invariant_clauses_update1: forall p z cs s,
-    valid_lit (v p z) s ->
+    valid_lit (L p z) s ->
     invariant cs s ->
-    invariant (clauses_update (v p z) (anti_literals (v p z)) cs) (update p z s).
+    invariant (clauses_update (L p z) (anti_literals (L p z)) cs) (update p z s).
 Proof.
   intros p z cs s V0 (V1, (V2, (V3, V4))).
   split; auto.
@@ -2619,16 +2681,16 @@ Proof.
 Qed.
 
 Theorem invariant_refine: forall n p z c cs s,
-    invariant ((n, v p z :: c) :: cs) s ->
+    invariant ((n, L p z :: c) :: cs) s ->
     (forall s1, refine (update p z s) s1 -> ~ sudoku s1) ->
     invariant ((n, c) :: cs) s.
 Proof.
   intros n p z c cs s (V1, (V2, (V3, V4))) H0.
-  assert (H: valid_lit (v p z) s); auto.
-  apply (V2 n (v p z :: c)); auto with datatypes.
-  assert (F1: ordered_clause (v p z :: c)); auto with datatypes.
+  assert (H: valid_lit (L p z) s); auto.
+  apply (V2 n (L p z :: c)); auto with datatypes.
+  assert (F1: ordered_clause (L p z :: c)); auto with datatypes.
   apply (V1 n); auto with datatypes.
-  assert (F2: valid_clause (v p z :: c) s); auto with datatypes.
+  assert (F2: valid_clause (L p z :: c) s); auto with datatypes.
   apply (V2 n); auto with datatypes.
   split; auto.
   intros n2 c2; simpl; intros [HH | HH]; subst.
@@ -2643,11 +2705,11 @@ Proof.
   apply (V2 n2); auto with datatypes.
   split; auto.
   intros s2 Hs2; split; intros HH1.
-  assert (Heq2: sat ((n, v p z :: c) :: cs) s2).
+  assert (Heq2: sat ((n, L p z :: c) :: cs) s2).
   case (V4 s2); auto.
   intros n2 c2; simpl; intros [HH | HH].
   injection HH; intros; subst n2 c2; clear HH.
-  case (Heq2 n (v p z :: c)); auto with datatypes.
+  case (Heq2 n (L p z :: c)); auto with datatypes.
   simpl; intros l ([Hl1 | Hl1], Hl2); subst.
   simpl in Hl2.
   case (H0 s2); auto.
@@ -2661,7 +2723,7 @@ Proof.
   apply valid_pos2n; auto.
   rewrite update_diff_get; auto.
   case Hs2; intros _ (_, tmp); auto.
-  case (F2 (v p z)); auto with datatypes.
+  case (F2 (L p z)); auto with datatypes.
   intros _ (tmp, _); auto.
   exists l; auto.
   apply (Heq2 n2 c2); auto with datatypes.
@@ -2872,9 +2934,9 @@ Proof.
   intros _ (_, (_, tmp)); case (tmp s1); auto; clear tmp.
   intros tmp _; apply (tmp H2 n nil); auto with datatypes.
   intros (p1, z1) c1 Rec H3.
-  assert (H: valid_lit (v p1 z1) s); auto.
+  assert (H: valid_lit (L p1 z1) s); auto.
   case H3; intros _ (V2, _).
-  apply (V2 n (v p1 z1 :: c1)); auto with datatypes.
+  apply (V2 n (L p1 z1 :: c1)); auto with datatypes.
   match goal with |- context [f ?X ?Y] =>
                   assert (U1: invariant Y X);
                     [idtac |
@@ -2947,9 +3009,9 @@ Proof.
   apply refine_trans with (2 := Hs2).
   apply refine_update; auto.
   case H1; intros _ (V2, _).
-  assert (Heq: valid_clause (v p z :: c2) s).
+  assert (Heq: valid_clause (L p z :: c2) s).
   apply (V2 n1); auto with datatypes.
-  case (Heq (v p z)); auto with datatypes.
+  case (Heq (L p z)); auto with datatypes.
   case H1; intuition.
   intros H2.
   match goal with |- context [try_one ?X ?Y ?Z ?T] =>
@@ -3021,16 +3083,16 @@ Proof.
   case Rec; auto.
   intros n2 c2; simpl; intros [Hn2 | Hn2].
   injection Hn2; intros; subst; clear Hn2.
-  assert (F1: valid_clause (v p z :: c2) s).
+  assert (F1: valid_clause (L p z :: c2) s).
   apply (H0 n2); auto with datatypes.
   intros l Hl; apply (F1 l); auto with datatypes.
   apply (H0 n2); auto with datatypes.
   intros Rec1 (Rec2, Rec3).
-  assert (F1: valid_lit (v p z) s).
-  assert (F2: valid_clause (v p z :: c1) s).
+  assert (F1: valid_lit (L p z) s).
+  assert (F2: valid_clause (L p z :: c1) s).
   apply (H0 n); auto with datatypes.
   apply F2; auto with datatypes.
-  case (H (update p z s) (clauses_update (v p z) (anti_literals (v p z)) cs)).
+  case (H (update p z s) (clauses_update (L p z) (anti_literals (L p z)) cs)).
   apply length_clauses_update.
   rewrite length_update; auto.
   apply clauses_update_valid; auto.
@@ -3096,7 +3158,7 @@ Proof.
   case F1; intuition.
   intros n2 c2; simpl; intros [Hn2 | Hn2].
   injection Hn2; intros; subst; clear Hn2.
-  exists (v p z); split; auto with datatypes; simpl.
+  exists (L p z); split; auto with datatypes; simpl.
   case U1; intros _ (_, tmp); rewrite <- tmp; auto with arith; clear tmp.
   apply update_get; auto.
   apply valid_pos2n; auto.
@@ -3117,7 +3179,7 @@ Proof.
   exists l; auto with datatypes.
   apply (U2 n2); auto with datatypes.
   intros s1 Hs1 Hs2 Hs3.
-  assert (F2: clause_sat (v p z :: c1) s1).
+  assert (F2: clause_sat (L p z :: c1) s1).
   apply (Hs3 n); auto with datatypes.
   case F2; intros l (Hl1, Hl2); simpl in Hl1;
     case Hl1; clear Hl1; intros Hl1; subst.

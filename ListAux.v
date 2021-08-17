@@ -302,6 +302,20 @@ Proof.
   apply in_dec; auto.
 Defined.
 
+Definition In_dec1:
+ forall {A: Set}, (forall x y : A, {x = y} + {x <> y}) -> 
+ forall (a : A) (l : list A), 
+   {ll : list A * list A| l = fst ll ++ (a :: snd ll)} + {~ In a l}.
+intros A dec; fix in_dec 2; intros a l; case l.
+right; simpl; intros tmp; case tmp.
+intros b l1; case (in_dec a l1); intros H.
+left; case H; intros ll HH; exists ((b :: fst ll), snd ll). 
+  rewrite HH; auto with datatypes.
+case (dec a b); intros H1.
+left; exists (@nil A, l1); subst; auto.
+right; simpl; intros [H2 | H2]; auto.
+Defined.
+
 Theorem in_fold_map: forall (A: Set) (f: nat -> nat -> A) p l1 l2,
   In p
     (fold_right
