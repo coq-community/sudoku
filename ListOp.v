@@ -135,16 +135,15 @@ Fixpoint take_and_jump (t j n: nat) (l: list A) {struct n}: list A :=
 Theorem take_and_jump_nil: forall a b c,
   take_and_jump a b c nil = nil.
 intros a b c; elim c; simpl; auto.
-intros n H; rewrite jump_nil; rewrite take_nil;
-  rewrite H; auto with arith.
+intros n H; rewrite jump_nil, take_nil, H; auto with arith.
 Qed.
 
 Theorem length_take_and_jump: forall i j (k: nat) s,
   (if k then 0 else i) + pred k * j <= length s -> length (take_and_jump i j k s) = k * i.
 intros i j k; generalize i j; elim k; simpl; auto; clear i j k.
-intros k Rec i j s H; rewrite length_app; rewrite length_take1;
+intros k Rec i j s H; rewrite length_app, length_take1;
   auto with arith.
-eq_tac; auto.
+f_equal; auto.
 apply Rec.
 generalize H; case k; clear k H Rec.
 intros; simpl; auto with arith.
@@ -196,14 +195,14 @@ Fixpoint restrict (n: nat) (l: list A) {struct l}: list A :=
 
 Theorem restrict_0: forall l, restrict 0 l = mk_0 (length l).
 intros l;  elim l; simpl; auto with datatypes.
-intros; eq_tac; auto.
+intros; f_equal; auto.
 Qed.
 
 Theorem restrict_all: forall n l, length l <= n -> restrict n l = l.
 intros n l; generalize n; elim l; simpl; auto with datatypes; clear n l.
 intros a l Rec n; case n; auto with arith.
 intros H; contradict H; auto with arith.
-intros n1 H; eq_tac; auto with arith.
+intros n1 H; f_equal; auto with arith.
 Qed.
 
 Theorem restrict_length: forall n l, length (restrict n l) = (length l).
@@ -216,7 +215,7 @@ Theorem restrict_update: forall n l, S n <= length l ->
 intros n l; generalize n; elim l; auto with datatypes; clear n l.
 intros n H; contradict H; auto with arith.
 intros a l1 Rec n; case n; auto; clear n.
-simpl length; intros n H; simpl; eq_tac; auto with arith.
+simpl length; intros n H; simpl; f_equal; auto with arith.
 Qed.
 
 Theorem restrict_nth: forall l n m, n < m ->

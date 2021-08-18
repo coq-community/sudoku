@@ -54,7 +54,7 @@ Proof.
 intros n m p H0.
 apply lexico_mult with (b := p) (c1 := mod (p * m + n) p) (c2 := mod n p);
   try apply mod_lt; auto with arith.
-rewrite mult_plus_distr_r; rewrite <- plus_assoc;
+rewrite mult_plus_distr_r, <- plus_assoc;
   repeat rewrite <- div_mod_correct; auto with arith.
 Qed.
 
@@ -64,8 +64,6 @@ Proof. now intros; apply Nat.mod_small. Qed.
 Theorem mod_mult_comp: forall n m p, 0 < p ->  mod (p * m + n) p = mod n p.
 Proof.
 intros n m p H; apply plus_reg_l with (div (p * m + n) p * p).
-rewrite <- div_mod_correct; auto.
-rewrite div_mult_comp; auto.
-rewrite mult_plus_distr_r; rewrite (mult_comm p); rewrite <- plus_assoc.
-eq_tac; apply div_mod_correct; auto.
+rewrite <- div_mod_correct, div_mult_comp,  mult_plus_distr_r, (mult_comm p),  <- plus_assoc by assumption.
+f_equal. now apply div_mod_correct.
 Qed.

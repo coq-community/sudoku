@@ -93,11 +93,11 @@ Proof.
   intros a l1 l2; generalize a l1; elim l2; clear a l1 l2; simpl in |- *; auto.
   intros a l1 H1; case H1.
   intros a l H a0 l1 [H0| H0].
-  injection H0; intros H1 H2; rewrite H2; rewrite H1; auto.
+  injection H0; intros H1 H2; rewrite H2, H1; auto.
   generalize H H0; elim (split_one l); simpl in |- *; auto.
   intros H1 H2; case H2.
   intros a1 l0 H1 H2 [H3| H3]; auto.
-  injection H3; intros H4 H5; (rewrite <- H4; rewrite <- H5).
+  injection H3; intros H4 H5; (rewrite <- H4, <- H5).
   apply perm_trans with (a :: fst a1 :: snd a1); auto.
   apply perm_skip.
   apply H2; auto.
@@ -115,7 +115,7 @@ Proof.
   intros a l1; elim l1; simpl in |- *; auto.
   intros H; case H.
   intros a0 l H [H0| H0]; auto.
-  exists l; left; eq_tac; auto.
+  exists l; left; f_equal; auto.
   case H; auto.
   intros x H1; exists (a0 :: x); right; auto.
   apply

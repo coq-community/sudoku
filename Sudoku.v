@@ -166,7 +166,7 @@ Proof.
   intros p1 p2; case p1; case p2; simpl; auto.
   intros x2 y2 x1 y1; case_eq (test x1 x2); intros H; auto.
   intros; discriminate.
-  intros H1; eq_tac; apply test_exact; auto.
+  intros H1; f_equal; apply test_exact; auto.
   intros; discriminate.
 Qed.
 
@@ -192,7 +192,7 @@ Theorem valid_pos_eq: forall p1 p2,
     valid_pos p1 -> valid_pos p2 -> pos2n p1 = pos2n p2 -> p1 = p2.
 Proof.
   intros (x1, y1) (x2, y2); simpl; intros (H1, H2) (H3, H4) H5.
-  assert (x1 = x2); try eq_tac; auto; try subst x2.
+  assert (x1 = x2); try f_equal; auto; try subst x2.
   apply lexico_mult with (3 := H5); auto.
   apply plus_reg_l with (1 := H5).
 Qed.
@@ -402,7 +402,7 @@ Proof with auto with arith.
   - contradict H; generalize H Hp1 Hp2; clear H Hp1 Hp2; case p1; case p2; simpl.
     intros x2 y2 x1 y1 H (H1, H2) (H3, H4).
     assert (HH: x1 = x2) by nia.
-    eq_tac; auto; subst...
+    f_equal; auto; subst...
     apply plus_reg_l with (x2 * size)...
 Qed.
 
@@ -648,9 +648,9 @@ Proof.
   repeat rewrite jump_nil; rewrite take_and_jump_nil; rewrite nth_nil; auto.
   intros n l; case l; simpl; auto.
   intros H; rewrite <- Rec; auto with arith.
-  eq_tac; auto; apply jump_add; auto.
+  f_equal; auto; apply jump_add; auto.
   intros n1 l1 H; rewrite <- Rec; auto with arith.
-  eq_tac; auto; apply jump_add; auto.
+  f_equal; auto; apply jump_add; auto.
 Qed.
 
 (***************************************************)
@@ -889,7 +889,7 @@ Proof.
   intros l1 l2; case l1; case l2; simpl; auto.
   intros p2 z2 p1 z1; case_eq (pos_test p1 p2); intros H; auto.
   intros; discriminate.
-  intros H1; eq_tac; try apply pos_test_exact; auto.
+  intros H1; f_equal; try apply pos_test_exact; auto.
   apply test_exact; auto.
   intros; discriminate.
 Qed.
@@ -1833,7 +1833,7 @@ Proof.
   rewrite <- H0; simpl.
   intros H5; assert (Eq1: length s = pos2n p); auto with arith.
   contradict H4; rewrite Eq1; auto with arith.
-  eq_tac; auto.
+  f_equal; auto.
   intros a s1; case s1; clear s1.
   intros Rec s p cs H0 H1 H2 H3 H4.
   assert (F1: pos2n p < length s).
@@ -2168,14 +2168,14 @@ Proof.
                   case (gen_rect_correct l i z); auto; intros _ tmp; apply tmp; clear tmp
   end.
   exists (div j w); exists (mod j w); repeat split; auto with arith.
-  eq_tac; auto.
-  eq_tac; auto.
+  f_equal; auto.
+  f_equal; auto.
   rewrite (mult_comm h); auto.
   rewrite (mult_comm w); auto.
   apply div_lt; rewrite (mult_comm w); rewrite length_rect in Hj1; auto.
   rewrite Hj2.
   rewrite get_rect.
-  eq_tac; auto; [idtac | eq_tac]; auto.
+  f_equal; auto; [idtac | f_equal]; auto.
   rewrite length_rect in Hj1; auto.
   rewrite (mult_comm (div i h)); rewrite (mult_comm (mod i h));
     repeat rewrite mod_mult_comp; auto.
@@ -2413,7 +2413,7 @@ Proof.
               rewrite (div_mod_correct y1 w);
               try rewrite (div_mod_correct y2 w)]; auto.
   replace (div y1 w) with (div y2 w); auto.
-  eq_tac; auto.
+  f_equal; auto.
   apply plus_reg_l with (mod x1 h * w).
   pattern (mod x1 h) at 2; rewrite Eq1; auto.
   apply plus_reg_l with (div x1 h * h).
@@ -2806,7 +2806,7 @@ Proof.
   rewrite <- H2; simpl.
   intros H4; assert (Eq1: length s = pos2n p); auto with arith.
   contradict H3; rewrite Eq1; auto with arith.
-  eq_tac; auto.
+  f_equal; auto.
   intros a s1; unfold gen_init_clauses_aux; lazy beta; fold gen_init_clauses_aux;
     case s1; clear s1.
   intros Rec s cs p H0 H1 H2 H3.

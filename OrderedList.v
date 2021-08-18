@@ -621,7 +621,7 @@ intros y b.
 generalize (weight_exact x y).
 case (weight x y); auto.
 intros; discriminate.
-intros; eq_tac; auto.
+intros; f_equal; auto.
 intros; discriminate.
 Qed.
 

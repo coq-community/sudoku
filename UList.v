@@ -112,40 +112,40 @@ Qed.
 Theorem ulist_incl_permutation:
   forall (l1 l2 : list A),
     ulist l1 -> incl l1 l2 ->  (exists l3 , Permutation l2 (l1 ++ l3) ).
-  intros l1; elim l1; simpl; auto.
-  intros l2 H H0; exists l2; simpl; auto.
-  intros a l H l2 H0 H1; auto.
-  case (in_permutation_ex _ a l2); auto with datatypes.
+Proof with auto with datatypes.
+  intros l1; elim l1; simpl...
+  intros l2 H H0; exists l2; simpl...
+  intros a l H l2 H0 H1...
+  case (in_permutation_ex _ a l2)...
   intros l3 Hl3.
-  case (H l3); auto.
-  apply ulist_inv with ( 1 := H0 ); auto.
+  case (H l3)...
+  apply ulist_inv with ( 1 := H0 )...
   intros b Hb.
   assert (H2: In b (a :: l3)).
-  apply Permutation_in with ( 1 := Permutation_sym Hl3 );
-    auto with datatypes.
-  simpl in H2 |-; case H2; intros H3; simpl; auto.
-  inversion_clear H0 as [|c lc Hk1]; auto.
-  case Hk1; subst a; auto.
+  apply Permutation_in with ( 1 := Permutation_sym Hl3 )...
+  simpl in H2 |-; case H2; intros H3; simpl...
+  inversion_clear H0 as [|c lc Hk1]...
+  case Hk1; subst a...
   intros l4 H4; exists l4.
-  apply perm_trans with (a :: l3); auto.
-  apply Permutation_sym; auto.
+  apply perm_trans with (a :: l3)...
+  apply Permutation_sym...
 Qed.
 
 Theorem ulist_eq_permutation:
   forall (l1 l2 : list A),
     ulist l1 -> incl l1 l2 -> length l1 = length l2 ->  Permutation l1 l2.
-Proof.
+Proof with auto with arith.
   intros l1 l2 H1 H2 H3.
-  case (ulist_incl_permutation l1 l2); auto.
+  case (ulist_incl_permutation l1 l2)...
   intros l3 H4.
   assert (H5: l3 = @nil A).
-  generalize (Permutation_length H4); rewrite length_app; rewrite H3.
-  rewrite plus_comm; case l3; simpl; auto.
-  intros a l H5; absurd (lt (length l2) (length l2)); auto with arith.
-  pattern (length l2) at 2; rewrite H5; auto with arith.
-  replace l1 with (app l1 l3); auto.
-  apply Permutation_sym; auto.
-  rewrite H5; rewrite app_nil_end; auto.
+  generalize (Permutation_length H4); rewrite length_app, H3.
+  rewrite plus_comm; case l3; simpl...
+  intros a l H5; absurd (lt (length l2) (length l2))...
+  pattern (length l2) at 2; rewrite H5...
+  replace l1 with (app l1 l3)...
+  apply Permutation_sym...
+  rewrite H5, app_nil_end...
 Qed.
 
 
@@ -194,10 +194,10 @@ Theorem in_ex_app_first:
   intros a1 l H H1; auto.
   generalize (in_inv_dec _ _ _ H1); intros [H2|[H2 H3]].
   exists (nil (A:=A)); exists l; simpl; split; auto.
-  eq_tac; auto.
+  f_equal; auto.
   case H; auto; intros l1 [l2 [Hl2 Hl3]]; exists (a1 :: l1); exists l2; simpl;
     split; auto.
-  eq_tac; auto.
+  f_equal; auto.
   intros H4; case H4; auto.
 Qed.
 

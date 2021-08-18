@@ -73,9 +73,9 @@ Proof.
   intros H; case H.
   intros a1 l H [H1|H1]; auto.
   exists (nil (A:=A)); exists l; simpl; auto.
-  eq_tac; auto.
+  f_equal; auto.
   case H; auto; intros l1 [l2 Hl2]; exists (a1 :: l1); exists l2; simpl; auto.
-  eq_tac; auto.
+  f_equal; auto.
 Qed.
 
 (******************************************************************************)
@@ -143,11 +143,11 @@ Proof.
   intros l1; elim l1; simpl; auto.
   intros l2 l3 l4 a H; right; exists l3; auto.
   intros a l H l2 l3 l4 a0; case l3; simpl.
-  intros H0; left; exists l; eq_tac; injection H0; auto.
+  intros H0; left; exists l; f_equal; injection H0; auto.
   intros b l0 H0; case (H l2 l0 l4 a0); auto.
   injection H0; auto.
   intros [l5 H1].
-  left; exists l5; eq_tac; injection H0; auto.
+  left; exists l5; f_equal; injection H0; auto.
 Qed.
 
 Theorem app_inv_app2:
@@ -162,13 +162,13 @@ Proof.
   intros a l H l2 l3 l4 a0 b; case l3; simpl.
   case l; simpl.
   intros H0; right; right; injection H0; split; auto.
-  eq_tac; auto.
-  intros b0 l0 H0; left; exists l0; injection H0; intros; (repeat eq_tac); auto.
+  f_equal; auto.
+  intros b0 l0 H0; left; exists l0; injection H0; intros; (repeat f_equal); auto.
   intros b0 l0 H0; case (H l2 l0 l4 a0 b); auto.
   injection H0; auto.
-  intros [l5 HH1]; left; exists l5; eq_tac; auto; injection H0; auto.
+  intros [l5 HH1]; left; exists l5; f_equal; auto; injection H0; auto.
   intros [H1|[H1 H2]]; auto.
-  right; right; split; auto; eq_tac; auto; injection H0; auto.
+  right; right; split; auto; f_equal; auto; injection H0; auto.
 Qed.
 
 Theorem same_length_ex:
@@ -187,7 +187,7 @@ Proof.
   case (H l2 l0); auto.
   intros l4 [l5 [b1 [HH1 [HH2 HH3]]]].
   exists (b :: l4); exists l5; exists b1; (repeat (simpl; split; auto)).
-  eq_tac; auto.
+  f_equal; auto.
 Qed.
 
 (******************************************************************************)
@@ -234,7 +234,7 @@ Proof.
   injection H2; clear H2; intros H2 H3.
   case (Rec l2 l3 l4); auto.
   intros H4 H5; split; auto.
-  eq_tac; auto.
+  f_equal; auto.
 Qed.
 
 (******************************************************************************)
@@ -275,7 +275,7 @@ Theorem length_list_prod:
   length (list_prod l1 l2) = length l1 * length l2.
 Proof.
   intros A l1 l2; elim l1; simpl; auto.
-  intros a l H; rewrite length_app; rewrite length_map; rewrite H; auto.
+  intros a l H; rewrite length_app, length_map, H; auto.
 Qed.
 
 Theorem in_list_prod_inv:
