@@ -29,7 +29,7 @@ Require Import Permutation.
 Require Import Div.
 Require Import OrderedList.
 Require Import ListOp.
-Require Import Psatz.
+Require Import Lia.
 
 Section check.
 
@@ -768,7 +768,10 @@ Proof with auto with arith.
       rewrite le_plus_minus_r...
       unfold size.
       ring_simplify.
-      nia.
+      destruct (lt_eq_lt_dec h w) as [[Hh|Hh]|Hh].
+      * nia.
+      * rewrite Hh, Nat.mul_sub_distr_r; nia.
+      * nia.
   - apply le_trans with (w * (h - 1) + h * (w - 1) * size).
     repeat (apply plus_le_compat || apply mult_le_compat_l || apply mult_le_compat_r).
     + apply F1; auto; apply mod_lt...

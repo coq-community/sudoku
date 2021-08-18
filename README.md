@@ -1,9 +1,70 @@
+<!---
+This file was generated from `meta.yml`, please do not edit manually.
+Follow the instructions on https://github.com/coq-community/templates to regenerate.
+--->
+# Sudoku
 
-## Sudoku
+[![Docker CI][docker-action-shield]][docker-action-link]
+[![Nix CI][nix-action-shield]][nix-action-link]
+[![Contributing][contributing-shield]][contributing-link]
+[![Code of Conduct][conduct-shield]][conduct-link]
+[![Zulip][zulip-shield]][zulip-link]
+
+[docker-action-shield]: https://github.com/coq-community/sudoku/workflows/Docker%20CI/badge.svg?branch=master
+[docker-action-link]: https://github.com/coq-community/sudoku/actions?query=workflow:"Docker%20CI"
+
+[nix-action-shield]: https://github.com/coq-community/sudoku/workflows/Nix%20CI/badge.svg?branch=master
+[nix-action-link]: https://github.com/coq-community/sudoku/actions?query=workflow:"Nix%20CI"
+
+[contributing-shield]: https://img.shields.io/badge/contributions-welcome-%23f7931e.svg
+[contributing-link]: https://github.com/coq-community/manifesto/blob/master/CONTRIBUTING.md
+
+[conduct-shield]: https://img.shields.io/badge/%E2%9D%A4-code%20of%20conduct-%23f15a24.svg
+[conduct-link]: https://github.com/coq-community/manifesto/blob/master/CODE_OF_CONDUCT.md
+
+[zulip-shield]: https://img.shields.io/badge/chat-on%20zulip-%23c1272d.svg
+[zulip-link]: https://coq.zulipchat.com/#narrow/stream/237663-coq-community-devs.20.26.20users
+
 
 
 A formalisation of Sudoku in Coq. It implements a naive
-Davis-Putnam procedure to solve sudokus.
+Davis-Putnam procedure to solve Sudokus.
+
+## Meta
+
+- Author(s):
+  - Laurent Théry (initial)
+- Coq-community maintainer(s):
+  - Ben Siraphob ([**@siraben**](https://github.com/siraben))
+  - Laurent Théry ([**@thery**](https://github.com/thery))
+- License: [GNU Lesser General Public License v2.1 or later](LICENSE)
+- Compatible Coq versions: 8.12 or later
+- Additional dependencies: none
+- Coq namespace: `Sudoku`
+- Related publication(s):
+  - [Sudoku in Coq](https://hal.inria.fr/hal-03277886) 
+
+## Building and installation instructions
+
+The easiest way to install the latest released version of Sudoku
+is via [OPAM](https://opam.ocaml.org/doc/Install.html):
+
+```shell
+opam repo add coq-released https://coq.inria.fr/opam/released
+opam install coq-sudoku
+```
+
+To instead build and install manually, do:
+
+``` shell
+git clone https://github.com/coq-community/sudoku.git
+cd sudoku
+make   # or make -j <number-of-cores-on-your-machine> 
+make install
+```
+
+
+## Documentation
 
 A sudoku is represented as a mono-dimensional list of natural
 numbers. Zeros are used to represent empty cells. For example,
@@ -99,9 +160,6 @@ The following files should be in the libraries of Coq:
 
 A note about this formalisation is available [here](https://hal.inria.fr/hal-03277886).
 
-There is an extraction to javascript using
+There is an extraction to JavaScript using
 [js_of_ocaml](https://github.com/ocsigen/js_of_ocaml").
-The files to run it are generated in the [Html directory](./Html/).
-
-
-Laurent Théry (Laurent.Thery@inria.fr)
+The files to run it are generated in the [Html directory](Html).

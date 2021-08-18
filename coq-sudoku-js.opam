@@ -1,0 +1,26 @@
+opam-version: "2.0"
+maintainer: "palmskog@gmail.com"
+version: "dev"
+
+homepage: "https://github.com/coq-community/sudoku"
+dev-repo: "git+https://github.com/coq-community/sudoku.git"
+bug-reports: "https://github.com/coq-community/sudoku/issues"
+license: "LGPL-2.1-or-later"
+
+synopsis: "JavaScript Sudoku solver certified in Coq"
+description: """
+JavaScript Sudoku solver extracted from a formalisation
+in Coq using js_of_ocaml."""
+
+build: [make "Sudoku.js"]
+depends: [
+  "ocaml" {>= "4.07.1"}
+  "coq" {(>= "8.12" & < "8.15~") | (= "dev")}
+  "ocamlbuild" {>= "0.14.0"}
+  "js_of_ocaml" {>= "3.9.0"}
+  "js_of_ocaml-ppx" {>= "3.9.0"}
+]
+
+authors: [
+  "Laurent Théry"
+]
