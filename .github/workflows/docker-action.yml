@@ -16,7 +16,7 @@ jobs:
       matrix:
         image:
           - 'coqorg/coq:dev'
-	opam_file:
+        opam_file:
           - 'coq-sudoku.opam'
           - 'coq-sudoku-js.opam'
       fail-fast: false
