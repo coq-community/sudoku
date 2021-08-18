@@ -593,7 +593,7 @@ Proof.
   intros x y s; rewrite jump_add.
   generalize (jump (x * size) s); intros l.
   generalize y size; elim l; simpl; auto; clear y l.
-  intros; rewrite jump_nil; rewrite take_nil; repeat rewrite nth_nil;
+  intros; rewrite jump_nil, take_nil; repeat rewrite nth_nil;
     auto.
   intros a l Rec y; case y.
   intros n; case n; simpl; auto.
@@ -617,7 +617,7 @@ Proof.
   simpl; auto with arith.
   intros size1 H H1; apply plus_le_reg_l with j.
   repeat rewrite (plus_comm j).
-  rewrite <- plus_assoc; rewrite (plus_comm 1); rewrite <- plus_assoc.
+  rewrite <- plus_assoc, (plus_comm 1), <- plus_assoc.
   rewrite <- length_jump; auto with arith.
   rewrite H1; auto with arith.
   replace (S size1 * S size1) with (size1 * S size1 + S size1); auto with arith.
@@ -632,7 +632,7 @@ Theorem get_column:
   forall x y s, x < size -> get (Pos x y) s = nth x (column y s) out.
 Proof.
   unfold get, column; simpl.
-  intros x y s; rewrite plus_comm; rewrite jump_add.
+  intros x y s; rewrite plus_comm, jump_add.
   generalize (jump y s); intros l.
   assert (Gen:
             forall a x l,
@@ -643,7 +643,7 @@ Proof.
   intros a l H; contradict H; auto with arith.
   intros a Rec; intros x; case x; simpl; clear x.
   intros l; case l; simpl; auto.
-  rewrite jump_nil; rewrite take_and_jump_nil; rewrite nth_nil; auto.
+  rewrite jump_nil, take_and_jump_nil, nth_nil; auto.
   intros x l; case l; auto; clear l.
   repeat rewrite jump_nil; rewrite take_and_jump_nil; rewrite nth_nil; auto.
   intros n l; case l; simpl; auto.

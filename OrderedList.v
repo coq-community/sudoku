@@ -219,7 +219,7 @@ generalize (Rec Eq1).
 assert (Eq2: forall c, In c (insert a l1) -> weight b c = lt).
 intros c H2.
 case insert_inv with (1 := H2); auto.
-intros; subst; rewrite weight_anti_sym; rewrite H1; auto.
+intros; subst; rewrite weight_anti_sym, H1; auto.
 intros H3; apply olist_weight with (1 := H); auto.
 generalize Eq2; case (insert a l1); auto.
 intros; apply olist_one.
@@ -306,7 +306,7 @@ apply olist_inv with (1 := H1); auto.
 apply olist_cons; auto.
 apply olist_weight with (1 := H1); auto with datatypes.
 apply Rec1; auto.
-rewrite weight_anti_sym; rewrite H2; auto.
+rewrite weight_anti_sym, H2; auto.
 apply olist_inv with (1 := H1); auto.
 Qed.
 
@@ -325,7 +325,7 @@ apply merge_olist_strong; auto.
 rewrite weight_exact with (1 := H2); auto.
 generalize b H H1 H2; elim l2; simpl; auto; clear l2 b H H1 H2.
 intros b H H1 H2; apply olist_cons; auto.
-rewrite weight_anti_sym; rewrite H2; auto.
+rewrite weight_anti_sym, H2; auto.
 apply merge_olist_strong; auto.
 apply olist_one; auto.
 intros b l2 Rec c H H1 H2.
