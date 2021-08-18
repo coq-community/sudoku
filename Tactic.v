@@ -24,11 +24,6 @@
                                       Laurent.Thery@inria.fr (2006)
  **********************************************************************)
 
-(**************************************
-  A simple tactic to end a proof
-**************************************)
-Ltac  finish := intros; auto; trivial; discriminate.
-
 
 (**************************************
  A tactic for proof by contradiction
