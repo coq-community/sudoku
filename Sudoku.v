@@ -1128,19 +1128,19 @@ Definition find_all s :=
 
 Inductive jRes: Set := jNone | jOne (_: list nat) | jMore (_ _: list nat).
 
-Fixpoint try_just_one (s: list nat) (c: clause) 
-                 (cs: clauses) 
+Fixpoint try_just_one (s: list nat) (c: clause)
+                 (cs: clauses)
                  (f: list nat -> clauses -> jRes) : jRes :=
    match c with
       nil => jNone
     | (L p v) as k:: c1 =>
          let s1 := update p v s in
-         let cs1 := clauses_update k (anti_literals k) cs in   
+         let cs1 := clauses_update k (anti_literals k) cs in
          match f s1 cs1 with
            jNone => try_just_one s c1 cs f
          | jOne s2 => match try_just_one s c1 cs f with
                     jNone => jOne s2
-                   | jOne s3 => 
+                   | jOne s3 =>
                       if list_nat_eq s2 s3 then jOne s2 else jMore s2 s3
                    | jMore s1 s2 => jMore s1 s2
                    end
@@ -1151,13 +1151,13 @@ Fixpoint try_just_one (s: list nat) (c: clause)
 (* An auxillary function to find a solution by iteratively trying
    to satisfy the first clause of the list of clauses c
  *)
-Fixpoint find_just_one_aux (n: clauses) (s: list nat) 
+Fixpoint find_just_one_aux (n: clauses) (s: list nat)
                       (cs: clauses) : jRes :=
 match cs with
    nil => jOne s
 | (_, nil) :: _  => jNone
-| (_, p) :: cs1 => 
-    match n with 
+| (_, p) :: cs1 =>
+    match n with
       nil => jNone
     | _ :: n1 =>
        try_just_one s p cs1 (find_just_one_aux n1)

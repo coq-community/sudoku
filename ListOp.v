@@ -42,7 +42,7 @@ Proof.
   apply firstn_nil.
 Qed.
 
-Theorem take_nth: forall i j r l, 
+Theorem take_nth: forall i j r l,
     i < j \/ length l <= i -> nth i (take j l) r = nth i l r.
 Proof.
 intros i j r l; generalize i j r; elim l; simpl; auto with arith;
@@ -71,7 +71,7 @@ intros; rewrite take_nil; auto.
 intros a l Rec i; case i; simpl; auto with arith.
 Qed.
 
-Theorem length_take1: forall i s, 
+Theorem length_take1: forall i s,
     i <= length s -> length (take i s) = i.
 Proof.
   intros i s H.
@@ -89,7 +89,7 @@ Proof.
 Qed.
 
 (* the relation between jump and nth *)
-Theorem jump_nth: 
+Theorem jump_nth:
   forall l k r, nth k l r = nth 0 (jump k l) r.
 intros l; elim l; simpl; auto.
 intros k r; rewrite jump_nil; simpl; case k; auto.
@@ -114,7 +114,7 @@ Proof.
     + apply IHa.
 Qed.
 
-Theorem length_jump: forall i s, 
+Theorem length_jump: forall i s,
     i <= length s -> length s = length (jump i s) + i.
 Proof.
   intros i.
@@ -124,15 +124,15 @@ Proof.
     + simpl. rewrite <- plus_n_Sm; auto with arith.
 Qed.
 
-(* Take from l t elements and then jump j elements n times *) 
+(* Take from l t elements and then jump j elements n times *)
 Fixpoint take_and_jump (t j n: nat) (l: list A) {struct n}: list A :=
    match n with
         0 => nil
-   | S n1 =>  take t l ++ take_and_jump t j n1 (jump j l)  
+   | S n1 =>  take t l ++ take_and_jump t j n1 (jump j l)
    end.
 
 (* Taking and jumping on an empty list is an empty list *)
-Theorem take_and_jump_nil: forall a b c, 
+Theorem take_and_jump_nil: forall a b c,
   take_and_jump a b c nil = nil.
 intros a b c; elim c; simpl; auto.
 intros n H; rewrite jump_nil; rewrite take_nil;
@@ -142,7 +142,7 @@ Qed.
 Theorem length_take_and_jump: forall i j (k: nat) s,
   (if k then 0 else i) + pred k * j <= length s -> length (take_and_jump i j k s) = k * i.
 intros i j k; generalize i j; elim k; simpl; auto; clear i j k.
-intros k Rec i j s H; rewrite length_app; rewrite length_take1; 
+intros k Rec i j s H; rewrite length_app; rewrite length_take1;
   auto with arith.
 eq_tac; auto.
 apply Rec.
@@ -165,7 +165,7 @@ Fixpoint subst (n: nat) (v: A) (l: list A) {struct n} : list A :=
   match l with
     nil => nil
   | a :: l1 => match n with O => v :: l1 | S n1 => a :: subst n1 v l1 end
-  end. 
+  end.
 
 (*  Subst does not change the length of a list *)
 Theorem length_subst: forall n v l, length (subst n v l) = length l.
@@ -187,8 +187,8 @@ Qed.
 Fixpoint restrict (n: nat) (l: list A) {struct l}: list A :=
   match l with
     nil => nil
-  | a :: l1 => 
-    match n with 
+  | a :: l1 =>
+    match n with
       O => o :: (restrict n l1)
    | S n1 => a :: (restrict n1 l1)
    end
@@ -252,7 +252,7 @@ Arguments subst [A].
 Arguments restrict [A].
 Arguments mk_0 [A].
 
-(* Build the list [m; m+1; ...; m+n] *) 
+(* Build the list [m; m+1; ...; m+n] *)
 Fixpoint progression (n m: nat) {struct n}: list nat :=
   match n with O => nil | S n1 => m :: progression n1 (S m) end.
 
@@ -270,7 +270,7 @@ intros H1; contradict H1; auto with arith.
 Qed.
 
 (* Define the element of a progression *)
-Theorem in_progression: forall n a i, 
+Theorem in_progression: forall n a i,
   In i (progression n a) <-> a <= i < n + a.
 intros n; elim n; simpl; auto.
 intros a i; split; try (intros H; case H; fail);
@@ -284,8 +284,8 @@ rewrite plus_n_Sm in H4; auto with arith.
 Qed.
 
 Fixpoint list_nat_eq (l1 l2: list nat) {struct l1}: bool :=
-  match l1, l2 with nil, nil => true 
-  | n1::l3, n2::l4 => 
+  match l1, l2 with nil, nil => true
+  | n1::l3, n2::l4 =>
       if Nat.eqb n1 n2 then list_nat_eq l3 l4 else false
   | _, _ => false
   end.
@@ -294,7 +294,7 @@ Lemma list_nat_eq_correct l1 l2 :
   if list_nat_eq l1 l2 then l1 = l2 else l1 <> l2.
 Proof.
 revert l2.
-induction l1 as [| n1 l1 Hrec]; destruct l2 as [| n2 l2]; simpl; 
+induction l1 as [| n1 l1 Hrec]; destruct l2 as [| n2 l2]; simpl;
   try (intros; discriminate); auto.
 destruct (Nat.eqb_spec n1 n2) as [n1En2|H1].
   generalize (Hrec l2); case list_nat_eq; intros H2.

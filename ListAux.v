@@ -30,7 +30,7 @@ Require Import Wf_nat.
 (******************************************************************************)
 (*  Some properties on list operators: app, map,...                           *)
 (******************************************************************************)
- 
+
 Section List.
 Variables (A : Set) (B : Set) (C : Set).
 Variable f : A ->  B.
@@ -38,7 +38,7 @@ Variable f : A ->  B.
 (******************************************************************************)
 (* An induction theorem for list based on length                              *)
 (******************************************************************************)
- 
+
 Theorem list_length_ind:
  forall (P : list A ->  Prop),
  (forall (l1 : list A),
@@ -51,7 +51,7 @@ Proof.
   apply wf_inverse_image with (R := lt); auto.
   apply lt_wf.
 Qed.
- 
+
 Definition list_length_induction:
  forall (P : list A ->  Set),
  (forall (l1 : list A),
@@ -64,7 +64,7 @@ Proof.
   apply wf_inverse_image with (R := lt); auto.
   apply lt_wf.
 Qed.
- 
+
 Theorem in_ex_app:
  forall (a : A) (l : list A),
  In a l ->  (exists l1 : list A , exists l2 : list A , l = l1 ++ (a :: l2)).
@@ -117,7 +117,7 @@ Proof.
   intros; apply nth_overflow; auto.
 Qed.
 
-Theorem list_nth_eq: forall (r: A) l1 l2, 
+Theorem list_nth_eq: forall (r: A) l1 l2,
   length l1 = length l2 ->
   (forall n, nth n l1 r = nth n l2 r) -> l1 = l2.
 Proof.
@@ -127,13 +127,13 @@ Qed.
 (******************************************************************************)
 (* Properties on app                                                          *)
 (******************************************************************************)
- 
+
 Theorem length_app:
   forall (l1 l2 : list A), length (l1 ++ l2) = length l1 + length l2.
 Proof.
   apply app_length.
 Qed.
- 
+
 Theorem app_inv_app:
  forall l1 l2 l3 l4 a,
  l1 ++ l2 = l3 ++ (a :: l4) ->
@@ -149,7 +149,7 @@ Proof.
   intros [l5 H1].
   left; exists l5; eq_tac; injection H0; auto.
 Qed.
- 
+
 Theorem app_inv_app2:
  forall l1 l2 l3 l4 a b,
  l1 ++ l2 = l3 ++ (a :: (b :: l4)) ->
@@ -170,7 +170,7 @@ Proof.
   intros [H1|[H1 H2]]; auto.
   right; right; split; auto; eq_tac; auto; injection H0; auto.
 Qed.
- 
+
 Theorem same_length_ex:
  forall (a : A) l1 l2 l3,
  length (l1 ++ (a :: l2)) = length l3 ->
@@ -193,7 +193,7 @@ Qed.
 (******************************************************************************)
 (* Properties on map                                                          *)
 (******************************************************************************)
- 
+
 Theorem in_map_inv:
  forall (b : B) (l : list A),
    In b (map f l) ->  (exists a : A , In a l /\ b = f a ).
@@ -203,7 +203,7 @@ Proof.
   destruct H as [x [H1 H2]].
   eauto.
 Qed.
- 
+
 Theorem in_map_fst_inv:
  forall a (l : list (B * C)),
  In a (map (fst (B:=_)) l) ->  (exists c , In (a, c) l ).
@@ -214,12 +214,12 @@ Proof.
   exists (snd a0); left; rewrite <- H0; case a0; simpl; auto.
   case H; auto; intros l1 Hl1; exists l1; auto.
 Qed.
- 
+
 Theorem length_map: forall l,  length (map f l) = length l.
 Proof.
   apply map_length.
 Qed.
- 
+
 Theorem map_length_decompose:
  forall l1 l2 l3 l4,
  length l1 = length l2 ->
@@ -240,7 +240,7 @@ Qed.
 (******************************************************************************)
 (* Properties of flat_map                                                     *)
 (******************************************************************************)
- 
+
 Theorem in_flat_map:
  forall (l : list B) (f : B ->  list C) a b,
  In a (f b) -> In b l ->  In a (flat_map f l).
@@ -250,7 +250,7 @@ Proof.
   left; rewrite H1; auto.
   right; apply H with ( b := b ); auto.
 Qed.
- 
+
 Theorem in_flat_map_ex:
  forall (l : list B) (f : B ->  list C) a,
  In a (flat_map f l) ->  (exists b , In b l /\ In a (f b) ).
@@ -262,14 +262,14 @@ Proof.
   intros H1; case H with ( 1 := H1 ).
   intros b [H2 H3]; exists b; simpl; auto.
 Qed.
- 
+
 End List.
 
 
 (******************************************************************************)
 (* Propertie of list_prod                                                     *)
 (******************************************************************************)
- 
+
 Theorem length_list_prod:
  forall (A : Set) (l1 l2 : list A),
   length (list_prod l1 l2) = length l1 * length l2.
@@ -277,7 +277,7 @@ Proof.
   intros A l1 l2; elim l1; simpl; auto.
   intros a l H; rewrite length_app; rewrite length_map; rewrite H; auto.
 Qed.
- 
+
 Theorem in_list_prod_inv:
  forall (A B : Set) a l1 l2,
  In a (list_prod l1 l2) ->
@@ -303,13 +303,13 @@ Proof.
 Defined.
 
 Definition In_dec1:
- forall {A: Set}, (forall x y : A, {x = y} + {x <> y}) -> 
- forall (a : A) (l : list A), 
+ forall {A: Set}, (forall x y : A, {x = y} + {x <> y}) ->
+ forall (a : A) (l : list A),
    {ll : list A * list A| l = fst ll ++ (a :: snd ll)} + {~ In a l}.
 intros A dec; fix in_dec 2; intros a l; case l.
 right; simpl; intros tmp; case tmp.
 intros b l1; case (in_dec a l1); intros H.
-left; case H; intros ll HH; exists ((b :: fst ll), snd ll). 
+left; case H; intros ll HH; exists ((b :: fst ll), snd ll).
   rewrite HH; auto with datatypes.
 case (dec a b); intros H1.
 left; exists (@nil A, l1); subst; auto.

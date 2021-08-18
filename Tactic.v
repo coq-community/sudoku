@@ -16,43 +16,43 @@
 
 
 (**********************************************************************
-       Tactic.v                                                                                    
-                                                                                                         
-          Useful tactics                                                                       
-                                                                                                         
-                                                                                                         
-                                      Laurent.Thery@inria.fr (2006)               
+       Tactic.v
+
+          Useful tactics
+
+
+                                      Laurent.Thery@inria.fr (2006)
  **********************************************************************)
 
 (**************************************
-  A simple tactic to end a proof 
+  A simple tactic to end a proof
 **************************************)
 Ltac  finish := intros; auto; trivial; discriminate.
 
 
 (**************************************
  A tactic for proof by contradiction
-     with contradict H 
-         H: ~A |-   B      gives           |-   A
-         H: ~A |- ~ B     gives  H: B |-   A
-         H:   A |-   B      gives           |- ~ A
-         H:   A |-   B      gives           |- ~ A
+     with contradict H
+         H:  ~A |-   B     gives       |-   A
+         H:  ~A |- ~ B     gives  H: B |-   A
+         H:   A |-   B     gives       |- ~ A
+         H:   A |-   B     gives       |- ~ A
          H:   A |- ~ B     gives  H: A |- ~ A
 **************************************)
 
-Ltac  contradict name := 
+Ltac  contradict name :=
      let term := type of name in (
-     match term with 
-       (~_) => 
-          match goal with 
+     match term with
+       (~_) =>
+          match goal with
             |- ~ _  => let x := fresh in
-                     (intros x; case name; 
+                     (intros x; case name;
                       generalize x; clear x name;
                       intro name)
           | |- _    => case name; clear name
           end
-     | _ => 
-          match goal with 
+     | _ =>
+          match goal with
             |- ~ _  => let x := fresh in
                     (intros x;  absurd term;
                        [idtac | exact name]; generalize x; clear x name;
@@ -72,10 +72,10 @@ Ltac case_eq name :=
 
 
 (**************************************
- A tactic to use f_equal? theorems 
+ A tactic to use f_equal? theorems
 **************************************)
 
-Ltac eq_tac := 
+Ltac eq_tac :=
  match goal with
     |-  (?f' _ = ?f' _) => apply f_equal with (f := f')
  |  |-  (?f' ?X _ = ?f'  ?X _) => apply f_equal with (f := f'  X)
@@ -89,7 +89,7 @@ Ltac eq_tac :=
  |  |-  (?f' _ _ _ _ _ = ?f' _ _ _ _) => apply f_equal4 with (f := f')
  end.
 
-(************************************** 
+(**************************************
  A stupid tactic that tries auto also after applying sym_equal
 **************************************)
 

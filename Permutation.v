@@ -345,7 +345,7 @@ Definition permutation_dec1 :
 intros dec; fix perm 1; intros l1; case l1.
 intros l2; case l2.
 left; auto.
-intros a l3; right; intros H; generalize (permutation_length _ _ H); 
+intros a l3; right; intros H; generalize (permutation_length _ _ H);
  discriminate.
 intros a l3 l2.
 case (In_dec1 dec a l2); intros H1.

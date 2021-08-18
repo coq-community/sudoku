@@ -21,7 +21,7 @@ Require Import Extraction.
 Import List.
 
 Definition one_solution n m l :=
- match find_one n m l with Some c => print n m c 
+ match find_one n m l with Some c => print n m c
                           | _ => "No Solution" end.
 
 Definition solutions n m l := length (find_all n m l).
@@ -31,10 +31,10 @@ Definition cr := "
 
 Definition just_one_solution n m l :=
  match find_just_one n m l with
-   jOne c => print n m c 
- | jNone => "No Solution" 
+   jOne c => print n m c
+ | jNone => "No Solution"
  | jMore c1 c2 => ("More Than One Solution" ++ cr
-                  ++ (print n m c1) ++ cr ++ (print n m c2))%string  
+                  ++ (print n m c1) ++ cr ++ (print n m c2))%string
  end.
 
 (* Compute all the sudoku 2 x 2 *)
@@ -114,7 +114,7 @@ Time Eval vm_compute in ppf 3 3.
 
 (* A problem with more than one solution *)
 Time Eval vm_compute in jos
-"   
+"
     -------------
     |   |9  |  1|
     |   | 4 | 2 |
@@ -167,7 +167,7 @@ Time Eval vm_compute in jos
 (* L'escargot *)
 
 Time Eval vm_compute in jos
-" 
+"
     -------------
     |1  |  7| 9 |
     | 3 | 2 |  8|
@@ -186,7 +186,7 @@ Time Eval vm_compute in jos
 
 Time Eval vm_compute in jos
 
-" 
+"
     -------------
     |2  | 68|   |
     | 69|   |   |
@@ -198,13 +198,13 @@ Time Eval vm_compute in jos
     -------------
     | 12|7  |   |
     |   | 2 |6 5|
-    |  5|   |4  |  
+    |  5|   |4  |
     -------------".
 
 (* Le monde 28/10/07 *)
 
 Time Eval vm_compute in jos
-" 
+"
     -------------
     |9  |  8|   |
     | 52|   |  1|
@@ -223,7 +223,7 @@ Time Eval vm_compute in jos
 
 
 Time Eval vm_compute in jos
-" 
+"
     -------------
     |   |7  |5  |
     |   | 63|   |
@@ -243,7 +243,7 @@ Time Eval vm_compute in jos
 
 
 Time Eval vm_compute in jos
-"   
+"
     -------------
     |  2|  3| 9 |
     |9  |52 |   |
@@ -262,7 +262,7 @@ Time Eval vm_compute in jos
 
 
 Time Eval vm_compute in jos
-" 
+"
     -------------
     |5  | 37|1  |
     |   |   |   |

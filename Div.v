@@ -45,14 +45,14 @@ Proof. intros; now apply Nat.div_small. Qed.
 Theorem mult_lt_plus: forall a b c d, a < b -> c < d -> a * d + c < b * d.
 Proof. nia. Qed.
 
-Theorem lexico_mult: forall a1 a2 b c1 c2, 
+Theorem lexico_mult: forall a1 a2 b c1 c2,
     c1 < b -> c2 < b -> a1 * b + c1 = a2 * b + c2 -> a1 = a2.
 Proof. nia. Qed.
 
 Theorem div_mult_comp: forall n m p, 0 < p ->  div (p * m + n) p = m + div n p.
 Proof.
 intros n m p H0.
-apply lexico_mult with (b := p) (c1 := mod (p * m + n) p) (c2 := mod n p); 
+apply lexico_mult with (b := p) (c1 := mod (p * m + n) p) (c2 := mod n p);
   try apply mod_lt; auto with arith.
 rewrite mult_plus_distr_r; rewrite <- plus_assoc;
   repeat rewrite <- div_mod_correct; auto with arith.
