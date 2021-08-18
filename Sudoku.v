@@ -166,7 +166,7 @@ Proof.
   intros p1 p2; case p1; case p2; simpl; auto.
   intros x2 y2 x1 y1; case_eq (test x1 x2); intros H; auto.
   intros; discriminate.
-  intros H1; eq_tac; apply test_exact; auto.
+  intros H1; f_equal; apply test_exact; auto.
   intros; discriminate.
 Qed.
 
@@ -192,7 +192,7 @@ Theorem valid_pos_eq: forall p1 p2,
     valid_pos p1 -> valid_pos p2 -> pos2n p1 = pos2n p2 -> p1 = p2.
 Proof.
   intros (x1, y1) (x2, y2); simpl; intros (H1, H2) (H3, H4) H5.
-  assert (x1 = x2); try eq_tac; auto; try subst x2.
+  assert (x1 = x2); try f_equal; auto; try subst x2.
   apply lexico_mult with (3 := H5); auto.
   apply plus_reg_l with (1 := H5).
 Qed.
@@ -402,7 +402,7 @@ Proof with auto with arith.
   - contradict H; generalize H Hp1 Hp2; clear H Hp1 Hp2; case p1; case p2; simpl.
     intros x2 y2 x1 y1 H (H1, H2) (H3, H4).
     assert (HH: x1 = x2) by nia.
-    eq_tac; auto; subst...
+    f_equal; auto; subst...
     apply plus_reg_l with (x2 * size)...
 Qed.
 
@@ -593,7 +593,7 @@ Proof.
   intros x y s; rewrite jump_add.
   generalize (jump (x * size) s); intros l.
   generalize y size; elim l; simpl; auto; clear y l.
-  intros; rewrite jump_nil; rewrite take_nil; repeat rewrite nth_nil;
+  intros; rewrite jump_nil, take_nil; repeat rewrite nth_nil;
     auto.
   intros a l Rec y; case y.
   intros n; case n; simpl; auto.
@@ -617,7 +617,7 @@ Proof.
   simpl; auto with arith.
   intros size1 H H1; apply plus_le_reg_l with j.
   repeat rewrite (plus_comm j).
-  rewrite <- plus_assoc; rewrite (plus_comm 1); rewrite <- plus_assoc.
+  rewrite <- plus_assoc, (plus_comm 1), <- plus_assoc.
   rewrite <- length_jump; auto with arith.
   rewrite H1; auto with arith.
   replace (S size1 * S size1) with (size1 * S size1 + S size1); auto with arith.
@@ -632,7 +632,7 @@ Theorem get_column:
   forall x y s, x < size -> get (Pos x y) s = nth x (column y s) out.
 Proof.
   unfold get, column; simpl.
-  intros x y s; rewrite plus_comm; rewrite jump_add.
+  intros x y s; rewrite plus_comm, jump_add.
   generalize (jump y s); intros l.
   assert (Gen:
             forall a x l,
@@ -643,14 +643,14 @@ Proof.
   intros a l H; contradict H; auto with arith.
   intros a Rec; intros x; case x; simpl; clear x.
   intros l; case l; simpl; auto.
-  rewrite jump_nil; rewrite take_and_jump_nil; rewrite nth_nil; auto.
+  rewrite jump_nil, take_and_jump_nil, nth_nil; auto.
   intros x l; case l; auto; clear l.
   repeat rewrite jump_nil; rewrite take_and_jump_nil; rewrite nth_nil; auto.
   intros n l; case l; simpl; auto.
   intros H; rewrite <- Rec; auto with arith.
-  eq_tac; auto; apply jump_add; auto.
+  f_equal; auto; apply jump_add; auto.
   intros n1 l1 H; rewrite <- Rec; auto with arith.
-  eq_tac; auto; apply jump_add; auto.
+  f_equal; auto; apply jump_add; auto.
 Qed.
 
 (***************************************************)
@@ -790,9 +790,9 @@ Qed.
    rows, columns and subrectangle should be a permutation of the reference list
  *)
 Definition sudoku l := length l = size * size /\
-                       (forall i, i < size -> permutation (row i l) ref_list) /\
-                       (forall i, i < size -> permutation (column i l) ref_list) /\
-                       (forall i, i < size -> permutation (rect i l) ref_list).
+                       (forall i, i < size -> Permutation (row i l) ref_list) /\
+                       (forall i, i < size -> Permutation (column i l) ref_list) /\
+                       (forall i, i < size -> Permutation (rect i l) ref_list).
 
 
 (***************************************************)
@@ -817,11 +817,11 @@ Defined.
 Definition check: forall l, {sudoku l} + {~sudoku l}.
   intros l.
   case (eq_nat (length l) (size * size)); intros H1.
-  case (check_P (fun i => permutation (row i l) ref_list)
+  case (check_P (fun i => Permutation (row i l) ref_list)
                 (fun i => permutation_dec1 eq_nat (row i l) ref_list) size); intros H2.
-  case (check_P (fun i => permutation (column i l) ref_list)
+  case (check_P (fun i => Permutation (column i l) ref_list)
                 (fun i => permutation_dec1 eq_nat (column i l) ref_list) size); intros H3.
-  case (check_P (fun i => permutation (rect i l) ref_list)
+  case (check_P (fun i => Permutation (rect i l) ref_list)
                 (fun i => permutation_dec1 eq_nat (rect i l) ref_list) size); intros H4.
   left; unfold sudoku; auto.
   right; intros (_,(_,(_,HH))); case H4; auto.
@@ -889,7 +889,7 @@ Proof.
   intros l1 l2; case l1; case l2; simpl; auto.
   intros p2 z2 p1 z1; case_eq (pos_test p1 p2); intros H; auto.
   intros; discriminate.
-  intros H1; eq_tac; try apply pos_test_exact; auto.
+  intros H1; f_equal; try apply pos_test_exact; auto.
   apply test_exact; auto.
   intros; discriminate.
 Qed.
@@ -1128,19 +1128,19 @@ Definition find_all s :=
 
 Inductive jRes: Set := jNone | jOne (_: list nat) | jMore (_ _: list nat).
 
-Fixpoint try_just_one (s: list nat) (c: clause) 
-                 (cs: clauses) 
+Fixpoint try_just_one (s: list nat) (c: clause)
+                 (cs: clauses)
                  (f: list nat -> clauses -> jRes) : jRes :=
    match c with
       nil => jNone
     | (L p v) as k:: c1 =>
          let s1 := update p v s in
-         let cs1 := clauses_update k (anti_literals k) cs in   
+         let cs1 := clauses_update k (anti_literals k) cs in
          match f s1 cs1 with
            jNone => try_just_one s c1 cs f
          | jOne s2 => match try_just_one s c1 cs f with
                     jNone => jOne s2
-                   | jOne s3 => 
+                   | jOne s3 =>
                       if list_nat_eq s2 s3 then jOne s2 else jMore s2 s3
                    | jMore s1 s2 => jMore s1 s2
                    end
@@ -1151,13 +1151,13 @@ Fixpoint try_just_one (s: list nat) (c: clause)
 (* An auxillary function to find a solution by iteratively trying
    to satisfy the first clause of the list of clauses c
  *)
-Fixpoint find_just_one_aux (n: clauses) (s: list nat) 
+Fixpoint find_just_one_aux (n: clauses) (s: list nat)
                       (cs: clauses) : jRes :=
 match cs with
    nil => jOne s
 | (_, nil) :: _  => jNone
-| (_, p) :: cs1 => 
-    match n with 
+| (_, p) :: cs1 =>
+    match n with
       nil => jNone
     | _ :: n1 =>
        try_just_one s p cs1 (find_just_one_aux n1)
@@ -1833,7 +1833,7 @@ Proof.
   rewrite <- H0; simpl.
   intros H5; assert (Eq1: length s = pos2n p); auto with arith.
   contradict H4; rewrite Eq1; auto with arith.
-  eq_tac; auto.
+  f_equal; auto.
   intros a s1; case s1; clear s1.
   intros Rec s p cs H0 H1 H2 H3 H4.
   assert (F1: pos2n p < length s).
@@ -2168,14 +2168,14 @@ Proof.
                   case (gen_rect_correct l i z); auto; intros _ tmp; apply tmp; clear tmp
   end.
   exists (div j w); exists (mod j w); repeat split; auto with arith.
-  eq_tac; auto.
-  eq_tac; auto.
+  f_equal; auto.
+  f_equal; auto.
   rewrite (mult_comm h); auto.
   rewrite (mult_comm w); auto.
   apply div_lt; rewrite (mult_comm w); rewrite length_rect in Hj1; auto.
   rewrite Hj2.
   rewrite get_rect.
-  eq_tac; auto; [idtac | eq_tac]; auto.
+  f_equal; auto; [idtac | f_equal]; auto.
   rewrite length_rect in Hj1; auto.
   rewrite (mult_comm (div i h)); rewrite (mult_comm (mod i h));
     repeat rewrite mod_mult_comp; auto.
@@ -2413,7 +2413,7 @@ Proof.
               rewrite (div_mod_correct y1 w);
               try rewrite (div_mod_correct y2 w)]; auto.
   replace (div y1 w) with (div y2 w); auto.
-  eq_tac; auto.
+  f_equal; auto.
   apply plus_reg_l with (mod x1 h * w).
   pattern (mod x1 h) at 2; rewrite Eq1; auto.
   apply plus_reg_l with (div x1 h * h).
@@ -2457,7 +2457,7 @@ Proof.
   rewrite length_row; auto.
   rewrite length_row; auto.
   apply ulist_perm with ref_list; auto.
-  apply permutation_sym; auto.
+  apply Permutation_sym; auto.
   repeat rewrite <- get_row; try rewrite H2; auto.
   case H1; clear H1; intros V1 (_, (V2, _)).
   case (gen_column_correct l y z); intros tmp _; case tmp; auto; clear tmp.
@@ -2478,7 +2478,7 @@ Proof.
   rewrite length_column; auto.
   rewrite length_column; auto.
   apply ulist_perm with ref_list; auto.
-  apply permutation_sym; auto.
+  apply Permutation_sym; auto.
   repeat rewrite <- get_column; try rewrite H2; auto.
   case (gen_rect_correct l (div x h * h + div y w) z).
   apply rect_aux1; auto.
@@ -2522,7 +2522,7 @@ Proof.
   apply div_lt; rewrite mult_comm; auto.
   case H1; auto.
   apply ulist_perm with ref_list.
-  apply permutation_sym; case H1; auto.
+  apply Permutation_sym; case H1; auto.
   intros _ (_, (_, tmp)); apply tmp; clear tmp.
   unfold size; rewrite (mult_comm h); apply mult_lt_plus; auto.
   apply div_lt; rewrite mult_comm; auto.
@@ -2753,19 +2753,19 @@ Proof.
   generalize ref_list_length; intros F1.
   apply iff_sym; apply iff_trans with (1 := Hs3); clear Hs3.
   split; intros (V1, (V2, (V3, V4))); repeat split; auto.
-  intros; apply permutation_sym; apply ulist_eq_permutation; auto.
+  intros; apply Permutation_sym; apply ulist_eq_permutation; auto.
   rewrite length_row; auto.
-  intros; apply permutation_sym; apply ulist_eq_permutation; auto.
+  intros; apply Permutation_sym; apply ulist_eq_permutation; auto.
   rewrite length_column; auto.
-  intros; apply permutation_sym; apply ulist_eq_permutation; auto.
+  intros; apply Permutation_sym; apply ulist_eq_permutation; auto.
   rewrite length_rect; auto.
-  intros i Hi x Hx; apply permutation_in with ref_list; auto;
-    apply permutation_sym; auto.
-  intros i Hi x Hx; apply permutation_in with ref_list; auto;
-    apply permutation_sym; auto.
-  intros i Hi x Hx; apply permutation_in with ref_list; auto;
-    apply permutation_sym; auto.
-  intros (x, y) (Hx, Hy); apply permutation_in with (row x s1); auto.
+  intros i Hi x Hx; apply Permutation_in with ref_list; auto;
+    apply Permutation_sym; auto.
+  intros i Hi x Hx; apply Permutation_in with ref_list; auto;
+    apply Permutation_sym; auto.
+  intros i Hi x Hx; apply Permutation_in with ref_list; auto;
+    apply Permutation_sym; auto.
+  intros (x, y) (Hx, Hy); apply Permutation_in with (row x s1); auto.
   case (in_ex_nth _ (get (Pos x y) s1) out (row x s1)).
   intros _ tmp; apply tmp; clear tmp; auto.
   exists y; split; auto.
@@ -2806,7 +2806,7 @@ Proof.
   rewrite <- H2; simpl.
   intros H4; assert (Eq1: length s = pos2n p); auto with arith.
   contradict H3; rewrite Eq1; auto with arith.
-  eq_tac; auto.
+  f_equal; auto.
   intros a s1; unfold gen_init_clauses_aux; lazy beta; fold gen_init_clauses_aux;
     case s1; clear s1.
   intros Rec s cs p H0 H1 H2 H3.
@@ -3285,16 +3285,16 @@ Proof.
   case HH0; clear HH0 HH1; auto; intros HH0 (HH1, (HH2, HH3)); unfold sudoku
   .
   split; auto.
-  repeat split; intros i U; apply permutation_sym; apply ulist_eq_permutation; auto.
+  repeat split; intros i U; apply Permutation_sym; apply ulist_eq_permutation; auto.
   rewrite length_row; auto.
   rewrite length_column; auto.
   rewrite length_rect; auto.
   apply HH1; clear HH0 HH1.
   case H1; clear H1; intros H0 (H1, (H2, H3)).
-  repeat split; try (intros i Hi j Hj; apply permutation_in with (2 := Hj);
-                     try apply permutation_sym; auto).
+  repeat split; try (intros i Hi j Hj; apply Permutation_in with (2 := Hj);
+                     try apply Permutation_sym; auto).
   intros (x, y) (HH1, HH2).
-  apply permutation_in with (row x s); auto.
+  apply Permutation_in with (row x s); auto.
   rewrite get_row; try apply nth_In; try rewrite length_row; auto.
 Qed.
 
@@ -3342,7 +3342,7 @@ Proof.
   generalize H4; rewrite H1; case size; simpl; auto with arith.
   intros tmp; contradict tmp; auto with arith.
   case H; intros _ (HH, _).
-  apply permutation_in with  (l := row (div n size) s1); auto.
+  apply Permutation_in with  (l := row (div n size) s1); auto.
   unfold row.
   match goal with |- (In ?X ?Y) =>
                   case (in_ex_nth _ X out Y); intros _ tmp; apply tmp; clear tmp;

@@ -42,7 +42,7 @@ Davis-Putnam procedure to solve Sudokus.
 - Additional dependencies: none
 - Coq namespace: `Sudoku`
 - Related publication(s):
-  - [Sudoku in Coq](https://hal.inria.fr/hal-03277886) 
+  - [Sudoku in Coq](https://hal.inria.fr/hal-03277886)
 
 ## Building and installation instructions
 
@@ -59,7 +59,7 @@ To instead build and install manually, do:
 ``` shell
 git clone https://github.com/coq-community/sudoku.git
 cd sudoku
-make   # or make -j <number-of-cores-on-your-machine> 
+make   # or make -j <number-of-cores-on-your-machine>
 make install
 ```
 

@@ -39,32 +39,32 @@ Definition opp v := match v with lt => gt | eq => eq | gt => lt end.
 Variable weight: A -> A -> cmp.
 
 (* Transitivity *)
-Hypothesis weight_trans: 
+Hypothesis weight_trans:
   forall a b c, weight a b = weight b c -> weight a c = weight a b.
 
 (* Anti symmetry *)
-Hypothesis weight_anti_sym: 
+Hypothesis weight_anti_sym:
   forall a b, weight b a = opp (weight a b).
 
 (* Reflexivity *)
 Theorem weight_refl: forall a, weight a a = eq.
-intros a; generalize (weight_anti_sym a a); 
+intros a; generalize (weight_anti_sym a a);
   case (weight a a); auto; intros; discriminate.
 Qed.
 
 (* Compatibility left *)
-Hypothesis weight_compat_l: 
+Hypothesis weight_compat_l:
   forall a b c, weight a b = eq -> weight a c = weight b c.
 
 (* Compatibility right *)
-Theorem weight_compat_r: 
+Theorem weight_compat_r:
   forall a b c, weight a b = eq -> weight c a = weight c b.
 intros a b c H; repeat rewrite (fun x => weight_anti_sym x c).
 rewrite weight_compat_l with (b := b); auto.
 Qed.
 
 (* No collision *)
-Hypothesis weight_exact: 
+Hypothesis weight_exact:
   forall a b, weight a b = eq -> a = b.
 
 Theorem weight_equiv:
@@ -74,7 +74,7 @@ apply weight_refl.
 Qed.
 
 Definition A_dec : forall a b: A, {a = b} + {a <> b}.
-intros a b; generalize (weight_equiv a b); 
+intros a b; generalize (weight_equiv a b);
   case (weight a b); intros (H1, H2); auto.
 right; intros H; generalize (H2 H); intros; discriminate.
 right; intros H; generalize (H2 H); intros; discriminate.
@@ -84,11 +84,11 @@ Defined.
 Inductive olist: list A -> Prop :=
    olist_nil: olist nil
 |  olist_one: forall a, olist (a :: nil)
-| olist_cons: forall a b l, 
+| olist_cons: forall a b l,
       weight a b = lt -> olist (b::l) -> olist (a::b::l).
 
 (* Removing the first element of an ordered list, the list
-   remains ordered 
+   remains ordered
  *)
 Theorem olist_inv: forall a l, olist (a :: l) -> olist l.
 intros a l; case l; simpl; auto.
@@ -97,7 +97,7 @@ intros a1 l1 H; inversion H; auto.
 Qed.
 
 (* Removing the second element of an ordered list, the list
-   remains ordered 
+   remains ordered
  *)
 Theorem olist_skip:
   forall a b l, olist (a :: b :: l) -> olist (a :: l).
@@ -146,17 +146,17 @@ Qed.
 
 (* Check if a literal is in a clause *)
 Fixpoint is_in (a: A) (l: list A) {struct l}: bool :=
-  match l with 
+  match l with
     nil => false
-  | b :: l1 => 
+  | b :: l1 =>
      match weight a b with
-       eq => true 
+       eq => true
      | lt => false
      | gt => is_in a l1
      end
   end.
 
-Theorem is_in_correct: 
+Theorem is_in_correct:
   forall a l, olist l -> if is_in a l then In a l else ~ In a l.
 intros a l; elim l; simpl; auto.
 intros b l1 Rec H.
@@ -189,7 +189,7 @@ Fixpoint insert (a: A) (l: list A) {struct l}: list A :=
 Theorem insert_in: forall a l, In a (insert a l).
 intros a l; elim l; simpl; auto.
 intros b l1 H; case_eq (weight a b); auto with datatypes.
-intros H1; rewrite weight_exact with (1 := H1); 
+intros H1; rewrite weight_exact with (1 := H1);
   auto with datatypes.
 Qed.
 
@@ -219,17 +219,17 @@ generalize (Rec Eq1).
 assert (Eq2: forall c, In c (insert a l1) -> weight b c = lt).
 intros c H2.
 case insert_inv with (1 := H2); auto.
-intros; subst; rewrite weight_anti_sym; rewrite H1; auto.
+intros; subst; rewrite weight_anti_sym, H1; auto.
 intros H3; apply olist_weight with (1 := H); auto.
 generalize Eq2; case (insert a l1); auto.
 intros; apply olist_one.
 intros c l2 H2 H3; apply olist_cons; auto with datatypes.
 Qed.
 
-(* Insert an element in an ordered list l if needed (a does not 
-   occur in l) and then call the continuation f with the tail of l 
+(* Insert an element in an ordered list l if needed (a does not
+   occur in l) and then call the continuation f with the tail of l
  *)
-Fixpoint insert_cont (f: list A -> list A) (a: A) (l: list A) {struct l}: 
+Fixpoint insert_cont (f: list A -> list A) (a: A) (l: list A) {struct l}:
       list A :=
   match l with
     nil => a :: f nil
@@ -265,7 +265,7 @@ Theorem merge_incl_r: forall l1 l2, incl l2 (merge l1 l2).
 intros l1; elim l1; simpl; auto with datatypes.
 intros a l3 Rec l2; elim l2; simpl; auto with datatypes; clear l2.
 intros b l2 Rec1; case_eq (weight a b); intros H; auto with datatypes.
-intro c; simpl; intros [H1 | H1]; subst. 
+intro c; simpl; intros [H1 | H1]; subst.
 left; apply weight_exact; auto.
 right; apply (Rec l2 c); auto.
 Qed.
@@ -282,9 +282,9 @@ case Rec1; auto.
 Qed.
 
 (* Old trick to prove that ordering is preserved we first need
-   to prove something stronger 
+   to prove something stronger
  *)
-Theorem merge_olist_strong: forall a l1 l2, 
+Theorem merge_olist_strong: forall a l1 l2,
   olist (a :: l1) -> olist (a :: l2)  -> olist (a :: merge l1 l2).
 intros a l1; generalize a; elim l1; simpl; auto; clear a l1.
 intros b l1 Rec a l2 H.
@@ -306,12 +306,12 @@ apply olist_inv with (1 := H1); auto.
 apply olist_cons; auto.
 apply olist_weight with (1 := H1); auto with datatypes.
 apply Rec1; auto.
-rewrite weight_anti_sym; rewrite H2; auto.
+rewrite weight_anti_sym, H2; auto.
 apply olist_inv with (1 := H1); auto.
 Qed.
 
 (* merge keeps ordering *)
-Theorem merge_olist: forall l1 l2, 
+Theorem merge_olist: forall l1 l2,
   olist l1 -> olist l2  -> olist (merge l1 l2).
 intros l1; case l1; clear l1; simpl; auto.
 intros a l1 l2; case l2; simpl; auto; clear l2.
@@ -325,7 +325,7 @@ apply merge_olist_strong; auto.
 rewrite weight_exact with (1 := H2); auto.
 generalize b H H1 H2; elim l2; simpl; auto; clear l2 b H H1 H2.
 intros b H H1 H2; apply olist_cons; auto.
-rewrite weight_anti_sym; rewrite H2; auto.
+rewrite weight_anti_sym, H2; auto.
 apply merge_olist_strong; auto.
 apply olist_one; auto.
 intros b l2 Rec c H H1 H2.
@@ -388,9 +388,9 @@ intuition.
 Qed.
 
 (* Add an element in an ordered list l with possible duplication
-   and then call the continuation f with the tail of l 
+   and then call the continuation f with the tail of l
  *)
-Fixpoint add_cont (f: list A -> list A) (a: A) (l: list A) {struct l}: 
+Fixpoint add_cont (f: list A -> list A) (a: A) (l: list A) {struct l}:
       list A :=
   match l with
     nil => a :: f nil
@@ -450,13 +450,13 @@ case Rec1; auto.
 Qed.
 
 (* Remove an element from the list l if needed and then call
-   the continuation f on the tail of l 
+   the continuation f on the tail of l
  *)
 Fixpoint rm_cont (f: list A -> list A) (a: A) (l: list A) {struct l}:
           list A :=
-  match l with 
+  match l with
     nil => nil
-  | b :: l1 => 
+  | b :: l1 =>
      match weight a b with
        eq => f l1
      | lt => f l
@@ -525,7 +525,7 @@ assert (O2: olist l3); try apply olist_inv with (1 := H4).
 case_eq (weight b c); auto with datatypes; intros H6.
 Qed.
 
-Theorem rm_olist_strong: forall a l1 l2, 
+Theorem rm_olist_strong: forall a l1 l2,
   olist (a :: l2) -> olist (a :: rm l1 l2).
 intros a l1; generalize a; elim l1; simpl; auto; clear a l1.
 intros a l1 Rec c l2; generalize c; elim l2; simpl; auto; clear c l2.
@@ -564,8 +564,8 @@ Fixpoint lexico (l1 l2: list A) {struct l1}: cmp :=
   match l1 with
     nil => match l2 with nil => eq | _ => lt end
   | a:: l3 =>
-     match l2 with 
-       nil => gt 
+     match l2 with
+       nil => gt
      | b :: l4 =>
         match weight a b with
           eq => lexico l3 l4
@@ -574,13 +574,13 @@ Fixpoint lexico (l1 l2: list A) {struct l1}: cmp :=
      end
    end.
 
-Theorem lexico_trans: 
+Theorem lexico_trans:
   forall a b c, lexico a b = lexico b c -> lexico a c = lexico a b.
 intros a; elim a; simpl; auto; clear a.
 intros b; case b; auto; clear b.
-intros x b c; case c; clear c; simpl; auto. 
+intros x b c; case c; clear c; simpl; auto.
 intros; discriminate.
-intros x a Rec; intros b c; case c; case b; clear b c; simpl; 
+intros x a Rec; intros b c; case c; case b; clear b c; simpl;
  try (intros; discriminate; fail); auto.
 intros y b z c.
 case_eq (weight x y); auto; intros H1.
@@ -600,7 +600,7 @@ rewrite H1; auto.
 rewrite H1; auto.
 Qed.
 
-Theorem lexico_anti_sym: 
+Theorem lexico_anti_sym:
   forall a b, lexico b a = opp (lexico a b).
 intros a; elim a; clear a; simpl; auto.
 intros b; case b; clear b; simpl; auto.
@@ -610,7 +610,7 @@ case (weight x y); simpl; auto.
 Qed.
 
 (* No collision *)
-Theorem lexico_exact: 
+Theorem lexico_exact:
   forall a b, lexico a b = eq -> a = b.
 intros a; elim a; simpl; auto; clear a.
 intros b; case b; auto.
@@ -621,7 +621,7 @@ intros y b.
 generalize (weight_exact x y).
 case (weight x y); auto.
 intros; discriminate.
-intros; eq_tac; auto.
+intros; f_equal; auto.
 intros; discriminate.
 Qed.
 
@@ -635,7 +635,7 @@ Defined.
 
 (* Comparison for integers *)
 Fixpoint test (n m: nat) {struct n}: cmp :=
-  match n with 
+  match n with
        O => match m with O => eq | _ => lt end
   | S n1 => match m with O => gt | S m1 => test n1 m1 end
   end.
@@ -666,7 +666,7 @@ intros n1 Rec n2; elim n2; simpl; auto; clear n2.
 intros; discriminate.
 Qed.
 
-Theorem test_compat_l: 
+Theorem test_compat_l:
   forall a b c, test a b = eq -> test a c = test b c.
 intros a; elim a; simpl; auto; clear a.
 intros b; case b; try (intros; discriminate; fail).
