@@ -4,9 +4,14 @@
 *.vo
 *.glob
 *.cache
+*.cmi
+*.cmo
+*.bytes
 .Makefile.coq.d
 .coqdeps.d
 .direnv
-.CoqMakefile.d
 Makefile.coq
 Makefile.coq.conf
+Sudoku.ml
+Sudoku.mli
+Sudoku.js
