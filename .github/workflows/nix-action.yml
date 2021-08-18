@@ -20,8 +20,6 @@ jobs:
           - 'coq = "v8.14"'
           - 'coq = "8.13"'
           - 'coq = "8.12"'
-          - 'coq = "8.11"'
-          - 'coq = "8.10"'
       fail-fast: false
     steps:
       - uses: cachix/install-nix-action@v12

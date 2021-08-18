@@ -38,7 +38,7 @@ Davis-Putnam procedure to solve Sudokus.
   - Ben Siraphob ([**@siraben**](https://github.com/siraben))
   - Laurent Théry ([**@thery**](https://github.com/thery))
 - License: [GNU Lesser General Public License v2.1 or later](LICENSE)
-- Compatible Coq versions: 8.10 or later
+- Compatible Coq versions: 8.12 or later
 - Additional dependencies: none
 - Coq namespace: `Sudoku`
 - Related publication(s):
