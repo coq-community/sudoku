@@ -790,9 +790,9 @@ Qed.
    rows, columns and subrectangle should be a permutation of the reference list
  *)
 Definition sudoku l := length l = size * size /\
-                       (forall i, i < size -> permutation (row i l) ref_list) /\
-                       (forall i, i < size -> permutation (column i l) ref_list) /\
-                       (forall i, i < size -> permutation (rect i l) ref_list).
+                       (forall i, i < size -> Permutation (row i l) ref_list) /\
+                       (forall i, i < size -> Permutation (column i l) ref_list) /\
+                       (forall i, i < size -> Permutation (rect i l) ref_list).
 
 
 (***************************************************)
@@ -817,11 +817,11 @@ Defined.
 Definition check: forall l, {sudoku l} + {~sudoku l}.
   intros l.
   case (eq_nat (length l) (size * size)); intros H1.
-  case (check_P (fun i => permutation (row i l) ref_list)
+  case (check_P (fun i => Permutation (row i l) ref_list)
                 (fun i => permutation_dec1 eq_nat (row i l) ref_list) size); intros H2.
-  case (check_P (fun i => permutation (column i l) ref_list)
+  case (check_P (fun i => Permutation (column i l) ref_list)
                 (fun i => permutation_dec1 eq_nat (column i l) ref_list) size); intros H3.
-  case (check_P (fun i => permutation (rect i l) ref_list)
+  case (check_P (fun i => Permutation (rect i l) ref_list)
                 (fun i => permutation_dec1 eq_nat (rect i l) ref_list) size); intros H4.
   left; unfold sudoku; auto.
   right; intros (_,(_,(_,HH))); case H4; auto.
@@ -2457,7 +2457,7 @@ Proof.
   rewrite length_row; auto.
   rewrite length_row; auto.
   apply ulist_perm with ref_list; auto.
-  apply permutation_sym; auto.
+  apply Permutation_sym; auto.
   repeat rewrite <- get_row; try rewrite H2; auto.
   case H1; clear H1; intros V1 (_, (V2, _)).
   case (gen_column_correct l y z); intros tmp _; case tmp; auto; clear tmp.
@@ -2478,7 +2478,7 @@ Proof.
   rewrite length_column; auto.
   rewrite length_column; auto.
   apply ulist_perm with ref_list; auto.
-  apply permutation_sym; auto.
+  apply Permutation_sym; auto.
   repeat rewrite <- get_column; try rewrite H2; auto.
   case (gen_rect_correct l (div x h * h + div y w) z).
   apply rect_aux1; auto.
@@ -2522,7 +2522,7 @@ Proof.
   apply div_lt; rewrite mult_comm; auto.
   case H1; auto.
   apply ulist_perm with ref_list.
-  apply permutation_sym; case H1; auto.
+  apply Permutation_sym; case H1; auto.
   intros _ (_, (_, tmp)); apply tmp; clear tmp.
   unfold size; rewrite (mult_comm h); apply mult_lt_plus; auto.
   apply div_lt; rewrite mult_comm; auto.
@@ -2753,19 +2753,19 @@ Proof.
   generalize ref_list_length; intros F1.
   apply iff_sym; apply iff_trans with (1 := Hs3); clear Hs3.
   split; intros (V1, (V2, (V3, V4))); repeat split; auto.
-  intros; apply permutation_sym; apply ulist_eq_permutation; auto.
+  intros; apply Permutation_sym; apply ulist_eq_permutation; auto.
   rewrite length_row; auto.
-  intros; apply permutation_sym; apply ulist_eq_permutation; auto.
+  intros; apply Permutation_sym; apply ulist_eq_permutation; auto.
   rewrite length_column; auto.
-  intros; apply permutation_sym; apply ulist_eq_permutation; auto.
+  intros; apply Permutation_sym; apply ulist_eq_permutation; auto.
   rewrite length_rect; auto.
-  intros i Hi x Hx; apply permutation_in with ref_list; auto;
-    apply permutation_sym; auto.
-  intros i Hi x Hx; apply permutation_in with ref_list; auto;
-    apply permutation_sym; auto.
-  intros i Hi x Hx; apply permutation_in with ref_list; auto;
-    apply permutation_sym; auto.
-  intros (x, y) (Hx, Hy); apply permutation_in with (row x s1); auto.
+  intros i Hi x Hx; apply Permutation_in with ref_list; auto;
+    apply Permutation_sym; auto.
+  intros i Hi x Hx; apply Permutation_in with ref_list; auto;
+    apply Permutation_sym; auto.
+  intros i Hi x Hx; apply Permutation_in with ref_list; auto;
+    apply Permutation_sym; auto.
+  intros (x, y) (Hx, Hy); apply Permutation_in with (row x s1); auto.
   case (in_ex_nth _ (get (Pos x y) s1) out (row x s1)).
   intros _ tmp; apply tmp; clear tmp; auto.
   exists y; split; auto.
@@ -3285,16 +3285,16 @@ Proof.
   case HH0; clear HH0 HH1; auto; intros HH0 (HH1, (HH2, HH3)); unfold sudoku
   .
   split; auto.
-  repeat split; intros i U; apply permutation_sym; apply ulist_eq_permutation; auto.
+  repeat split; intros i U; apply Permutation_sym; apply ulist_eq_permutation; auto.
   rewrite length_row; auto.
   rewrite length_column; auto.
   rewrite length_rect; auto.
   apply HH1; clear HH0 HH1.
   case H1; clear H1; intros H0 (H1, (H2, H3)).
-  repeat split; try (intros i Hi j Hj; apply permutation_in with (2 := Hj);
-                     try apply permutation_sym; auto).
+  repeat split; try (intros i Hi j Hj; apply Permutation_in with (2 := Hj);
+                     try apply Permutation_sym; auto).
   intros (x, y) (HH1, HH2).
-  apply permutation_in with (row x s); auto.
+  apply Permutation_in with (row x s); auto.
   rewrite get_row; try apply nth_In; try rewrite length_row; auto.
 Qed.
 
@@ -3342,7 +3342,7 @@ Proof.
   generalize H4; rewrite H1; case size; simpl; auto with arith.
   intros tmp; contradict tmp; auto with arith.
   case H; intros _ (HH, _).
-  apply permutation_in with  (l := row (div n size) s1); auto.
+  apply Permutation_in with  (l := row (div n size) s1); auto.
   unfold row.
   match goal with |- (In ?X ?Y) =>
                   case (in_ex_nth _ X out Y); intros _ tmp; apply tmp; clear tmp;
