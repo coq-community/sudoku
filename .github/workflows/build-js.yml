@@ -20,7 +20,9 @@ jobs:
         with:
           custom_image: 'coqorg/coq:dev-ocaml-4.07.1-flambda'
           custom_script: |
-            {{before_install}}
+            startGroup "Add permissions"
+              sudo chown -R coq:coq .
+            endGroup
             startGroup "Install dependencies"
               opam pin add -n -y -k path coq-sudoku-js .
               opam update -y
