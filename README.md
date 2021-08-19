@@ -42,7 +42,7 @@ Davis-Putnam procedure to solve Sudokus.
 - Additional dependencies: none
 - Coq namespace: `Sudoku`
 - Related publication(s):
-  - [Sudoku in Coq](https://hal.inria.fr/hal-03277886)
+  - [Sudoku in Coq](https://hal.inria.fr/hal-03277886) 
 
 ## Building and installation instructions
 
@@ -59,18 +59,18 @@ To instead build and install manually, do:
 ``` shell
 git clone https://github.com/coq-community/sudoku.git
 cd sudoku
-make   # or make -j <number-of-cores-on-your-machine>
+make   # or make -j <number-of-cores-on-your-machine> 
 make install
 ```
 
 
 ## Documentation
 
-A sudoku is represented as a mono-dimensional list of natural
+A Sudoku is represented as a mono-dimensional list of natural
 numbers. Zeros are used to represent empty cells. For example,
-for 3x3 sudokus:
+the 3x3 Sudoku:
 
-````
+```
   -------------------------------------
   |   |   | 8 | 1 | 6 |   | 9 |   |   |
   -------------------------------------
@@ -90,11 +90,11 @@ for 3x3 sudokus:
   -------------------------------------
   |   |   | 7 |   | 4 | 9 | 3 |   |   |
   -------------------------------------
-````
+```
 
 is represented as
 
-````
+```coq
   0 :: 0 :: 8 :: 1 :: 6 :: 0 :: 9 :: 0 :: 0 ::
   0 :: 0 :: 4 :: 0 :: 5 :: 0 :: 2 :: 0 :: 0 ::
   9 :: 7 :: 0 :: 0 :: 0 :: 8 :: 0 :: 4 :: 5 ::
@@ -103,29 +103,25 @@ is represented as
   1 :: 0 :: 0 :: 0 :: 0 :: 0 :: 4 :: 0 :: 0 ::
   3 :: 6 :: 0 :: 5 :: 0 :: 0 :: 0 :: 8 :: 4 ::
   0 :: 0 :: 2 :: 0 :: 7 :: 0 :: 5 :: 0 :: 0 ::
-  0 :: 0 :: 7 :: 0 :: 4 :: 9 :: 3 :: 0 :: 0 :: nil.
-````
+  0 :: 0 :: 7 :: 0 :: 4 :: 9 :: 3 :: 0 :: 0 :: nil
+```
 
 All functions are parametrized by the height and width of
-its subrectangles.
+a Sudoku's subrectangles. For example, for a 3x3 Sudoku:
+```coq
+sudoku 3 3: list nat -> Prop
 
-For example for 3x3,
-
-````
-  sudoku 3 3: list nat -> Prop
-
-   check 3 3: forall l, {sudoku 3 3 l} + {~ sudoku 3 3 l}
+check 3 3: forall l, {sudoku 3 3 l} + {~ sudoku 3 3 l}
 
 find_one 3 3: list nat -> option (list nat)
 
 find_all 3 3: list nat -> list (list nat)
-````
+```
 
-See `Test.v`
+See `Test.v`.
 
 Corresponding correctness theorems are:
-
-```
+```coq
 find_one_correct 3 3
      : forall s,
        length s = 81 ->
@@ -139,27 +135,26 @@ find_all_correct 3 3
      : forall s,
        length s = 81 ->
        refine 3 3 s s1 -> (sudoku 3 3 s1 <-> In s1 (find_all 3 3 s))
-````
-See `Sudoku.v`
+```
 
-The contribution includes:
+See `Sudoku.v`.
 
-* `ListOp.v`         some basic functions on list
-* `Sudoku.v`         main file
-* `Test.v`           test file
+More about the formalisation can be found in a [note](https://hal.inria.fr/hal-03277886).
 
+The following files are included:
+- `ListOp.v`         some basic functions on list
+- `Sudoku.v`         main file
+- `Test.v`           test file
+- `Tactic.v`         contradict tactic
+- `Div.v`            division and modulo for nat
+- `Permutation.v`    permutation
+- `UList.v`          unique list
+- `ListAux.v`        auxillary facts on lists
+- `OrderedList.v`    ordered list
 
-The following files should be in the libraries of Coq:
-
-* `Tactic.v`         contradict tactic
-* `Div.v`            division and modulo for nat
-* `Permutation.v`    permutation
-* `UList.v`          unique list
-* `ListAux.v`        auxillary facts on lists
-* `OrderedList.v`    ordered list
-
-A note about this formalisation is available [here](https://hal.inria.fr/hal-03277886).
-
-There is an extraction to JavaScript using
-[js_of_ocaml](https://github.com/ocsigen/js_of_ocaml").
-The files to run it are generated in the [Html directory](Html).
+The Sudoku code can be extracted to JavaScript using
+[js_of_ocaml](https://github.com/ocsigen/js_of_ocaml):
+```shell
+make Sudoku.js
+```
+Then, point your browser at `Sudoku.html`.
