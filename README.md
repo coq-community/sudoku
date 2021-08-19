@@ -132,9 +132,7 @@ find_one_correct 3 3
        end
 
 find_all_correct 3 3
-     : forall s,
-       length s = 81 ->
-       refine 3 3 s s1 -> (sudoku 3 3 s1 <-> In s1 (find_all 3 3 s))
+     : forall s s1, refine 3 3 s s1 -> (sudoku 3 3 s1 <-> In s1 (find_all 3 3 s))
 ```
 
 See `Sudoku.v`.
