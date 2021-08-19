@@ -139,7 +139,7 @@ Proof with auto with arith.
   case (ulist_incl_permutation l1 l2)...
   intros l3 H4.
   assert (H5: l3 = @nil A).
-  generalize (Permutation_length H4); rewrite length_app, H3.
+  generalize (Permutation_length H4); rewrite app_length, H3.
   rewrite plus_comm; case l3; simpl...
   intros a l H5; absurd (lt (length l2) (length l2))...
   pattern (length l2) at 2; rewrite H5...
@@ -153,7 +153,7 @@ Theorem ulist_incl_length:
   forall (l1 l2 : list A), ulist l1 -> incl l1 l2 ->  le (length l1) (length l2).
   intros l1 l2 H1 Hi; case ulist_incl_permutation with ( 2 := Hi ); auto.
   intros l3 Hl3; rewrite Permutation_length with ( 1 := Hl3 ); auto.
-  rewrite length_app; simpl; auto with arith.
+  rewrite app_length; simpl; auto with arith.
 Qed.
 
 Theorem ulist_incl2_permutation:
@@ -168,13 +168,14 @@ Qed.
 Theorem ulist_incl_length_strict:
   forall (l1 l2 : list A),
     ulist l1 -> incl l1 l2 -> ~ incl l2 l1 ->  lt (length l1) (length l2).
-  intros l1 l2 H1 Hi Hi0; case ulist_incl_permutation with ( 2 := Hi ); auto.
-  intros l3 Hl3; rewrite Permutation_length with ( 1 := Hl3 ); auto.
-  rewrite length_app; simpl; auto with arith.
-  generalize Hl3; case l3; simpl; auto with arith.
-  rewrite <- app_nil_end; auto.
-  intros H2; case Hi0; auto.
-  intros a HH; apply Permutation_in with ( 1 := H2 ); auto.
+Proof with auto with arith.
+  intros l1 l2 H1 Hi Hi0; case ulist_incl_permutation with ( 2 := Hi )...
+  intros l3 Hl3; rewrite Permutation_length with ( 1 := Hl3 )...
+  rewrite app_length; simpl...
+  generalize Hl3; case l3; simpl...
+  rewrite <- app_nil_end...
+  intros H2; case Hi0...
+  intros a HH; apply Permutation_in with ( 1 := H2 )...
   intros a l Hl0; (rewrite plus_comm; simpl; rewrite plus_comm; auto with arith).
 Qed.
 

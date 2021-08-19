@@ -141,7 +141,7 @@ Qed.
 Theorem length_take_and_jump: forall i j (k: nat) s,
   (if k then 0 else i) + pred k * j <= length s -> length (take_and_jump i j k s) = k * i.
 intros i j k; generalize i j; elim k; simpl; auto; clear i j k.
-intros k Rec i j s H; rewrite length_app, length_take1;
+intros k Rec i j s H; rewrite app_length, length_take1;
   auto with arith.
 f_equal; auto.
 apply Rec.
