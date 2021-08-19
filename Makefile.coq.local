@@ -1,17 +1,17 @@
 Sudoku.js: Sudoku.bytes
 	js_of_ocaml Sudoku.bytes
 
-Sudoku.bytes: jSudoku.cmi jSudoku.ml Sudoku.ml Sudoku.cmi
-	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml-ppx -linkpkg -o Sudoku.bytes Sudoku.ml jSudoku.ml
+Sudoku.bytes: src/jSudoku.cmi src/jSudoku.ml Sudoku.ml Sudoku.cmi
+	ocamlfind ocamlc -I src -package js_of_ocaml -package js_of_ocaml-ppx -linkpkg -o Sudoku.bytes Sudoku.ml src/jSudoku.ml
 
-jSudoku.cmi: jSudoku.ml Sudoku.cmi
-	ocamlfind ocamlc jSudoku.mli
+src/jSudoku.cmi: src/jSudoku.ml Sudoku.cmi
+	ocamlfind ocamlc src/jSudoku.mli
 
 Sudoku.cmi: Sudoku.mli
 	ocamlfind ocamlc Sudoku.mli
 
-Sudoku.ml Sudoku.mli: Extract.v Sudoku.vo
-	$(COQC) $(COQDEBUG) $(COQFLAGS) $(COQLIBS) Extract.v
+Sudoku.ml Sudoku.mli: src/Extract.v theories/Sudoku.vo
+	$(COQC) $(COQDEBUG) $(COQFLAGS) $(COQLIBS) src/Extract.v
 
 clean::
-	$(HIDE)rm -f Sudoku.ml Sudoku.mli jSudoku.cmi jSudoku.cmo Sudoku.cmi Sudoku.cmo Sudoku.bytes Sudoku.js
+	$(HIDE)rm -f Sudoku.ml Sudoku.mli src/jSudoku.cmi src/jSudoku.cmo Sudoku.cmi Sudoku.cmo Sudoku.bytes Sudoku.js

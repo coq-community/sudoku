@@ -1,0 +1,20 @@
+(coq.extraction
+ (prelude Extract)
+ (extracted_modules Sudoku)
+ ;(theories Sudoku)
+)
+
+(executable
+ (name JSudoku)
+ (modes js)
+ (libraries js_of_ocaml)
+ (preprocess (pps js_of_ocaml-ppx)))
+
+(install
+ (section share)
+ (files
+  (JSudoku.bc.js as Sudoku.js)
+  (../SudokuBoard.js as SudokuBoard.js)
+  (../Sudoku.css as Sudoku.css)
+  (../Sudoku.html as Sudoku.html))
+ (package coq-sudoku-js))

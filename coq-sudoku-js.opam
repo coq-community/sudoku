@@ -12,13 +12,14 @@ description: """
 JavaScript Sudoku solver extracted from a formalisation
 in Coq using js_of_ocaml."""
 
-build: [make "Sudoku.js"]
+build: ["dune" "build" "-p" name "-j" jobs]
 depends: [
   "ocaml" {>= "4.07.1"}
+  "dune" {>= "2.5"}
   "coq" {(>= "8.12" & < "8.15~") | (= "dev")}
-  "ocamlbuild" {>= "0.14.0"}
   "js_of_ocaml" {>= "3.9.0"}
   "js_of_ocaml-ppx" {>= "3.9.0"}
+  "coq-sudoku" {= version}
 ]
 
 authors: [

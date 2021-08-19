@@ -13,7 +13,7 @@
 (* Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA *)
 (* 02110-1301 USA                                                     *)
 
-Require Import Sudoku.
-Require Import Extraction.
+From Sudoku Require Import Sudoku.
+From Coq Require Import Extraction.
 
 Extraction "Sudoku.ml" find_just_one.
