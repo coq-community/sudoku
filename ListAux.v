@@ -128,12 +128,6 @@ Qed.
 (* Properties on app                                                          *)
 (******************************************************************************)
 
-Theorem length_app:
-  forall (l1 l2 : list A), length (l1 ++ l2) = length l1 + length l2.
-Proof.
-  apply app_length.
-Qed.
-
 Theorem app_inv_app:
  forall l1 l2 l3 l4 a,
  l1 ++ l2 = l3 ++ (a :: l4) ->
@@ -275,7 +269,7 @@ Theorem length_list_prod:
   length (list_prod l1 l2) = length l1 * length l2.
 Proof.
   intros A l1 l2; elim l1; simpl; auto.
-  intros a l H; rewrite length_app, length_map, H; auto.
+  intros a l H; rewrite app_length, length_map, H; auto.
 Qed.
 
 Theorem in_list_prod_inv:

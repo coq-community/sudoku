@@ -64,9 +64,3 @@ Ltac  contradict name :=
 
 Ltac case_eq name :=
   generalize (refl_equal name); pattern name at -1 in |- *; case name.
-
-(**************************************
- A stupid tactic that tries auto also after applying sym_equal
-**************************************)
-
-Ltac sauto := (intros; apply sym_equal; auto; fail) || auto.
