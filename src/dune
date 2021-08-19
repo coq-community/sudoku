@@ -12,9 +12,5 @@
 
 (install
  (section share)
- (files
-  (JSudoku.bc.js as Sudoku.js)
-  (../SudokuBoard.js as SudokuBoard.js)
-  (../Sudoku.css as Sudoku.css)
-  (../Sudoku.html as Sudoku.html))
+ (files (JSudoku.bc.js as Sudoku.js))
  (package coq-sudoku-js))
