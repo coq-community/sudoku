@@ -1,3 +1,5 @@
+# This file was generated from `meta.yml`, please do not edit manually.
+# Follow the instructions on https://github.com/coq-community/templates to regenerate.
 name: Docker CI
 
 on:
@@ -16,15 +18,12 @@ jobs:
       matrix:
         image:
           - 'coqorg/coq:dev-ocaml-4.07.1-flambda'
-        opam_file:
-          - 'coq-sudoku.opam'
-          - 'coq-sudoku-js.opam'
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
       - uses: coq-community/docker-coq-action@v1
         with:
-          opam_file: ${{ matrix.opam_file }}
+          opam_file: 'coq-sudoku.opam'
           custom_image: ${{ matrix.image }}
 
 # See also:

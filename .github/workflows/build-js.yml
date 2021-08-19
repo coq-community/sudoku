@@ -1,0 +1,52 @@
+name: Build and Deploy JavaScript
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  build-js:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@v2
+
+      - name: Build Sudoku JavaScript
+        uses: coq-community/docker-coq-action@v1
+        with:
+          custom_image: 'coqorg/coq:dev-ocaml-4.07.1-flambda'
+          custom_script: |
+            startGroup "Add permissions"
+              sudo chown -R coq:coq .
+            endGroup
+            startGroup "Install dependencies"
+              opam pin add -n -y -k path coq-sudoku-js .
+              opam update -y
+              opam install -y -j "$(nproc)" coq-sudoku-js --deps-only
+            endGroup
+            startGroup "Build Sudoku.js"
+              make -j "$(nproc)" Sudoku.js
+            endGroup
+
+      - name: Revert Coq user permissions
+        # to avoid a warning at cleanup time
+        if: ${{ always() }}
+        run: sudo chown -R 1001:116 .
+
+      - name: Copy HTML and CSS and JavaScript
+        run: |
+          mkdir public
+          cp SudokuBoard.js Sudoku.css Sudoku.html Sudoku.js public/
+
+      - name: Deploy to GitHub pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: crazy-max/ghaction-github-pages@v2
+        with:
+          build_dir: public
+          jekyll: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
