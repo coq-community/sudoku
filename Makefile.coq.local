@@ -10,8 +10,8 @@ jSudoku.cmi: jSudoku.ml Sudoku.cmi
 Sudoku.cmi: Sudoku.mli
 	ocamlfind ocamlc Sudoku.mli
 
-Sudoku.ml Sudoku.mli: Test.v Sudoku.vo Print.vo Parse.vo
-	$(COQC) $(COQDEBUG) $(COQFLAGS) $(COQLIBS) Test.v
+Sudoku.ml Sudoku.mli: Extract.v Sudoku.vo
+	$(COQC) $(COQDEBUG) $(COQFLAGS) $(COQLIBS) Extract.v
 
 clean::
 	$(HIDE)rm -f Sudoku.ml Sudoku.mli jSudoku.cmi jSudoku.cmo Sudoku.cmi Sudoku.cmo Sudoku.bytes Sudoku.js

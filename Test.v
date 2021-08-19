@@ -17,7 +17,6 @@ Require Import Sudoku.
 Require Import Print.
 Require Import String.
 Require Import Parse.
-Require Import Extraction.
 Import List.
 
 Definition one_solution n m l :=
@@ -128,8 +127,6 @@ Time Eval vm_compute in jos
     |49 | 5 |   |
     |   |  2|   |
     -------------".
-
-Extraction "Sudoku.ml" find_just_one.
 
 Time Eval vm_compute in jos
 "
