@@ -20,27 +20,31 @@ jobs:
         with:
           custom_image: 'coqorg/coq:dev-ocaml-4.07.1-flambda'
           custom_script: |
-            startGroup "Add permissions"
-              sudo chown -R coq:coq .
+            {{before_install}}
+            startGroup "Build sudoku dependencies"
+              opam pin add -n -y -k path coq-sudoku .
+              opam update -y
+              opam install -y -j "$(nproc)" coq-sudoku --deps-only
             endGroup
-            startGroup "Install dependencies"
+            startGroup "Build sudoku"
+              opam install -y -v -j "$(nproc)" coq-sudoku
+              opam list
+            endGroup
+            startGroup "Build sudoku-js dependencies"
               opam pin add -n -y -k path coq-sudoku-js .
               opam update -y
               opam install -y -j "$(nproc)" coq-sudoku-js --deps-only
             endGroup
-            startGroup "Build Sudoku.js"
-              make -j "$(nproc)" Sudoku.js
+            startGroup "Build sudoku-js"
+              opam install -y -v -j "$(nproc)" coq-sudoku-js
+              opam list
             endGroup
-
-      - name: Revert Coq user permissions
-        # to avoid a warning at cleanup time
-        if: ${{ always() }}
-        run: sudo chown -R 1001:116 .
 
       - name: Copy HTML and CSS and JavaScript
         run: |
           mkdir public
-          cp index.html SudokuBoard.js Sudoku.css Sudoku.html Sudoku.js public/
+          cp "$(opam var share)"/coq-sudoku-js/Sudoku.js public/
+          cp index.html SudokuBoard.js Sudoku.css Sudoku.html public/
 
       - name: Deploy to GitHub pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
