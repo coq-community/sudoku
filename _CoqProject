@@ -1,4 +1,4 @@
--R . Sudoku
+-R theories Sudoku
 
 theories/Div.v
 theories/ListAux.v
