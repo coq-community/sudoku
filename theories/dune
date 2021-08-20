@@ -1,0 +1,4 @@
+(coq.theory
+ (name Sudoku)
+ (package coq-sudoku)
+ (synopsis "Sudoku solver certified in Coq"))

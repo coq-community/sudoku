@@ -20,16 +20,30 @@ jobs:
         with:
           custom_image: 'coqorg/coq:dev-ocaml-4.07.1-flambda'
           custom_script: |
-            startGroup "Add permissions"
-              sudo chown -R coq:coq .
+            {{before_install}}
+            startGroup "Build sudoku dependencies"
+              opam pin add -n -y -k path coq-sudoku .
+              opam update -y
+              opam install -y -j "$(nproc)" coq-sudoku --deps-only
             endGroup
-            startGroup "Install dependencies"
+            startGroup "Build sudoku"
+              opam install -y -v -j "$(nproc)" coq-sudoku
+              opam list
+            endGroup
+            startGroup "Build sudoku-js dependencies"
               opam pin add -n -y -k path coq-sudoku-js .
               opam update -y
               opam install -y -j "$(nproc)" coq-sudoku-js --deps-only
             endGroup
-            startGroup "Build Sudoku.js"
-              make -j "$(nproc)" Sudoku.js
+            startGroup "Build sudoku-js"
+              opam install -y -v -j "$(nproc)" coq-sudoku-js
+              opam list
+            endGroup
+            startGroup "Add permissions"
+              sudo chown -R coq:coq .
+            endGroup
+            startGroup "Copy JavaScript"
+              cp "$(opam var share)"/coq-sudoku-js/Sudoku.js .
             endGroup
 
       - name: Revert Coq user permissions

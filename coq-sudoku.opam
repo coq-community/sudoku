@@ -15,9 +15,9 @@ description: """
 A formalisation of Sudoku in Coq. It implements a naive
 Davis-Putnam procedure to solve Sudokus."""
 
-build: [make "-j%{jobs}%" ]
-install: [make "install"]
+build: ["dune" "build" "-p" name "-j" jobs]
 depends: [
+  "dune" {>= "2.5"}
   "coq" {(>= "8.12" & < "8.15~") | (= "dev")}
 ]
 
