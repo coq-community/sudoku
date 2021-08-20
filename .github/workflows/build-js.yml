@@ -39,12 +39,22 @@ jobs:
               opam install -y -v -j "$(nproc)" coq-sudoku-js
               opam list
             endGroup
+            startGroup "Add permissions"
+              sudo chown -R coq:coq .
+            endGroup
+            startGroup "Copy JavaScript"
+              cp "$(opam var share)"/coq-sudoku-js/Sudoku.js .
+            endGroup
+
+      - name: Revert Coq user permissions
+        # to avoid a warning at cleanup time
+        if: ${{ always() }}
+        run: sudo chown -R 1001:116 .
 
       - name: Copy HTML and CSS and JavaScript
         run: |
           mkdir public
-          cp "$(opam var share)"/coq-sudoku-js/Sudoku.js public/
-          cp index.html SudokuBoard.js Sudoku.css Sudoku.html public/
+          cp index.html SudokuBoard.js Sudoku.css Sudoku.html Sudoku.js public/
 
       - name: Deploy to GitHub pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
