@@ -43,7 +43,7 @@ tested_coq_opam_versions:
 
 tested_coq_nix_versions:
 - coq_version: 'master'
-- coq_version: 'v8.14'
+- coq_version: '8.14'
 - coq_version: '8.13'
 - coq_version: '8.12'
 
