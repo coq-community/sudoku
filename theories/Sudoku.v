@@ -36,8 +36,8 @@ Section check.
 (***********************************************************************)
 (* About the encoding:                                                 *)
 (*  h represents the number of rows of a little rectangle              *)
-(*  w represents the number of colums of a little rectangle            *)
-(*  size represents the number of cells of a litte rectangle           *)
+(*  w represents the number of columns of a little rectangle           *)
+(*  size represents the number of cells of a little rectangle          *)
 (* the initial grid is then composed of (size * size) cells            *)
 (* For example for the usual sudoku                                    *)
 (*   h = 3, w = 3, size = 9, the grid = 81 cells                       *)
@@ -520,7 +520,7 @@ Proof.
   intros n p; unfold empty; rewrite get_mk_0; apply out_not_in_refl.
 Qed.
 
-(* Jumping an empty state gives an empty sate *)
+(* Jumping an empty state gives an empty state *)
 Theorem empty_jump:
   forall n s, empty s -> empty (jump n s).
 Proof.
@@ -865,7 +865,7 @@ Proof with auto.
   rewrite (pos_test_trans p1 p2 p3); rewrite H...
 Qed.
 
-(* lit_test is anti symetric *)
+(* lit_test is anti symmetric *)
 Theorem lit_test_anti_sym: forall l1 l2,
     lit_test l1 l2 = opp (lit_test l2 l1).
 Proof.
@@ -1003,7 +1003,7 @@ Definition anti_literals l :=
                                              (lit_rm c (gen_cell k))))
   end.
 
-(* Auxillary function that updates the list of clauses c with
+(* Auxiliary function that updates the list of clauses c with
    the list s, interpreting the first element of s as in position (x,y)
    the update is performed only for the elements of s that are in l
  *)
@@ -1047,7 +1047,7 @@ Fixpoint try_one (s: list nat) (c: clause)
     end
   end.
 
-(* An auxillary function to find a solution by iteratively trying
+(* An auxiliary function to find a solution by iteratively trying
    to satisfy the first clause of the list of clauses c
  *)
 Fixpoint find_one_aux (n: clauses) (s: list nat)
@@ -1092,7 +1092,7 @@ Fixpoint try_all (s: list nat) (c: clause)
     merges (f s1 cs1) (try_all s l1 cs f)
   end.
 
-(* An auxillary function to find all solutions by iteratively trying
+(* An auxiliary function to find all solutions by iteratively trying
    to satisfy the first clause of the list of clauses c
  *)
 Fixpoint find_all_aux (n: clauses) (s: list nat) (cs: clauses) {struct n}:
@@ -1140,7 +1140,7 @@ Fixpoint try_just_one (s: list nat) (c: clause)
          end
    end.
 
-(* An auxillary function to find a solution by iteratively trying
+(* An auxiliary function to find a solution by iteratively trying
    to satisfy the first clause of the list of clauses c
  *)
 Fixpoint find_just_one_aux (n: clauses) (s: list nat)
@@ -1172,7 +1172,7 @@ Proof.
   intros c cs; unfold clause_insert; apply ocons_length.
 Qed.
 
-(* Addding two classes adds their length *)
+(* Adding two classes adds their length *)
 Theorem length_clauses_merge: forall cs1 cs2,
     length (clauses_merge cs1 cs2) = length cs1 + length cs2.
 Proof.

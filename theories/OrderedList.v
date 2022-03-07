@@ -117,7 +117,7 @@ inversion_clear H1; auto.
 Qed.
 
 
-(* All the elements in an ordered list are smaller thant the head *)
+(* All the elements in an ordered list are smaller than the head *)
 Theorem olist_weight:
   forall a b l, olist (a :: l) -> In b l -> weight a b = lt.
 intros a b l H; generalize a b H; elim l; clear a b l H.

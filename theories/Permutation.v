@@ -124,7 +124,7 @@ Proof.
 Qed.
 
 (**************************************
- An auxillary function to generate all permutations
+ An auxiliary function to generate all permutations
  **************************************)
 
 Fixpoint all_permutations_aux (l : list A) (n : nat) {struct n} :
