@@ -411,12 +411,12 @@ Fixpoint add (l1 l2: list A) {struct l1}: list A :=
 
 Theorem add_length: forall l1 l2, length (add l1 l2) = length l1 + length l2.
 intros l1; elim l1; simpl; auto; clear l1.
-intros a l1 Rec l2; elim l2; simpl; auto; clear l2.
-rewrite Rec; auto.
-intros b l2 Rec1; case (weight a b); simpl; auto.
-rewrite Rec; simpl; repeat rewrite <- plus_n_Sm; auto with arith.
-rewrite Rec; simpl; repeat rewrite <- plus_n_Sm; auto with arith.
-rewrite Rec1; simpl; repeat rewrite <- plus_n_Sm; auto with arith.
+intros a l1 Rec l2; elim l2.
+- simpl; auto; clear l2; rewrite Rec; auto.
+- simpl; clear l2; intros b l2 Rec1; case (weight a b); simpl.
+  * rewrite Rec; simpl; repeat rewrite <- plus_n_Sm; auto with arith.
+  * rewrite Rec; simpl; repeat rewrite <- plus_n_Sm; auto with arith.
+  * rewrite Rec1; simpl; repeat rewrite <- plus_n_Sm; auto with arith.
 Qed.
 
 Theorem add_incl_l: forall l1 l2, incl l1 (add l1 l2).
