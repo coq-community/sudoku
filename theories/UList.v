@@ -140,7 +140,7 @@ Proof with auto with arith.
   intros l3 H4.
   assert (H5: l3 = @nil A).
   generalize (Permutation_length H4); rewrite app_length, H3.
-  rewrite plus_comm; case l3; simpl...
+  rewrite Nat.add_comm; case l3; simpl...
   intros a l H5; absurd (lt (length l2) (length l2))...
   pattern (length l2) at 2; rewrite H5...
   replace l1 with (app l1 l3)...
@@ -161,7 +161,7 @@ Theorem ulist_incl2_permutation:
     ulist l1 -> ulist l2 -> incl l1 l2 -> incl l2 l1  ->  Permutation l1 l2.
   intros l1 l2 H1 H2 H3 H4.
   apply ulist_eq_permutation; auto.
-  apply le_antisym; apply ulist_incl_length; auto.
+  apply Nat.le_antisymm; apply ulist_incl_length; auto.
 Qed.
 
 
@@ -176,7 +176,7 @@ Proof with auto with arith.
   rewrite <- app_nil_end...
   intros H2; case Hi0...
   intros a HH; apply Permutation_in with ( 1 := H2 )...
-  intros a l Hl0; (rewrite plus_comm; simpl; rewrite plus_comm; auto with arith).
+  intros a l Hl0; (rewrite Nat.add_comm; simpl; rewrite Nat.add_comm; auto with arith).
 Qed.
 
 Theorem in_inv_dec:

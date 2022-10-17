@@ -148,15 +148,15 @@ apply Rec.
 generalize H; case k; clear k H Rec.
 intros; simpl; auto with arith.
 intros k H; simpl pred.
-apply plus_le_reg_l with j.
-rewrite (fun x (y: list A) => plus_comm x (length y)).
+apply Nat.add_le_mono_l with j.
+rewrite (fun x (y: list A) => Nat.add_comm x (length y)).
 rewrite <- length_jump; auto with arith.
-rewrite plus_permute; auto.
-apply le_trans with (2 := H); auto with arith.
+rewrite Nat.add_shuffle3; auto.
+apply Nat.le_trans with (2 := H); auto with arith.
 pattern j at 1; replace j with (0 + (j + 0)); auto with arith.
-apply plus_le_compat; simpl; auto with arith.
+apply Nat.add_le_mono; simpl; auto with arith.
 simpl; auto with arith.
-apply le_trans with (2 := H); auto with arith.
+apply Nat.le_trans with (2 := H); auto with arith.
 Qed.
 
 (* Replace the n th element of the list l with the value v *)
@@ -261,7 +261,7 @@ assert (E1: forall n m p , In p (progression n m) -> m <= p).
 intros n; elim n; simpl; auto with datatypes; clear n.
 intros m p H; case H.
 intros n Rec m p [H | H]; subst; auto with arith.
-apply le_trans with (S m); auto with arith.
+apply Nat.le_trans with (S m); auto with arith.
 intros n; elim n; simpl; clear n; auto.
 intros n Rec m; apply ulist_cons; auto.
 intros H; generalize (E1 _ _ _ H); auto with arith.
@@ -278,7 +278,7 @@ intros n1 Rec a i; case (Rec (S a) i); clear Rec; intros H1 H2.
 split; intros H.
 case H; intros H3; subst; auto with arith.
 case H1; try rewrite plus_n_Sm; auto with arith.
-case H; intros H3 H4; case le_lt_or_eq with (1 := H3); auto with arith.
+case H; intros H3 H4; case Lt.le_lt_or_eq_stt  with (1 := H3); auto with arith.
 rewrite plus_n_Sm in H4; auto with arith.
 Qed.
 
