@@ -18,6 +18,8 @@ jobs:
       matrix:
         overrides:
           - 'coq = "master"'
+          - 'coq = "8.16"'
+          - 'coq = "8.15"'
           - 'coq = "8.14"'
           - 'coq = "8.13"'
           - 'coq = "8.12"'
