@@ -1,0 +1,51 @@
+<!--
+(* GNU General Public License for more details.                       *)
+(*                                                                    *)
+(* You should have received a copy of the GNU Lesser General Public   *)
+(* License along with this program; if not, write to the Free         *)
+(* Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA *)
+(* 02110-1301 USA                                                     *)
+-->
+
+
+<HTML>
+
+    <HEAD>
+
+        <TITLE>Sudoku</TITLE>
+
+    </HEAD><BODY>
+
+        <H1> Sudoku Solver </H1>
+        <P>
+        This page lets you solve your Sudoku. The position is entered
+        by clicking on the different squares of the Sudoku. For example,
+        5 is put on an empty square by clicking
+        five times on it. Once the position is entered, click on
+        the "Solve" button to solve it. If you want to start from
+        scratch, click on the "Clear" button.
+        </P>
+
+        <p>
+	        <div class="center-wrapper-parent">
+  			 <div class="canvas-wrapper">
+    			<canvas  width="340" height="340" id="sudokuBoard" class="center-v"></canvas>
+            <script src="Sudoku.js"></script>
+            <script src="SudokuBoard.js"></script>
+  </div>
+  <div>
+  <button onclick="resetBoard(init0)" class="Clear"> Clear </button>
+  <button onclick="solveBoard()" class="Solve"> Solve </button>
+  <label id="messageBoard"></label>
+  </div>
+</div>
+        </p>
+
+        This code has been proved correct in the <A HREF="https://coq.inria.fr">Coq proof assistant</A>.
+        A paper that explains the algorithm that is used can
+        be found <A HREF="https://hal.inria.fr/hal-03277886">here</A>. We use <A HREF="https://github.com/ocsigen/js_of_ocaml">js_of_ocaml</A> to
+        include <A HREF="https://ocaml.org">OCaml</A> code inside an HTML page.
+
+    </BODY>
+
+</HTML>
