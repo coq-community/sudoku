@@ -1,27 +1,27 @@
-(* This program is free software; you can redistribute it and/or      *)
-(* modify it under the terms of the GNU Lesser General Public License *)
-(* as published by the Free Software Foundation; either version 2.1   *)
-(* of the License, or (at your option) any later version.             *)
-(*                                                                    *)
-(* This program is distributed in the hope that it will be useful,    *)
-(* but WITHOUT ANY WARRANTY; without even the implied warranty of     *)
-(* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the      *)
-(* GNU General Public License for more details.                       *)
-(*                                                                    *)
-(* You should have received a copy of the GNU Lesser General Public   *)
-(* License along with this program; if not, write to the Free         *)
-(* Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA *)
-(* 02110-1301 USA                                                     *)
+(* This program is free software; you can redistribute it and/or              *)
+(* modify it under the terms of the GNU Lesser General Public License         *)
+(* as published by the Free Software Foundation; either version 2.1           *)
+(* of the License, or (at your option) any later version.                     *)
+(*                                                                            *)
+(* This program is distributed in the hope that it will be useful,            *)
+(* but WITHOUT ANY WARRANTY; without even the implied warranty of             *)
+(* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              *)
+(* GNU General Public License for more details.                               *)
+(*                                                                            *)
+(* You should have received a copy of the GNU Lesser General Public           *)
+(* License along with this program; if not, write to the Free                 *)
+(* Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA         *)
+(* 02110-1301 USA                                                             *)
 
 
-(********************************************************)
-(*            Sudoku.v:                                 *)
-(*     Checking and Solving Sudokus                     *)
-(*                               thery@sophia.inria.fr  *)
-(*     Definitions:                                     *)
-(*      sudoku, check, find_one, find_all               *)
-(*                                      (2006)          *)
-(********************************************************)
+(******************************************************************************)
+(*            Sudoku.v:                                                       *)
+(*     Checking and Solving Sudokus                                           *)
+(*                               thery@sophia.inria.fr                        *)
+(*     Definitions:                                                           *)
+(*      sudoku, check, find_one, find_all                                     *)
+(*                                      (2006)                                *)
+(******************************************************************************)
 
 Require Export List.
 Require Import UList.
@@ -33,19 +33,19 @@ Require Import Lia.
 
 Section check.
 
-(***********************************************************************)
-(* About the encoding:                                                 *)
-(*  h represents the number of rows of a little rectangle              *)
-(*  w represents the number of columns of a little rectangle           *)
-(*  size represents the number of cells of a little rectangle          *)
-(* the initial grid is then composed of (size * size) cells            *)
-(* For example for the usual sudoku                                    *)
-(*   h = 3, w = 3, size = 9, the grid = 81 cells                       *)
-(* The grid is represented by a list of (size * size) cells            *)
-(* at the position (x,y) of the list (i.e at the index (x * size + y)) *)
-(* if the cell is empty it contains 0, otherwise its contains one of   *)
-(* the numbers 1,2, ..., size                                          *)
-(***********************************************************************)
+(******************************************************************************)
+(* About the encoding:                                                        *)
+(*  h represents the number of rows of a little rectangle                     *)
+(*  w represents the number of columns of a little rectangle                  *)
+(*  size represents the number of cells of a little rectangle                 *)
+(* the initial grid is then composed of (size * size) cells                   *)
+(* For example for the usual sudoku                                           *)
+(*   h = 3, w = 3, size = 9, the grid = 81 cells                              *)
+(* The grid is represented by a list of (size * size) cells                   *)
+(* at the position (x,y) of the list (i.e at the index (x * size + y))        *)
+(* if the cell is empty it contains 0, otherwise its contains one of          *)
+(* the numbers 1,2, ..., size                                                 *)
+(******************************************************************************)
 
 (* Height h and width w *)
 Variable h w: nat.
@@ -84,7 +84,7 @@ Theorem in_indexes: forall i, In i indexes <-> i < size.
 Proof.
   intros i; unfold indexes.
   destruct (in_progression size 0 i).
-  rewrite plus_0_r in H; split; intros; destruct H; auto with arith.
+  rewrite  Nat.add_0_r in H; split; intros; destruct H; auto with arith.
 Qed.
 
 (* An element outside the ref_list *)
@@ -107,9 +107,9 @@ Proof.
   unfold init; induction (size * size); simpl; auto.
 Qed.
 
-(***************************************************)
-(*    Positions (x, y)                             *)
-(***************************************************)
+(******************************************************************************)
+(*    Positions (x, y)                                                        *)
+(******************************************************************************)
 
 (* Define a position *)
 Inductive pos: Set := Pos: nat -> nat -> pos.
@@ -194,7 +194,7 @@ Proof.
   intros (x1, y1) (x2, y2); simpl; intros (H1, H2) (H3, H4) H5.
   assert (x1 = x2); try f_equal; auto; try subst x2.
   apply lexico_mult with (3 := H5); auto.
-  apply plus_reg_l with (1 := H5).
+  apply Nat.add_cancel_l with (1 := H5).
 Qed.
 
 (* Find the next position *)
@@ -251,21 +251,21 @@ Definition cross :=
 Theorem cross_correct: forall p,
     In p cross <-> exists x, exists y, x < h /\ y < w /\ p = Pos x y.
 Proof.
-  intros p; case (in_fold_map _ (fun x y => Pos x y) p (progression w 0) (progression h 0)).
+  intros p; case (in_fold_map _ (fun x y => Pos x y) p (progression w 0) 
+                  (progression h 0)).
   intros H1 H2; split; intros H3.
   case H1; auto.
   intros x (y, (U1, (U2, U3))).
   exists x; exists y; repeat split; auto.
   case (in_progression h 0 x); auto with arith.
-  rewrite plus_0_r; intros H _; case H; auto.
+  rewrite  Nat.add_0_r; intros H _; case H; auto.
   case (in_progression w 0 y); auto with arith.
-  rewrite plus_0_r; intros H _; case H; auto.
+  rewrite  Nat.add_0_r; intros H _; case H; auto.
   case H3; intros x (y, (U1, (U2, U3))); apply H2; clear H2 H3.
   exists x; exists y; repeat split; auto with arith.
   case (in_progression h 0 x); auto with arith.
   case (in_progression w 0 y); auto with arith.
 Qed.
-
 
 (* Create the list of pairs (x, y) such that 0 <= x < size and 1 <= y <= size *)
 Definition cross1 :=
@@ -274,12 +274,14 @@ Definition cross1 :=
   fold_right (fun x l => (map (fun y => (x, y)) q) ++ l) nil p.
 
 Theorem cross1_correct: forall p,
-    In p cross1 <-> exists x, exists y, In x indexes /\ In y ref_list /\ p = (x, y).
+  In p cross1 <->
+  exists x, exists y, In x indexes /\ In y ref_list /\ p = (x, y).
 Proof.
   intros p; exact (in_fold_map _ (fun x y => (x, y)) p ref_list indexes).
 Qed.
 
-(* Create the list of positions (x, y) such that 0 <= x < size and 0 <= y < size1 *)
+(* Create the list of positions (x, y) such that                              *)
+(*   0 <= x < size and 0 <= y < size1                                         *)
 Definition cross2 :=
   let p := indexes in
   let q := indexes in
@@ -293,9 +295,9 @@ Proof.
   intros x (y, (U1, (U2, U3))).
   rewrite U3; split; auto.
   case (in_progression size 0 x); auto with arith.
-  rewrite plus_0_r; intros H _; case H; auto.
+  rewrite  Nat.add_0_r; intros H _; case H; auto.
   case (in_progression size 0 y); auto with arith.
-  rewrite plus_0_r; intros H _; case H; auto.
+  rewrite  Nat.add_0_r; intros H _; case H; auto.
   apply H2; clear H1 H2.
   generalize H3; case p; clear p H3; intros x y (H3, H4).
   exists x; exists y; repeat split; auto with arith.
@@ -303,9 +305,9 @@ Proof.
   case (in_progression size 0 y); auto with arith.
 Qed.
 
-(***************************************************)
-(*    Get                                          *)
-(***************************************************)
+(******************************************************************************)
+(*    Get                                                                     *)
+(******************************************************************************)
 
 (* Get the element of the list l at position (x, y) *)
 Definition get p l := nth 0 (jump (pos2n p) l) out.
@@ -348,114 +350,102 @@ Proof.
   intros n1 Rec p; case p; simpl.
   intros x y; case y.
   case x; auto.
-  intros x1; rewrite plus_0_r.
+  intros x1; rewrite  Nat.add_0_r.
   case_eq size.
-  intros _ ; rewrite mult_0_r; auto.
+  intros _ ; rewrite Nat.mul_0_r; auto.
   intros n2 Hn2.
   replace (S x1 * S n2) with (S (x1 * size + n2)); simpl.
   generalize (Rec (Pos x1 n2)); auto.
-  rewrite Hn2; simpl; rewrite (plus_comm n2); auto.
+  rewrite Hn2; simpl; rewrite (Nat.add_comm n2); auto.
   intros y1; generalize (Rec (Pos x y1)); simpl; auto.
   rewrite <- plus_n_Sm; auto.
 Qed.
 
-(***************************************************)
-(*    Update                                       *)
-(***************************************************)
+(******************************************************************************)
+(*    Update                                                                  *)
+(******************************************************************************)
 
 (* Update the list l at the position (x, y) with the value v *)
 Definition update p v (l: list nat) := subst (pos2n p) v l.
 
 (* The length after an update is unchanged *)
-Theorem length_update:
-  forall p v l, length (update p v l) = length l.
+Theorem length_update p v l : length (update p v l) = length l.
 Proof.
-  intros p; unfold update; elim (pos2n p); simpl; auto.
-  intros v l; case l; auto.
-  intros n1 Rec v l; case l; simpl; auto.
+unfold update; generalize v l; clear v l; elim (pos2n p); simpl; auto.
+intros v l; case l; auto.
+intros n1 Rec v l; case l; simpl; auto.
 Qed.
 
 (* Getting the updated cell gives the new value *)
-Theorem update_get:
-  forall p v l, pos2n p < length l -> get p (update p v l) = v .
+Theorem update_get p v l : pos2n p < length l -> get p (update p v l) = v .
 Proof.
-  intros p v l; unfold get, update; generalize (pos2n p);
-    elim l; simpl; clear l p.
-  intros n H; contradict H; auto with arith.
-  intros a l1 Rec n; case n; clear n; simpl; auto with arith.
+unfold get, update; generalize (pos2n p); elim l; simpl; clear l p.
+intros n H; contradict H; auto with arith.
+intros a l1 Rec n; case n; clear n; simpl; auto with arith.
 Qed.
 
 (* Getting outside the updated cell returns the previous value *)
-Theorem update_diff_get:
-  forall p1 p2 v l, valid_pos p1 -> valid_pos p2 ->
-               p1 <> p2 -> get p1 (update p2 v l) = get p1 l.
+Theorem update_diff_get p1 p2 v l : 
+  valid_pos p1 -> valid_pos p2 -> p1 <> p2 -> get p1 (update p2 v l) = get p1 l.
 Proof with auto with arith.
-  intros p1 p2 v l Hp1 Hp2 H; unfold get, update.
-  cut (pos2n p1 <> pos2n p2).
-  - generalize l (pos2n p2); elim (pos2n p1); auto; clear l.
-    + intros l n1; case n1; simpl.
-      intros U; case U...
-      intros n2 _; case l...
-    + intros n1 Rec l n2; case n2...
-      case l; simpl...
-      intros n3 U; case l; simpl...
-  - contradict H; generalize H Hp1 Hp2; clear H Hp1 Hp2; case p1; case p2; simpl.
-    intros x2 y2 x1 y1 H (H1, H2) (H3, H4).
-    assert (HH: x1 = x2) by nia.
-    f_equal; auto; subst...
-    apply plus_reg_l with (x2 * size)...
+intros Hp1 Hp2 H; unfold get, update.
+cut (pos2n p1 <> pos2n p2).
+- generalize l (pos2n p2); elim (pos2n p1); auto; clear l.
+  + intros l n1; case n1; simpl.
+    intros U; case U...
+    intros n2 _; case l...
+  + intros n1 Rec l n2; case n2...
+    case l; simpl...
+    intros n3 U; case l; simpl...
+- contradict H; generalize H Hp1 Hp2; clear H Hp1 Hp2;
+    case p1; case p2; simpl.
+  intros x2 y2 x1 y1 H (H1, H2) (H3, H4).
+  assert (HH: x1 = x2) by nia.
+  f_equal; auto; subst...
+  apply Nat.add_cancel_l with (x2 * size)...
 Qed.
 
 
-(***************************************************)
-(*    Restrict till position                       *)
-(***************************************************)
+(******************************************************************************)
+(*    Restrict till position                                                  *)
+(******************************************************************************)
 
 Definition prestrict p := restrict out (pos2n p).
 
-Theorem prestrict_0: forall l,
-    prestrict (Pos 0 0) l = mk_0 out (length l).
+Theorem prestrict_0 l : prestrict (Pos 0 0) l = mk_0 out (length l).
+Proof. unfold prestrict; simpl; apply restrict_0. Qed.
+
+Theorem prestrict_all p s : length s <= pos2n p -> prestrict p s = s.
+Proof. unfold prestrict; intros H; apply restrict_all; auto. Qed.
+
+Theorem prestrict_length p s : length (prestrict p s) = (length s).
+Proof. unfold prestrict; simpl; apply restrict_length. Qed.
+
+Theorem prestrict_update p s :
+  pos2n (next p) <= length s ->
+  prestrict (next p) s = update p (get p s) (prestrict p s).
 Proof.
-  intros s; unfold prestrict; simpl; apply restrict_0.
+unfold prestrict, get, update.
+rewrite next_pos; intros H; apply restrict_update; auto.
 Qed.
 
-Theorem prestrict_all: forall p s, length s <= pos2n p -> prestrict p s = s.
+Theorem prestrict_get s p q :
+  pos2n p < pos2n q -> get p (prestrict q s) = get p s.
 Proof.
-  intros p s; unfold prestrict; intros H; apply restrict_all; auto.
+intros H; unfold get, prestrict.
+repeat rewrite <- jump_nth; apply restrict_nth; auto.
 Qed.
 
-Theorem prestrict_length: forall p s, length (prestrict p s) = (length s).
+Theorem prestrict_get_default s p q :
+  pos2n q <= pos2n p -> get p (prestrict q s) = out.
 Proof.
-  intros s; unfold prestrict; simpl; apply restrict_length.
+intros H; unfold get, prestrict.
+repeat rewrite <- jump_nth; apply restrict_nth_default; auto.
 Qed.
 
-Theorem prestrict_update: forall p s, pos2n (next p) <= length s ->
-                                 prestrict (next p) s = update p (get p s) (prestrict p s).
-Proof.
-  intros p; unfold prestrict, get, update.
-  rewrite next_pos; intros s H; apply restrict_update; auto.
-Qed.
-
-
-Theorem prestrict_get: forall s p q, pos2n p < pos2n q ->
-                                get p (prestrict q s) = get p s.
-Proof.
-  intros s p q H; unfold get, prestrict.
-  repeat rewrite <- jump_nth.
-  apply restrict_nth; auto.
-Qed.
-
-Theorem prestrict_get_default: forall s p q, pos2n q <= pos2n p ->
-                                        get p (prestrict q s) = out.
-Proof.
-  intros s p q H; unfold get, prestrict.
-  repeat rewrite <- jump_nth.
-  apply restrict_nth_default; auto.
-Qed.
-
-(***************************************************)
-(*    Refine                                       *)
-(***************************************************)
+(******************************************************************************)
+(*    Refine                                                                  *)
+(******************************************************************************)
 
 (* A state refines another if it has only substitutes non ref_list element *)
 Definition refine s1 s2 :=
@@ -464,327 +454,323 @@ Definition refine s1 s2 :=
   forall p, valid_pos p -> In (get p s1) ref_list -> get p s1 = get p s2.
 
 (* Refinement is transitive *)
-Theorem refine_trans: forall s1 s2 s3,
-    refine s1 s2 -> refine s2 s3 -> refine s1 s3.
+Theorem refine_trans s1 s2 s3 : refine s1 s2 -> refine s2 s3 -> refine s1 s3.
 Proof.
-  intros s1 s2 s3 (H, (H1, H2)) (H3, (H4, H5)); split; auto.
-  split; auto.
-  intros; rewrite H2; auto.
-  apply H5; auto.
-  rewrite <- H2; auto.
+intros (H, (H1, H2)) (H3, (H4, H5)); split; auto.
+split; auto.
+intros; rewrite H2; auto.
+apply H5; auto.
+rewrite <- H2; auto.
 Qed.
 
 (* Every states refine the initial state *)
-Theorem refine_init: forall s, length s = size * size -> refine init s.
+Theorem refine_init s : length s = size * size -> refine init s.
 Proof.
-  intros s H; split; auto.
-  apply length_init.
-  split; auto.
-  intros p _; unfold init; rewrite get_mk_0.
-  intros H1; contradict H1; apply out_not_in_refl.
+intros H; split; auto.
+apply length_init.
+split; auto.
+intros p _; unfold init; rewrite get_mk_0.
+intros H1; contradict H1; apply out_not_in_refl.
 Qed.
 
 (* update is a refinement *)
-Theorem refine_update:
-  forall p v s, ~ In (get p s) ref_list ->
-           length s = size * size -> refine s (update p v s).
+Theorem refine_update p v s :
+  ~ In (get p s) ref_list -> length s = size * size -> refine s (update p v s).
 Proof.
-  intros p1 v s H H1; split; auto.
-  split; auto.
-  unfold update; rewrite length_subst; auto.
-  intros p2  _.
-  generalize H; unfold get, update; generalize (pos2n p1) (pos2n p2);
-    clear p1 p2 H.
-  elim s; simpl; auto.
-  intros n1 n2; case n1; case n2; auto.
-  intros a s1 Rec n1 n2; case_eq n1; case_eq n2; simpl; auto.
-  intros _ _ H2 H3; case H2; auto.
+intros H H1; split; auto.
+split; auto.
+unfold update; rewrite length_subst; auto.
+intros p1  _.
+generalize H; unfold get, update; generalize (pos2n p) (pos2n p1);
+  clear p p1 H.
+elim s; simpl; auto.
+intros n1 n2; case n1; case n2; auto.
+intros a s1 Rec n1 n2; case_eq n1; case_eq n2; simpl; auto.
+intros _ _ H2 H3; case H2; auto.
 Qed.
 
-
-(***************************************************)
-(*    Empty                                        *)
-(***************************************************)
+(******************************************************************************)
+(*    Empty                                                                   *)
+(******************************************************************************)
 
 (* A state is empty if it is full of zero *)
 Definition empty s := forall p, ~ In (get p s) ref_list.
 
 (* The empty list is empty *)
 Theorem empty_nil: empty nil.
-Proof.
-  intros p; rewrite get_nil; apply out_not_in_refl.
-Qed.
+Proof. intros p; rewrite get_nil; apply out_not_in_refl. Qed.
 
-Theorem empty_mk_0 : forall n, empty (mk_0 out n).
+Theorem empty_mk_0 n : empty (mk_0 out n).
 Proof.
-  intros n p; unfold empty; rewrite get_mk_0; apply out_not_in_refl.
+intros p; unfold empty; rewrite get_mk_0; apply out_not_in_refl.
 Qed.
 
 (* Jumping an empty state gives an empty state *)
-Theorem empty_jump:
-  forall n s, empty s -> empty (jump n s).
+Theorem empty_jump n s : empty s -> empty (jump n s).
 Proof.
-  intros n; elim n; simpl; auto.
-  intros n0 Rec s0; case s0; auto.
-  intros a s1 H; apply Rec.
-  intros p; case p; intros x y.
-  generalize (H (Pos x (S y))); unfold get; simpl.
-  rewrite <- plus_n_Sm; simpl; auto.
+revert s; elim n; simpl; auto.
+intros n0 Rec s0; case s0; auto.
+intros a s1 H; apply Rec.
+intros p; case p; intros x y.
+generalize (H (Pos x (S y))); unfold get; simpl.
+rewrite <- plus_n_Sm; simpl; auto.
 Qed.
 
-(* A state that start with an element not in the ref_list
+(* A state that starts with an element not in the ref_list
    is empty if its tail is empty *)
-Theorem empty_cons: forall a s, ~ In a ref_list -> empty s -> empty (a :: s).
+Theorem empty_cons a s : ~ In a ref_list -> empty s -> empty (a :: s).
 Proof.
-  intros a s Ha H p; case p; intros x y; case y; simpl.
-  case x; unfold get; simpl; auto.
+intros Ha H p; case p; intros x y; case y; simpl.
+- case x; unfold get; simpl; auto.
   intros x1.
-  rewrite plus_0_r.
+  rewrite  Nat.add_0_r.
   generalize (H (Pos x1 (pred size))); unfold get; simpl; case size; simpl.
-  rewrite mult_0_r; simpl;auto.
-  intros n1; rewrite (plus_comm n1); auto.
-  intros y1; generalize (H (Pos x y1)); unfold get; simpl.
+  + rewrite Nat.mul_0_r; simpl;auto.
+  + intros n1; rewrite (Nat.add_comm n1); auto.
+- intros y1; generalize (H (Pos x y1)); unfold get; simpl.
   rewrite <- plus_n_Sm; auto.
 Qed.
 
 (* Inversion theorem for empty *)
-Theorem empty_inv: forall a s, empty (a :: s) -> ~ In a ref_list /\ empty s.
+Theorem empty_inv a s : empty (a :: s) -> ~ In a ref_list /\ empty s.
 Proof.
-  intros a s H; split.
-  generalize (H (Pos 0 0)); unfold get; simpl; auto.
-  intro p; rewrite <- get_next with (a := a); auto.
+intros H; split.
+- generalize (H (Pos 0 0)); unfold get; simpl; auto.
+- intro p; rewrite <- get_next with (a := a); auto.
 Qed.
 
 (* For a take to be empty it is sufficient the state to be empty *)
-Theorem empty_take:
-  forall n s, empty s -> empty (take n s).
+Theorem empty_take n s : empty s -> empty (take n s).
 Proof.
-  intros n; elim n; simpl; auto.
-  intros s; case s; auto.
+revert s; elim n; simpl; auto.
+- intros s; case s; auto.
   intros n1 l1 _ p; apply empty_nil.
-  intros n1 Rec s; case s; auto.
+- intros n1 Rec s; case s; auto.
   intros n2 s1 H.
   case empty_inv with (1 := H); intros H1 H2; subst.
   apply empty_cons; auto.
 Qed.
 
 
-(***************************************************)
-(*    Rows                                         *)
-(***************************************************)
+(******************************************************************************)
+(*    Rows                                                                    *)
+(******************************************************************************)
 
 Definition row i (l: list nat) := take size (jump (i * size) l).
 
-Theorem length_row: forall i s, i < size ->
-                           length s = size * size -> length (row i s) = size.
+Theorem length_row i s :
+  i < size -> length s = size * size -> length (row i s) = size.
 Proof.
-  intros i s H H1; unfold row; apply length_take1.
-  apply plus_le_reg_l with (i * size).
-  repeat rewrite (plus_comm (i * size)).
-  rewrite <- length_jump; rewrite H1; try (change ((S i) * size <= size * size));
-    apply mult_le_compat_r; auto with arith.
+intros H H1; unfold row; apply length_take1.
+apply Nat.add_le_mono_l with (i * size).
+repeat rewrite (Nat.add_comm (i * size)).
+rewrite <- length_jump; rewrite H1; try (change ((S i) * size <= size * size));
+  apply Nat.mul_le_mono_r; auto with arith.
 Qed.
 
 (* Relation between get and row *)
-Theorem get_row:
-  forall x y s, y < size -> get (Pos x y) s = nth y (row x s) out.
+Theorem get_row x y s : y < size -> get (Pos x y) s = nth y (row x s) out.
 Proof.
-  unfold get, row; simpl.
-  intros x y s; rewrite jump_add.
-  generalize (jump (x * size) s); intros l.
-  generalize y size; elim l; simpl; auto; clear y l.
-  intros; rewrite jump_nil, take_nil; repeat rewrite nth_nil;
-    auto.
-  intros a l Rec y; case y.
-  intros n; case n; simpl; auto.
+unfold get, row; simpl.
+rewrite jump_add.
+generalize (jump (x * size) s); intros l.
+generalize y size; elim l; simpl; auto; clear y l.
+intros; rewrite jump_nil, take_nil; repeat rewrite nth_nil;
+  auto.
+intros a l Rec y; case y.
+- intros n; case n; simpl; auto.
   intros H; contradict H; auto with arith.
-  intros y1 n; case n; simpl; auto with arith.
+- intros y1 n; case n; simpl; auto with arith.
   intros H; contradict H; auto with arith.
 Qed.
 
-(***************************************************)
-(*    Columns                                      *)
-(***************************************************)
+(******************************************************************************)
+(*    Columns                                                                 *)
+(******************************************************************************)
 
 Definition column i (l: list nat) := take_and_jump 1 size size (jump i l).
 
-Theorem length_column: forall j s, j < size ->
-                              length s = size * size -> length (column j s) = size.
+Theorem length_column j s :
+  j < size -> length s = size * size -> length (column j s) = size.
 Proof.
-  intros j s H H1; unfold column.
-  rewrite length_take_and_jump; auto with arith.
-  generalize H H1; case size; clear H H1.
-  simpl; auto with arith.
-  intros size1 H H1; apply plus_le_reg_l with j.
-  repeat rewrite (plus_comm j).
-  rewrite <- plus_assoc, (plus_comm 1), <- plus_assoc.
+intros H H1; unfold column.
+rewrite length_take_and_jump; auto with arith.
+generalize H H1; case size; clear H H1.
+- simpl; auto with arith.
+- intros size1 H H1; apply Nat.add_le_mono_l with j.
+  repeat rewrite (Nat.add_comm j).
+  rewrite <- Nat.add_assoc, (Nat.add_comm 1), <- Nat.add_assoc.
   rewrite <- length_jump; auto with arith.
-  rewrite H1; auto with arith.
-  replace (S size1 * S size1) with (size1 * S size1 + S size1); auto with arith.
-  apply plus_le_compat; simpl; auto with arith.
-  rewrite plus_comm; simpl; auto with arith.
-  rewrite plus_comm; simpl; auto.
-  rewrite H1; simpl; auto with arith.
+  + rewrite H1; auto with arith.
+    replace (S size1 * S size1) with (size1 * S size1 + S size1).
+    * apply Nat.add_le_mono; simpl; auto with arith.
+      rewrite Nat.add_comm; simpl; auto with arith.
+    * rewrite Nat.add_comm; simpl; auto.
+  + rewrite H1; simpl; auto with arith.
 Qed.
 
 (* Relation between get and column *)
-Theorem get_column:
-  forall x y s, x < size -> get (Pos x y) s = nth x (column y s) out.
+Theorem get_column x y s : x < size -> get (Pos x y) s = nth x (column y s) out.
 Proof.
-  unfold get, column; simpl.
-  intros x y s; rewrite plus_comm, jump_add.
-  generalize (jump y s); intros l.
-  assert (Gen:
-            forall a x l,
-              x < a ->
-              nth 0 (jump (x * size) l) out = nth x (take_and_jump 1 size a l) out); auto.
+unfold get, column; simpl.
+rewrite Nat.add_comm, jump_add.
+generalize (jump y s); intros l.
+assert (Gen:
+          forall a x l,
+            x < a ->
+            nth 0 (jump (x * size) l) out = 
+            nth x (take_and_jump 1 size a l) out); auto.
   clear x l.
   intros a; elim a; simpl; auto; clear a.
-  intros a l H; contradict H; auto with arith.
-  intros a Rec; intros x; case x; simpl; clear x.
-  intros l; case l; simpl; auto.
-  rewrite jump_nil, take_and_jump_nil, nth_nil; auto.
-  intros x l; case l; auto; clear l.
-  repeat rewrite jump_nil; rewrite take_and_jump_nil; rewrite nth_nil; auto.
-  intros n l; case l; simpl; auto.
-  intros H; rewrite <- Rec; auto with arith.
-  f_equal; auto; apply jump_add; auto.
-  intros n1 l1 H; rewrite <- Rec; auto with arith.
-  f_equal; auto; apply jump_add; auto.
+  - intros a l H; contradict H; auto with arith.
+  - intros a Rec; intros x; case x; simpl; clear x.
+    + intros l; case l; simpl; auto.
+      rewrite jump_nil, take_and_jump_nil, nth_nil; auto.
+    + intros x l; case l; auto; clear l.
+      *  repeat rewrite jump_nil; rewrite take_and_jump_nil; rewrite nth_nil; 
+         auto.
+      * intros n l; case l; simpl; auto.
+        -- intros H; rewrite <- Rec; auto with arith.
+           f_equal; auto; apply jump_add; auto.
+        -- intros n1 l1 H; rewrite <- Rec; auto with arith.
+           f_equal; auto; apply jump_add; auto.
 Qed.
 
-(***************************************************)
-(*    SubRectangles                                *)
-(***************************************************)
+(******************************************************************************)
+(*    SubRectangles                                                           *)
+(******************************************************************************)
 
 (* The subrectangles *)
 Definition rect i (l: list nat) :=
   take_and_jump w size h (jump (w * (mod i h) +  h * (div i  h) * size) l).
 
 (* Relation between get and rect *)
-Theorem get_rect:
-  forall x y s, x < size -> y < size ->
-           get (Pos x y) s =
-           nth (mod x h * w + mod y w) (rect (div x h * h + div y w) s) out.
+Theorem get_rect x y s : 
+  x < size -> y < size ->
+  get (Pos x y) s =
+  nth (mod x h * w + mod y w) (rect (div x h * h + div y w) s) out.
 Proof with auto with arith.
-  intros x y s H1 H2; unfold get, rect; simpl.
-  generalize (h_pos _ H1); intros U1.
-  generalize (w_pos _ H1); intros U2.
-  assert (F1: div y w < h).
-  {
-    apply div_lt; rewrite mult_comm...
-  }
-  repeat (rewrite (fun x => mult_comm x h)); rewrite mod_mult_comp...
-  rewrite div_mult_comp, (mod_small (div y w) h), (div_is_0 (div y w) h), plus_0_r...
-  match goal with
-    |- context [take_and_jump _ _ _ (jump ?X _)] =>
+intros H1 H2; unfold get, rect; simpl.
+generalize (h_pos _ H1); intros U1.
+generalize (w_pos _ H1); intros U2.
+assert (F1: div y w < h).
+  apply div_lt; rewrite  Nat.mul_comm...
+repeat (rewrite (fun x =>  Nat.mul_comm x h)); rewrite mod_mult_comp...
+rewrite div_mult_comp, (mod_small (div y w) h), (div_is_0 (div y w) h),
+        Nat.add_0_r...
+match goal with
+  |- context [take_and_jump _ _ _ (jump ?X _)] =>
     replace (x * size + y) with (X + (mod x h * size + mod y w))
-  end.
-  2: {
+end.
+2: {
     apply sym_equal.
     pattern x at 1; rewrite (div_mod_correct x h)...
     pattern y at 1; rewrite (div_mod_correct y w)...
     lia.
   }
-  rewrite jump_add.
-  match goal with |- context [jump ?X s]
-                  =>
-                  generalize (jump X s)
-  end.
-  intros l; rewrite <- jump_nth; generalize l; clear l.
-  generalize (mod_lt x h U1).
-  generalize (mod x h).
-  cut (w <= size).
-  - generalize size; intros m.
-    intros U3 n; generalize h; elim n; simpl...
-      clear n H1 H2 U1.
-    + intros h1; case h1; simpl...
-      * intros HH; contradict HH...
-      * intros n1 _ l.
-        case (le_or_lt (length l) (mod y w)); intros H1.
-        ++ rewrite jump_too_far.
-           ** rewrite take_and_jump_nil.
-              rewrite <- app_nil_end.
-              apply sym_equal; apply take_nth...
-           ** pose proof (mod_lt y w).
-              lia.
-        ++ rewrite nth_app_l.
-           ** apply sym_equal; apply take_nth...
-              left; apply mod_lt...
-           ** case (le_or_lt (length l) w); intros H2.
-              *** rewrite length_take_small...
-              *** rewrite length_take...
-                  apply mod_lt...
-    + intros n1 Rec h1; case h1; simpl.
-      * intros HH; contradict HH...
-      * intros h2 HH l.
-        case (le_or_lt (length l) w); intros H3.
-        ++ rewrite nth_app_r.
-           ** rewrite length_take_small, jump_too_far...
-              *** rewrite take_and_jump_nil.
-                  repeat rewrite nth_default...
-                  apply le_trans with (1 := H3)...
-              *** apply le_trans with (1 := H3)...
-           ** rewrite length_take_small...
-        ++ rewrite nth_app_r.
-           ** rewrite length_take...
-              repeat rewrite <- plus_assoc; rewrite minus_plus...
-              rewrite jump_nth, jump_add, <- jump_nth...
-           ** rewrite length_take...
-  -  unfold size; nia.
+rewrite jump_add.
+match goal with 
+  |- context [jump ?X s] => generalize (jump X s)
+end.
+intros l; rewrite <- jump_nth; generalize l; clear l.
+generalize (mod_lt x h U1).
+generalize (mod x h).
+cut (w <= size).
+- generalize size; intros m.
+  intros U3 n; generalize h; elim n; simpl...
+  + clear n H1 H2 U1.
+    intros h1; case h1; simpl...
+    * intros HH; contradict HH...
+    * intros n1 _ l.
+      case (Nat.le_gt_cases (length l) (mod y w)); intros H1.
+      ++rewrite jump_too_far.
+        **rewrite take_and_jump_nil.
+          rewrite <- app_nil_end.
+          apply sym_equal; apply take_nth...
+        **pose proof (mod_lt y w).
+          lia.
+      ++rewrite nth_app_l.
+        **apply sym_equal; apply take_nth...
+          left; apply mod_lt...
+        **case (Nat.le_gt_cases (length l) w); intros H2.
+          *** rewrite length_take_small...
+          *** rewrite length_take...
+              apply mod_lt...
+  + intros n1 Rec h1; case h1; simpl.
+    * intros HH; contradict HH...
+    * intros h2 HH l.
+      case (Nat.le_gt_cases (length l) w); intros H3.
+      ++rewrite nth_app_r.
+        **rewrite length_take_small, jump_too_far...
+          *** rewrite take_and_jump_nil.
+              repeat rewrite nth_default...
+              apply Nat.le_trans with (1 := H3)...
+          *** apply Nat.le_trans with (1 := H3)...
+        **rewrite length_take_small...
+      ++rewrite nth_app_r.
+        **rewrite length_take...
+          repeat rewrite <- Nat.add_assoc; 
+          rewrite (Nat.add_comm w), Nat.add_sub...
+          rewrite jump_nth, jump_add, <- jump_nth...
+        **rewrite length_take...
+-unfold size; nia.
 Qed.
 
-Theorem length_rect: forall i s, i < size ->
-                            length s = size * size -> length (rect i s) = size.
+Theorem length_rect i s :
+  i < size -> length s = size * size -> length (rect i s) = size.
 Proof with auto with arith.
-  intros i s H H1; unfold rect.
-  generalize (h_pos _ H); intros U1.
-  generalize (w_pos _ H); intros U2.
-  rewrite length_take_and_jump...
-  assert (F1: forall n m, 0 < n -> m < n -> m <= n - 1) by lia.
-  match goal with |- _ <= length (jump ?X _) =>
-                  apply plus_le_reg_l with X; repeat rewrite (plus_comm X);
-                    rewrite <- length_jump; auto with arith
-  end.
-  - rewrite H1; clear H1.
-    replace (size * size) with  (w + ((h - 1) * size) + (w * (h -1)) + h * (w - 1) * size).
-    + repeat rewrite plus_assoc.
-      repeat (apply plus_le_compat || apply mult_le_compat_l || apply mult_le_compat_r);
-        auto with arith.
-      * generalize U1; case h...
-      * apply F1; auto; apply mod_lt...
-      * apply F1; auto; apply div_lt...
-    + rewrite (plus_comm w).
-      repeat (rewrite <- plus_assoc).
-      rewrite (plus_assoc w).
-      pattern w at 1; rewrite <- mult_1_r, <- mult_plus_distr_l, le_plus_minus_r...
-      unfold size.
-      ring_simplify.
-      destruct (lt_eq_lt_dec h w) as [[Hh|Hh]|Hh].
-      * nia.
-      * rewrite Hh, Nat.mul_sub_distr_r; nia.
-      * nia.
-  - apply le_trans with (w * (h - 1) + h * (w - 1) * size).
-    repeat (apply plus_le_compat || apply mult_le_compat_l || apply mult_le_compat_r).
-    + apply F1; auto; apply mod_lt...
-    + apply F1; auto; apply div_lt...
-    + rewrite H1; unfold size.
-      pattern w at 4; replace w with (1 + (w - 1)) by lia.
-      * nia.
+intros H H1; unfold rect.
+generalize (h_pos _ H); intros U1.
+generalize (w_pos _ H); intros U2.
+rewrite length_take_and_jump...
+assert (F1: forall n m, 0 < n -> m < n -> m <= n - 1) by lia.
+match goal with |- _ <= length (jump ?X _) =>
+  apply Nat.add_le_mono_l with X; repeat rewrite (Nat.add_comm X);
+    rewrite <- length_jump; auto with arith
+end.
+- rewrite H1; clear H1.
+  replace (size * size) with 
+          (w + ((h - 1) * size) + (w * (h -1)) + h * (w - 1) * size).
+  + repeat rewrite Nat.add_assoc.
+    repeat (apply Nat.add_le_mono || apply Nat.mul_le_mono_l || 
+            apply Nat.mul_le_mono_r); auto with arith.
+    * generalize U1; case h...
+    * apply F1; auto; apply mod_lt...
+    * apply F1; auto; apply div_lt...
+  + rewrite (Nat.add_comm w).
+    repeat (rewrite <- Nat.add_assoc).
+    rewrite (Nat.add_assoc w).
+    pattern w at 1; rewrite <- Nat.mul_1_r, <- Nat.mul_add_distr_l.
+    rewrite (Nat.add_comm _ (h - 1)), Nat.sub_add...
+    unfold size.
+    ring_simplify.
+    destruct (lt_eq_lt_dec h w) as [[Hh|Hh]|Hh].
+    * nia.
+    * rewrite Hh, Nat.mul_sub_distr_r; nia.
+    * nia.
+- apply Nat.le_trans with (w * (h - 1) + h * (w - 1) * size).
+  repeat (apply Nat.add_le_mono || apply Nat.mul_le_mono_l ||
+          apply Nat.mul_le_mono_r).
+  + apply F1; auto; apply mod_lt...
+  + apply F1; auto; apply div_lt...
+  + rewrite H1; unfold size.
+    pattern w at 4; replace w with (1 + (w - 1)) by lia.
+    nia.
 Qed.
 
-(***************************************************)
-(*    Sudoku                                       *)
-(***************************************************)
+(******************************************************************************)
+(*    Sudoku                                                                  *)
+(******************************************************************************)
 
 
 (* To be a sudoku, the list should be of the proper size,
    rows, columns and subrectangle should be a permutation of the reference list
  *)
-Definition sudoku l := length l = size * size /\
-                       (forall i, i < size -> Permutation (row i l) ref_list) /\
-                       (forall i, i < size -> Permutation (column i l) ref_list) /\
-                       (forall i, i < size -> Permutation (rect i l) ref_list).
+Definition sudoku l :=
+  length l = size * size /\
+  (forall i, i < size -> Permutation (row i l) ref_list) /\
+  (forall i, i < size -> Permutation (column i l) ref_list) /\
+  (forall i, i < size -> Permutation (rect i l) ref_list).
 
 
 (***************************************************)
@@ -799,7 +785,7 @@ Definition check_P: forall (P: nat -> Prop) (P_dec: forall i, {P i} + {~ P i}) n
   left; intros i tmp; contradict tmp; auto with arith.
   intros n2; case (check_P n2); intros H.
   case (P_dec n2); intros H1.
-  left; intros i Hi; case (le_lt_or_eq i n2); try intros Hi1; subst; auto with arith.
+  left; intros i Hi; case (le_lt_eq_dec i n2); try intros Hi1; subst; auto with arith.
   right; intros H2; case H1; auto with arith.
   right; contradict H; auto with arith.
 Defined.
@@ -1184,7 +1170,7 @@ Theorem length_clauses_update:
 Proof.
   intros l c cs; elim cs; simpl; auto.
   intros (n1, c1) cs1 Rec; case (lit_is_in l c1); auto with arith.
-  apply le_trans with (2 := (le_n_S _ _ Rec)).
+  apply Nat.le_trans with (2 := (le_n_S _ _ Rec)).
   rewrite length_clause_insert; auto with arith.
 Qed.
 
@@ -1255,7 +1241,7 @@ Proof.
   elim size; simpl; auto.
   intros a l i z; split.
   intros H; case H.
-  intros (j, (_, (H1, H2))); contradict H2; rewrite plus_0_r; auto with arith.
+  intros (j, (_, (H1, H2))); contradict H2; rewrite  Nat.add_0_r; auto with arith.
   intros size1 Rec1 a l i z; split.
   intros H1.
   match type of H1 with In ?X (lit_insert ?Y ?Z) =>
@@ -1263,7 +1249,7 @@ Proof.
   end; intros H2; subst.
   exists a; split; auto with arith.
   split; auto with arith.
-  apply le_lt_trans with (a + 0); auto with arith.
+  apply Nat.le_lt_trans with (a + 0); auto with arith.
   case (Rec1 (S a) l i z); intros tmp _; case tmp; auto; clear tmp.
   intros j (H3, (H4, H5)); exists j; split; auto with arith.
   rewrite <- plus_n_Sm; split; auto with arith.
@@ -1271,13 +1257,13 @@ Proof.
   match goal with |- In ?X (lit_insert ?Y ?Z) =>
                   case (lit_insert_in X Y Z); intros _ tmp; apply tmp; clear tmp
   end; auto.
-  case le_lt_or_eq with (1 := H4); clear H4; intros H4; auto.
+  case le_lt_eq_dec with (1 := H4); clear H4; intros H4; auto.
   right; case (Rec1 (S a) l i z); intros _ tmp; apply tmp; clear tmp.
   rewrite <- plus_n_Sm in H5; exists j; auto with arith.
   subst; auto.
   intros l i z; split; intros H.
   case (Eq1 0 l i z); intros tmp _; case tmp; clear tmp Eq1; auto.
-  rewrite plus_0_l; intros j (H1, (H2, H3)); exists j; auto.
+  rewrite  Nat.add_0_l; intros j (H1, (H2, H3)); exists j; auto.
   case H; intros j (H1, H2); clear H.
   case (Eq1 0 l i z); intros _ tmp; apply tmp; clear tmp; exists j;
     auto with arith.
@@ -1296,7 +1282,7 @@ Proof.
   elim size; simpl; auto.
   intros a l j z; split.
   intros H; case H.
-  intros (i, (_, (H1, H2))); contradict H2; rewrite plus_0_r; auto with arith.
+  intros (i, (_, (H1, H2))); contradict H2; rewrite  Nat.add_0_r; auto with arith.
   intros size1 Rec1 a l j z; split.
   intros H1.
   match type of H1 with In ?X (lit_insert ?Y ?Z) =>
@@ -1304,7 +1290,7 @@ Proof.
   end; intros H2; subst.
   exists a; split; auto with arith.
   split; auto with arith.
-  apply le_lt_trans with (a + 0); auto with arith.
+  apply Nat.le_lt_trans with (a + 0); auto with arith.
   case (Rec1 (S a) l j z); intros tmp _; case tmp; auto; clear tmp.
   intros i (H3, (H4, H5)); exists i; split; auto with arith.
   rewrite <- plus_n_Sm; split; auto with arith.
@@ -1312,13 +1298,13 @@ Proof.
   match goal with |- In ?X (lit_insert ?Y ?Z) =>
                   case (lit_insert_in X Y Z); intros _ tmp; apply tmp; clear tmp
   end; auto.
-  case le_lt_or_eq with (1 := H4); clear H4; intros H4; auto.
+  case le_lt_eq_dec with (1 := H4); clear H4; intros H4; auto.
   right; case (Rec1 (S a) l j z); intros _ tmp; apply tmp; clear tmp.
   rewrite <- plus_n_Sm in H5; exists i; auto with arith.
   subst; auto.
   intros l j z; split; intros H.
   case (Eq1 0 l j z); intros tmp _; case tmp; clear tmp Eq1; auto.
-  rewrite plus_0_l; intros i (H1, (H2, H3)); exists i; auto.
+  rewrite  Nat.add_0_l; intros i (H1, (H2, H3)); exists i; auto.
   case H; intros i (H1, H2); clear H.
   case (Eq1 0 l j z); intros _ tmp; apply tmp; clear tmp; exists i;
     auto with arith.
@@ -1785,13 +1771,13 @@ Proof with auto with arith.
   intros x1 (y1, (Hl1, (Hl2, Hl3))); subst.
   repeat (split; auto).
   unfold size.
-  repeat rewrite (mult_comm h); apply mult_lt_plus...
+  repeat rewrite (Nat.mul_comm h); apply mult_lt_plus...
   apply div_lt...
   case (in_indexes i1)...
   unfold size.
-  repeat rewrite (mult_comm w); apply mult_lt_plus...
+  repeat rewrite (Nat.mul_comm w); apply mult_lt_plus...
   apply mod_lt...
-  apply le_lt_trans with (2 := Hl2)...
+  apply Nat.le_lt_trans with (2 := Hl2)...
   unfold all_cell; intros Hn; case fold_clause_insert1 with (1 := Hn); clear Hn.
   intros ((x, y), (n1, (HH1, HH2))); simpl in HH2.
   injection HH2; intros; subst; clear HH2.
@@ -1819,7 +1805,7 @@ Proof with auto with arith.
   intros s1; elim s1; clear s1;
     unfold gen_init_clauses_aux; lazy beta; fold gen_init_clauses_aux...
   intros s p cs H H0 H1 H2 H3; rewrite prestrict_all in H3...
-  case (le_or_lt (length s) (pos2n p))...
+  case (Nat.le_gt_cases (length s) (pos2n p))...
   intros H4; absurd (length (jump (pos2n p) s) = length (@nil nat)).
   generalize (length_jump _ (pos2n p) s).
   rewrite <- H0; simpl.
@@ -1829,7 +1815,7 @@ Proof with auto with arith.
   intros a s1; case s1; clear s1.
   intros Rec s p cs H0 H1 H2 H3 H4.
   assert (F1: pos2n p < length s).
-  case (le_or_lt (length s) (pos2n p)); auto; intros H5.
+  case (Nat.le_gt_cases (length s) (pos2n p)); auto; intros H5.
   rewrite (jump_too_far _ (pos2n p) s) in H1; try discriminate...
   case (In_dec eq_nat a ref_list); intros H5.
   unfold gen_init_clauses_aux; lazy beta; fold gen_init_clauses_aux.
@@ -1845,7 +1831,7 @@ Proof with auto with arith.
   unfold get; rewrite <- H1...
   rewrite next_pos...
   apply prestrict_all...
-  case (le_or_lt (length s) (pos2n (next p))); auto; intros H6.
+  case (Nat.le_gt_cases (length s) (pos2n (next p))); auto; intros H6.
   rewrite (length_jump nat (pos2n p)).
   rewrite <- H1; simpl; rewrite next_pos...
   rewrite next_pos in H6...
@@ -1853,21 +1839,21 @@ Proof with auto with arith.
   intros n c Hn (p1, z1) Hl; simpl.
   case (H4 n c Hn (L p1 z1))...
   intros U1 (U2, U3); split...
-  case (le_or_lt (pos2n p) (pos2n p1)); intros V1.
-  unfold get; rewrite (le_plus_minus (pos2n p) (pos2n p1));
+  case (Nat.le_gt_cases (pos2n p) (pos2n p1)); intros V1.
+  unfold get; rewrite <-(Nat.sub_add (pos2n p) (pos2n p1));
     auto with arith.
-  rewrite jump_add; rewrite <- H1.
+  rewrite Nat.add_comm, jump_add; rewrite <- H1.
   case (pos2n p1 - pos2n p); simpl...
   intros n1; rewrite jump_nil; simpl; apply out_not_in_refl.
   rewrite <- (prestrict_get s p1 p)...
   intros b s1 Rec s p cs H0 H1 H2 H3 H4.
   assert (F0: b :: s1 = jump (pos2n (next p)) s).
   rewrite next_pos.
-  replace (S (pos2n p)) with ((pos2n p) + 1)...
+  replace (S (pos2n p)) with ((pos2n p) + 1).
   rewrite jump_add; rewrite <- H1; simpl...
-  rewrite plus_comm...
+  rewrite Nat.add_comm...
   assert (F1: pos2n (next p) < length s).
-  case (le_or_lt (length s) (pos2n (next p))); auto; intros H5.
+  case (Nat.le_gt_cases (length s) (pos2n (next p))); auto; intros H5.
   rewrite (jump_too_far _ (pos2n (next p)) s) in F0; try discriminate...
   case (In_dec eq_nat a ref_list); intros H5.
   apply Rec...
@@ -1890,18 +1876,18 @@ Proof with auto with arith.
   intros n c Hn (p1, z1) Hl; simpl.
   case (H4 n c Hn (L p1 z1))...
   intros U1 (U2, U3); split...
-  case (le_or_lt (pos2n (next p)) (pos2n p1)); intros V1.
+  case (Nat.le_gt_cases (pos2n (next p)) (pos2n p1)); intros V1.
   rewrite prestrict_get_default...
   apply out_not_in_refl.
   rewrite prestrict_get...
-  case (le_lt_or_eq (pos2n p1) (pos2n p)); try intros V2.
+  case (le_lt_eq_dec (pos2n p1) (pos2n p)); try intros V2.
   rewrite next_pos in V1...
   rewrite prestrict_get in U1...
   assert (p1 = p); try (subst p1).
   apply valid_pos_eq...
   unfold get; rewrite <- H1...
   intros s Hs.
-  case (le_lt_or_eq 0 size); auto with arith; intros V1.
+  case (le_lt_eq_dec 0 size); auto with arith; intros V1.
   unfold gen_init_clauses; apply Eq; simpl...
   apply init_c_ordered.
   destruct s...
@@ -2128,25 +2114,25 @@ Proof with auto with arith.
   pose proof (div_mod_correct i h).
   lia.
   subst z; rewrite Eq; apply nth_In.
-  apply le_lt_trans with ((h - 1) * w + (w - 1))...
-  apply plus_le_compat.
-  apply mult_le_compat_r...
+  apply Nat.le_lt_trans with ((h - 1) * w + (w - 1))...
+  apply Nat.add_le_mono.
+  apply Nat.mul_le_mono_r...
   match goal with |- mod ?X ?Y <= ?T =>
                   generalize (mod_lt X Y V1); auto with arith
   end.
   case h; auto with arith; intros; simpl minus;
-    repeat rewrite <- minus_n_O...
+    repeat rewrite Nat.sub_0_r...
   match goal with |- mod ?X ?Y <= ?T =>
                   generalize (mod_lt X Y V2); auto with arith
   end.
   case w; auto with arith; intros; simpl minus;
-    repeat rewrite <- minus_n_O...
+    repeat rewrite Nat.sub_0_r...
   rewrite length_rect...
   replace size with ((h - 1) * w + w)...
-  pattern w at 2; rewrite <- mult_1_l; rewrite <- mult_plus_distr_r.
-  rewrite plus_comm;rewrite le_plus_minus_r...
-  unfold size; repeat rewrite (mult_comm h); apply mult_lt_plus...
-  unfold size; repeat rewrite (mult_comm w); apply mult_lt_plus...
+  pattern w at 2; rewrite <- Nat.mul_1_l; rewrite <- Nat.mul_add_distr_r.
+  rewrite Nat.sub_add...
+  unfold size; repeat rewrite (Nat.mul_comm h); apply mult_lt_plus...
+  unfold size; repeat rewrite (Nat.mul_comm w); apply mult_lt_plus...
   intros H1; red.
   case (in_ex_nth _ z 0 (rect i s)); intros tmp _ ; case (tmp H1);
     clear tmp H1.
@@ -2159,33 +2145,33 @@ Proof with auto with arith.
   exists (div j w); exists (mod j w); repeat split...
   f_equal.
   f_equal.
-  rewrite (mult_comm h)...
-  rewrite (mult_comm w)...
-  apply div_lt; rewrite (mult_comm w); rewrite length_rect in Hj1...
+  rewrite (Nat.mul_comm h)...
+  rewrite (Nat.mul_comm w)...
+  apply div_lt; rewrite (Nat.mul_comm w); rewrite length_rect in Hj1...
   rewrite Hj2.
   rewrite get_rect.
   f_equal; auto; [idtac | f_equal]...
   rewrite length_rect in Hj1...
-  rewrite (mult_comm (div i h)); rewrite (mult_comm (mod i h));
+  rewrite (Nat.mul_comm (div i h)); rewrite (Nat.mul_comm (mod i h));
     repeat rewrite mod_mult_comp...
   rewrite mod_small.
   rewrite mod_small.
   apply sym_equal; apply div_mod_correct...
   apply mod_lt...
   apply div_lt...
-  rewrite (mult_comm w)...
-  rewrite (mult_comm (div i h)); rewrite (mult_comm (mod i h));
+  rewrite (Nat.mul_comm w)...
+  rewrite (Nat.mul_comm (div i h)); rewrite (Nat.mul_comm (mod i h));
     repeat rewrite div_mult_comp...
   rewrite (fun x y => div_is_0 (div x y))...
   rewrite (fun x y => div_is_0 (mod x y))...
   pose proof (div_mod_correct i h).
   lia.
   apply div_lt...
-  rewrite (mult_comm w)...
+  rewrite (Nat.mul_comm w)...
   rewrite length_rect in Hj1...
-  unfold size; rewrite (mult_comm h); apply mult_lt_plus...
+  unfold size; rewrite (Nat.mul_comm h); apply mult_lt_plus...
   apply div_lt...
-  rewrite (mult_comm w); rewrite length_rect in Hj1...
+  rewrite (Nat.mul_comm w); rewrite length_rect in Hj1...
   unfold size; apply mult_lt_plus...
 Qed.
 
@@ -2377,10 +2363,10 @@ Qed.
 Theorem rect_aux1: forall x y, x < size -> y < size  ->
                           div x h * h + div y w < size.
 Proof.
-  intros x y H H1; unfold size; rewrite (mult_comm h); apply mult_lt_plus.
+  intros x y H H1; unfold size; rewrite (Nat.mul_comm h); apply mult_lt_plus.
   apply div_lt; auto.
   apply div_lt; auto.
-  rewrite mult_comm; auto.
+  rewrite  Nat.mul_comm; auto.
 Qed.
 
 Theorem rect_aux2: forall x1 x2 y1 y2, y1 < size -> y2 < size ->
@@ -2393,20 +2379,20 @@ Proof with auto with arith.
   intros tmp; contradict tmp...
   assert (U2: 0 < w).
   generalize V1; unfold size; case w; simpl...
-  rewrite mult_0_r; intros tmp; contradict tmp...
+  rewrite Nat.mul_0_r; intros tmp; contradict tmp...
   assert (Eq1: mod x1 h = mod x2 h).
   apply lexico_mult with (3 := H1); apply mod_lt...
   assert (Eq2: div x1 h = div x2 h).
-  apply lexico_mult with (3 := H2); apply div_lt; rewrite mult_comm...
+  apply lexico_mult with (3 := H2); apply div_lt; rewrite  Nat.mul_comm...
   split; [ rewrite (div_mod_correct x1 h);
            try rewrite (div_mod_correct x2 h) |
            rewrite (div_mod_correct y1 w);
            try rewrite (div_mod_correct y2 w)]...
   replace (div y1 w) with (div y2 w)...
   f_equal...
-  apply plus_reg_l with (mod x1 h * w).
+  apply Nat.add_cancel_l with (mod x1 h * w).
   pattern (mod x1 h) at 2; rewrite Eq1...
-  apply plus_reg_l with (div x1 h * h).
+  apply Nat.add_cancel_l with (div x1 h * h).
   pattern (div x1 h) at 1; rewrite Eq2...
 Qed.
 
@@ -2420,7 +2406,7 @@ Proof with auto with arith.
   intros tmp; contradict tmp...
   assert (U4: 0 < w).
   generalize U1; unfold size; case w; simpl...
-  rewrite mult_0_r; intros tmp; contradict tmp...
+  rewrite Nat.mul_0_r; intros tmp; contradict tmp...
   generalize div_lt; intros U5.
   generalize mod_lt; intros U6.
   repeat match goal with
@@ -2488,41 +2474,41 @@ Proof with auto with arith.
                         assert (X = x /\ Y = y)
   end.
   apply rect_aux2...
-  unfold size; rewrite (mult_comm w); apply mult_lt_plus...
-  apply div_lt; rewrite mult_comm...
+  unfold size; rewrite (Nat.mul_comm w); apply mult_lt_plus...
+  apply div_lt; rewrite  Nat.mul_comm...
   rewrite get_rect in H4...
   rewrite get_rect in H2...
   generalize H4; clear H4.
-  repeat rewrite (fun x => mult_comm x h).
+  repeat rewrite (fun x =>  Nat.mul_comm x h).
   repeat ((rewrite mod_mult_comp || rewrite div_mult_comp);
           auto).
   rewrite (div_is_0 x1 h)...
   rewrite (div_is_0 y1 w)...
-  repeat rewrite plus_0_r.
+  repeat rewrite  Nat.add_0_r.
   intros H4.
   apply nth_ulist with (a:= 0) (l := rect (div x h * h + div y w) s).
   rewrite length_rect...
   unfold size; apply mult_lt_plus...
-  unfold size; rewrite (mult_comm h); apply mult_lt_plus...
-  apply div_lt; rewrite mult_comm...
+  unfold size; rewrite (Nat.mul_comm h); apply mult_lt_plus...
+  apply div_lt; rewrite  Nat.mul_comm...
   case H1...
   rewrite length_rect...
   unfold size; apply mult_lt_plus...
-  unfold size; rewrite (mult_comm h); apply mult_lt_plus...
-  apply div_lt; rewrite mult_comm...
+  unfold size; rewrite (Nat.mul_comm h); apply mult_lt_plus...
+  apply div_lt; rewrite  Nat.mul_comm...
   case H1...
   apply ulist_perm with ref_list.
   apply Permutation_sym; case H1...
   intros _ (_, (_, tmp)); apply tmp; clear tmp.
-  unfold size; rewrite (mult_comm h); apply mult_lt_plus...
-  apply div_lt; rewrite mult_comm...
+  unfold size; rewrite (Nat.mul_comm h); apply mult_lt_plus...
+  apply div_lt; rewrite  Nat.mul_comm...
   apply ref_list_ulist.
-  repeat rewrite (fun x => mult_comm x h).
+  repeat rewrite (fun x =>  Nat.mul_comm x h).
   unfold out in H4; rewrite H4...
-  repeat rewrite (mult_comm h)...
-  unfold size; repeat rewrite (mult_comm h); apply mult_lt_plus...
-  unfold size; rewrite (mult_comm w); apply mult_lt_plus...
-  apply div_lt; rewrite mult_comm...
+  repeat rewrite (Nat.mul_comm h)...
+  unfold size; repeat rewrite (Nat.mul_comm h); apply mult_lt_plus...
+  unfold size; rewrite (Nat.mul_comm w); apply mult_lt_plus...
+  apply div_lt; rewrite  Nat.mul_comm...
   repeat rewrite div_mult_comp; auto with arith.
   rewrite (div_is_0 x1); auto with arith.
   rewrite (div_is_0 y1); auto with arith.
@@ -2539,13 +2525,13 @@ Proof with auto with arith.
   exact lit_test_exact.
   apply olist_one.
   apply gen_rect_ordered.
-  repeat rewrite (fun x => mult_comm x h).
+  repeat rewrite (fun x =>  Nat.mul_comm x h).
   repeat ((rewrite mod_mult_comp || rewrite div_mult_comp);
           auto).
   rewrite (div_is_0 (div y w) h)...
   rewrite (mod_small (div y w) h)...
-  apply div_lt; rewrite (mult_comm w)...
-  apply div_lt; rewrite (mult_comm w)...
+  apply div_lt; rewrite (Nat.mul_comm w)...
+  apply div_lt; rewrite (Nat.mul_comm w)...
   case (gen_cell_correct l x y); auto; intros tmp; case tmp; auto; clear tmp.
   apply (rm_incl _ lit_test) with
       (l1 := L (Pos x y) z::nil)
@@ -2789,7 +2775,7 @@ Proof with auto with arith.
                        invariant (gen_init_clauses_aux s1 p cs) s).
   intros s s1; generalize s; elim s1; auto; clear s s1.
   intros s cs p H H0 H1 H2; rewrite prestrict_all in H1...
-  case (le_or_lt (length s) (pos2n p))...
+  case (Nat.le_gt_cases (length s) (pos2n p))...
   intros H3; absurd (length (jump (pos2n p) s) = length (@nil nat)).
   generalize (length_jump _ (pos2n p) s).
   rewrite <- H2; simpl.
@@ -2800,7 +2786,7 @@ Proof with auto with arith.
     case s1; clear s1.
   intros Rec s cs p H0 H1 H2 H3.
   assert (F1: pos2n p < length s).
-  case (le_or_lt (length s) (pos2n p)); auto; intros H5.
+  case (Nat.le_gt_cases (length s) (pos2n p)); auto; intros H5.
   rewrite (jump_too_far _ (pos2n p) s) in H3; try discriminate...
   unfold gen_init_clauses_aux; lazy beta; fold gen_init_clauses_aux.
   case (In_dec eq_nat a ref_list); intros H5.
@@ -2814,7 +2800,7 @@ Proof with auto with arith.
   unfold get; rewrite <- H3...
   rewrite next_pos...
   apply prestrict_all...
-  case (le_or_lt (length s) (pos2n (next p))); auto; intros H6.
+  case (Nat.le_gt_cases (length s) (pos2n (next p))); auto; intros H6.
   rewrite (length_jump nat (pos2n p)).
   rewrite <- H3; simpl; rewrite next_pos...
   rewrite next_pos in H6...
@@ -2823,7 +2809,7 @@ Proof with auto with arith.
   rewrite prestrict_length...
   split...
   intros p1 Hp1.
-  case (le_or_lt (pos2n p) (pos2n p1)); intros Hp2.
+  case (Nat.le_gt_cases (pos2n p) (pos2n p1)); intros Hp2.
   rewrite prestrict_get_default; auto; intros HH; contradict HH;
     apply out_not_in_refl.
   rewrite prestrict_get...
@@ -2831,20 +2817,20 @@ Proof with auto with arith.
   split...
   rewrite prestrict_length...
   intros p1 Hp1.
-  case (le_or_lt (pos2n p) (pos2n p1)); intros Hp2.
+  case (Nat.le_gt_cases (pos2n p) (pos2n p1)); intros Hp2.
   intros HH; contradict HH; unfold get.
-  rewrite (le_plus_minus (pos2n p) (pos2n p1)); auto with arith;
-    rewrite jump_add; rewrite <- H3; case (pos2n p1 - pos2n p);
+  rewrite <-(Nat.sub_add (pos2n p) (pos2n p1)); auto with arith;
+    rewrite Nat.add_comm, jump_add; rewrite <- H3; case (pos2n p1 - pos2n p);
       simpl; auto; intros; rewrite jump_nil; apply out_not_in_refl.
   rewrite prestrict_get...
   intros b s1 Rec s cs p H0 H1 H2 H3.
   assert (F0: b :: s1 = jump (pos2n (next p)) s).
   rewrite next_pos.
-  replace (S (pos2n p)) with ((pos2n p) + 1)...
+  replace (S (pos2n p)) with ((pos2n p) + 1).
   rewrite jump_add; rewrite <- H3; simpl...
-  rewrite plus_comm...
+  rewrite Nat.add_comm...
   assert (F1: pos2n (next p) < length s).
-  case (le_or_lt (length s) (pos2n (next p))); auto; intros H5.
+  case (Nat.le_gt_cases (length s) (pos2n (next p))); auto; intros H5.
   rewrite (jump_too_far _ (pos2n (next p)) s) in F0; try discriminate...
   case (In_dec eq_nat a ref_list); intros H4.
   apply Rec...
@@ -2866,7 +2852,7 @@ Proof with auto with arith.
   split...
   rewrite prestrict_length...
   intros p1 Hp1.
-  case (le_or_lt (pos2n p) (pos2n p1)); intros Hp2.
+  case (Nat.le_gt_cases (pos2n p) (pos2n p1)); intros Hp2.
   rewrite prestrict_get_default; auto; intros HH; contradict HH;
     apply out_not_in_refl.
   rewrite prestrict_get...
@@ -2877,8 +2863,8 @@ Proof with auto with arith.
   split...
   rewrite prestrict_length...
   intros p1 Hp1.
-  case (le_or_lt (pos2n p) (pos2n p1)); intros Hp2.
-  case (le_lt_or_eq) with (1 := Hp2); clear Hp2; intros Hp2; subst.
+  case (Nat.le_gt_cases (pos2n p) (pos2n p1)); intros Hp2.
+  case le_lt_eq_dec with (1 := Hp2); clear Hp2; intros Hp2; subst.
   intros HH; contradict HH; rewrite prestrict_get_default...
   apply out_not_in_refl.
   rewrite next_pos...
@@ -2888,7 +2874,7 @@ Proof with auto with arith.
   rewrite <- Hp2; rewrite next_pos...
   repeat rewrite prestrict_get...
   rewrite next_pos...
-  case (le_lt_or_eq 0 size); auto with arith; intros H1.
+  case (le_lt_eq_dec 0 size); auto with arith; intros H1.
   intros s Hs; unfold gen_init_clauses; apply H; simpl...
   rewrite prestrict_0.
   apply invariant_init_c.
@@ -2994,7 +2980,7 @@ Proof.
                     ]
                   ]
   end; try clear tmp1 tmp2.
-  apply le_trans with (length cs1); auto with arith.
+  apply Nat.le_trans with (length cs1); auto with arith.
   apply length_clauses_update; auto.
   apply invariant_clauses_update with (1 := H1); auto.
   intros s1 (Hs1, Hs2); split; auto.
@@ -3013,11 +2999,11 @@ Proof.
   intros s1 fRec; apply fRec; auto with arith.
   apply invariant_refine with (1 := H1); auto.
   intros; apply H; auto with arith.
-  apply le_trans with (1 := H4); auto with arith.
+  apply Nat.le_trans with (1 := H4); auto with arith.
   intros HH s1 Hs1 Hs2; case HH with s1; auto.
   apply invariant_refine with (1 := H1); auto.
   intros; apply H; auto.
-  apply le_trans with (1 := H4); auto with arith.
+  apply Nat.le_trans with (1 := H4); auto with arith.
 Qed.
 
 Theorem try_all_olist:
@@ -3247,7 +3233,7 @@ Proof with auto with arith datatypes.
   intros n3 c3 Hn3; apply (HH1 n3)...
   intros s1 cs1 Hs1 Hs2 Hs3 Hs4 Hs5 Hs6.
   case (Rec s1 cs1)...
-  apply le_trans with (1 := Hs1)...
+  apply Nat.le_trans with (1 := Hs1)...
   intros H3 (H4, H5).
   split...
   split...
@@ -3312,7 +3298,7 @@ Proof with auto with arith.
   intros s1 s2 H (H1, (H2, H3)).
   apply list_nth_eq with (r := out).
   rewrite H2...
-  intros n; case (le_or_lt (length s1) n); intros H4.
+  intros n; case (Nat.le_gt_cases (length s1) n); intros H4.
   repeat rewrite nth_default...
   rewrite H2; rewrite <- H1...
   replace n with (pos2n (Pos (div n size) (mod n size))).
@@ -3339,12 +3325,12 @@ Proof with auto with arith.
                     exists (mod n size); split; auto
   end.
   rewrite length_take...
-  apply plus_le_reg_l with (div n size * size).
-  repeat rewrite (fun x y => plus_comm (x * y)).
+  apply Nat.add_le_mono_l with (div n size * size).
+  repeat rewrite (fun x y => Nat.add_comm (x * y)).
   rewrite <- length_jump; rewrite H1.
-  pattern size at 1; rewrite <- mult_1_l; rewrite <- mult_plus_distr_r.
-  apply mult_le_compat_r...
-  apply mult_le_compat_r...
+  pattern size at 1; rewrite <- Nat.mul_1_l; rewrite <- Nat.mul_add_distr_r.
+  apply Nat.mul_le_mono_r...
+  apply Nat.mul_le_mono_r...
   simpl pos2n.
   rewrite jump_add; rewrite <- jump_nth.
   apply sym_equal; apply take_nth...
