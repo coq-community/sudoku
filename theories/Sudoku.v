@@ -189,37 +189,33 @@ Qed.
 (* Find the next position *)
 Definition next p :=
   match p with 
-  | Pos x y => if eq_nat (S y) size then Pos (S x) 0 else Pos x (S y)
+  | Pos x y => if size =? (S y) then Pos (S x) 0 else Pos x (S y)
   end.
 
 Theorem next_pos p : pos2n (next p) = S (pos2n p).
 Proof.
 destruct p as (x, y); simpl; auto.
 unfold pos2n.
-case (eq_nat (S y) size); simpl; intros H1.
-- rewrite <- H1.
-  destruct (eq_nat y y); try lia.
+case Nat.eqb_spec; simpl; intros H1.
+- rewrite H1; lia.
 - destruct size.
   + lia.
   + assert (y <> n) by lia.
-    destruct (eq_nat y n); try lia.
+    lia.
 Qed.
 
 Theorem valid_pos_next p :
   valid_pos p -> pos2n (next p) < size * size -> valid_pos (next p).
 Proof.
 destruct p as (x, y).
-destruct (eq_nat (S y) size); simpl.
-- rewrite <- !e.
-  intros H H0.
-  all: destruct (eq_nat y y); simpl; try nia.
-  simpl in *.
+unfold next; case Nat.eqb_spec; intros e.
+- rewrite !e.
+  simpl; intros H H0.
   nia.
 - intros.
   destruct size eqn:E.
   + lia.
-  + destruct (eq_nat y n0); try lia.
-    simpl in *.
+  + simpl in *.
     lia.
 Qed.
 
@@ -228,6 +224,60 @@ Theorem valid_pos2n p (s: list nat) :
 Proof.
 destruct p as (x, y); simpl; intros (H1, H2) H3; rewrite H3; clear H3.
 apply mult_lt_plus; auto.
+Qed.
+
+Definition order_pos p1 p2 :=
+  match p1 with 
+  | Pos x1 y1 => 
+    match p2 with 
+      Pos x2 y2 => ((x1 <? x2) || ((x1 =? x2) && (y1 <=? y2)))%bool
+    end
+  end.
+
+Lemma order_pos_refl p :  order_pos p p = true.
+Proof.
+destruct p as [x y]; simpl.
+case Nat.ltb_spec; case Nat.eqb_spec; case Nat.leb_spec; simpl; auto.
+lia.
+Qed.
+
+Lemma order_pos_trans p1 p2 p3 :  
+  order_pos p1 p2 = true -> order_pos p2 p3 = true -> order_pos p1 p3 = true.
+Proof.
+destruct p1 as [x1 y1]; destruct p2 as [x2 y2]; destruct p3 as [x3 y3]; simpl.
+repeat (case Nat.ltb_spec; case Nat.eqb_spec; case Nat.leb_spec; simpl; try lia).
+Qed.
+
+Lemma order_next_anti p1 p2 : 
+   p1 <> p2 -> order_pos p1 p2 = (negb (order_pos p2 p1)).
+Proof.
+destruct p1 as [x1 y1]; destruct p2 as [x2 y2]; simpl; intros H1.
+assert (Hv : x1 <> x2 \/ y1 <> y2).
+{
+  case (Nat.eqb_spec x1 x2); intros Hx1.
+  - right; contradict H1; subst x1 y1; auto.
+  - left; auto. 
+}
+repeat (case Nat.ltb_spec; case Nat.eqb_spec; case Nat.leb_spec; simpl; try lia).
+Qed.
+
+Lemma order_next_pos p1 p2 : p1 <> p2 -> valid_pos p1 -> valid_pos p2 -> 
+   order_pos p1 p2 = true <-> order_pos (next p1) p2 = true.
+Proof.
+destruct p1 as [x1 y1]; destruct p2 as [x2 y2]; simpl; intros H1.
+assert (Hv : x1 <> x2 \/ y1 <> y2).
+{
+  case (Nat.eqb_spec x1 x2); intros Hx1.
+  - right; contradict H1; subst x1 y1; auto.
+  - left; auto. 
+}
+unfold order_pos.
+repeat (case Nat.ltb_spec || case Nat.eqb_spec || case Nat.leb_spec; try lia).
+Qed.
+
+Lemma order_pos_00 p : order_pos (Pos 0 0) p = true.
+Proof.
+destruct p as [[|x] y]; simpl; auto.
 Qed.
 
 (* Create the list of positions (x, y) such that 0 <= x < h and 0 <= y < w *)
@@ -308,7 +358,7 @@ induction p.
 - simpl.
   destruct (eq_nat (S n0) size).
   + rewrite <- !e.
-    destruct (eq_nat n0 n0); try lia.
+    rewrite Nat.eqb_refl.
     unfold get.
     simpl.
     rewrite <- !e.
@@ -318,7 +368,7 @@ induction p.
     * intros. unfold get.
       simpl. rewrite <- plus_n_Sm. simpl. reflexivity.
     * intros.
-      destruct (eq_nat n0 n2); try lia.
+      case Nat.eqb_spec; try lia; intros _.
       unfold get.
       simpl. rewrite <- plus_n_Sm. simpl. reflexivity.
 Qed.
@@ -695,6 +745,60 @@ cut (w <= size).
 - unfold size; nia.
 Qed.
 
+
+Theorem get_rect_rev i j s :
+  i < size -> j < size -> 
+  get (Pos (div j h * h + div i w) (mod j h * w + mod i w)) s = 
+  nth i (rect j s) out.
+Proof with auto with arith.
+intros Hi Hj.
+assert (F1 : div j h < w). {
+  apply div_lt; auto.
+}
+assert (F2 : div i w < h). {
+  apply div_lt; auto; rewrite Nat.mul_comm; auto.
+}
+assert (F3 : mod i w < w). {
+  apply mod_lt; auto; lia.
+}
+
+assert (F4 : mod j h < h). {
+  apply mod_lt; auto; lia.
+}
+rewrite get_rect; try (unfold size; nia).
+rewrite (Nat.mul_comm _ h), mod_mult_comp; try lia.
+rewrite mod_small; auto.
+rewrite (Nat.mul_comm (mod j h) w), mod_mult_comp; try lia.
+rewrite mod_small; auto.
+rewrite (Nat.mul_comm _ w), <- Nat.div_mod; try lia.
+rewrite !div_mult_comp; try lia.
+rewrite (Nat.div_small (div _ _)); auto.
+rewrite (Nat.div_small (mod _ _)); auto.
+rewrite !Nat.add_0_r.
+rewrite (Nat.mul_comm _ h), <- Nat.div_mod; try lia.
+Qed.
+
+Theorem valid_get_rect_rev i j :
+  i < size -> j < size -> 
+  valid_pos (Pos (div j h * h + div i w) (mod j h * w + mod i w)).
+Proof.
+intros Hi Hj.
+assert (F1 : div j h < w). {
+  apply div_lt; auto.
+}
+assert (F2 : div i w < h). {
+  apply div_lt; auto; rewrite Nat.mul_comm; auto.
+}
+assert (F3 : mod i w < w). {
+  apply mod_lt; auto; lia.
+}
+assert (F4 : mod j h < h). {
+  apply mod_lt; auto; lia.
+}
+split; unfold size; nia.
+Qed.
+
+
 Theorem length_rect i s :
   i < size -> length s = size * size -> length (rect i s) = size.
 Proof with auto with arith.
@@ -980,6 +1084,32 @@ Fixpoint gen_init_clauses_aux (s : list nat) (p : pos) (c : clauses)
 (* Generate the list of clauses relative to a list s *)
 Definition gen_init_clauses s := gen_init_clauses_aux s (Pos 0 0) init_c.
 
+(* Auxiliary function that check if the initial assignment does not violate 
+   the rules of the sudoku 
+ *)
+
+Fixpoint clause_satb c s := 
+  match c with 
+  | L p z :: c1 => ((get p s =? z) || clause_satb c1 s)%bool 
+  | _ => false
+  end.
+
+Fixpoint check_init_state_aux (s : list nat) (p : pos) (s2 : list nat)
+    {struct s} : bool :=
+  match s with
+  | nil => true
+  | a :: s1 =>
+    let p1 := next p in
+    let ll := L p a in
+    if (In_dec eq_nat a ref_list) then
+      ((negb (clause_satb (anti_literals ll) s2)) && 
+       check_init_state_aux s1 p1 s2)%bool
+    else check_init_state_aux s1 p1 s2
+  end.
+
+(* Check the initial state is consistent with sudoku                          *)
+Definition check_init_state s := check_init_state_aux s (Pos 0 0) s.
+
 
 (******************************************************************************)
 (*    Algorithm that finds a solution                                         *)
@@ -1020,7 +1150,9 @@ Fixpoint find_one_aux (n : clauses) (s : list nat) (cs : clauses) {struct n} :
   end.
 
 (* Find one solution that refines the state s *)
-Definition find_one s := let cs := gen_init_clauses s in find_one_aux cs s cs.
+Definition find_one s := let cs := gen_init_clauses s in 
+  if check_init_state s then find_one_aux cs s cs else None.
+
 
 (******************************************************************************)
 (*    Algorithm that finds all solutions                                      *)
@@ -1037,7 +1169,7 @@ Fixpoint try_all (s : list nat) (c : clause) (cs:  clauses)
    list (list nat) :=
   match c with
   | nil => nil
-  | (L p z) as k:: l1 =>
+  | (L p z) as k :: l1 =>
     let s1 := update p z s in
     let cs1 := clauses_update k (anti_literals k) cs in
     merges (f s1 cs1) (try_all s l1 cs f)
@@ -1059,7 +1191,8 @@ Fixpoint find_all_aux (n : clauses) (s : list nat) (cs : clauses) {struct n}:
   end.
 
 (* Find all solutions that refines the state s *)
-Definition find_all s := let cs := gen_init_clauses s in find_all_aux cs s cs.
+Definition find_all s := let cs := gen_init_clauses s in 
+  if check_init_state s then find_all_aux cs s cs else nil.
 
 (******************************************************************************)
 (*  Algorithm that finds one solution and insures that it is unique           *)
@@ -1102,7 +1235,8 @@ end.
 
 (* Find one solution that refines the state s *)
 Definition find_just_one s :=
-  let cs := gen_init_clauses s in find_just_one_aux cs s cs.
+  let cs := gen_init_clauses s in 
+  if check_init_state s then find_just_one_aux cs s cs else jNone.
 
 (******************************************************************************)
 (*            length                                                          *)
@@ -1178,6 +1312,8 @@ unfold clauses_merge; split; intros H.
   + apply add_incl_l; auto.
   + apply add_incl_r; auto.
 Qed.
+
+
 
 Theorem gen_row_correct l i z :
     In l (gen_row i z) <-> exists j, l = L (Pos i j) z /\ j < size.
@@ -1876,6 +2012,7 @@ assert (Eq:
     * intros; discriminate.
 Qed.
 
+
 (******************************************************************************)
 (*            Satisfiability                                                  *)
 (******************************************************************************)
@@ -1888,10 +2025,47 @@ Definition lit_sat l s := match l with L p z => get p s = z end.
 (* A state satisfies a clause if it satisfies at least one literal *)
 Definition clause_sat c s := exists l, In l c /\ lit_sat l s.
 
+Lemma clause_satb_spec c s : 
+  Bool.reflect (clause_sat c s) (clause_satb c s).
+Proof.
+induction c as [|[l z] c IH]; simpl.
+- apply Bool.ReflectF.
+  intros [l [H _]]; inversion H.
+- case Nat.eqb_spec; simpl; intros Hg.
+  + apply Bool.ReflectT.
+    exists (L l z); split; auto; left; auto.
+  + case IH; intros Hc.
+    * apply Bool.ReflectT.
+      destruct Hc as [l1 [Hl1 Hl2]].
+      exists l1; split; auto; right; auto.
+    * apply Bool.ReflectF.
+      contradict Hc.
+      destruct Hc as [l1 [Hl1 Hl2]].
+      exists l1; split; auto.
+      destruct Hl1; auto.
+      red in Hl2; subst l1; case Hg; auto.
+Qed.
+
 (* A state satisfies a list of clauses if it satisfies
    all its clauses
  *)
 Definition sat (cs : clauses) s := forall n c, In (n, c) cs -> clause_sat c s.
+
+Theorem clause_sat_incl c1 c2 s :
+  incl c1 c2 -> clause_sat c1 s -> clause_sat c2 s.
+Proof.
+intros H1 H2; case H2; intros l (H1l, H2l); exists l; 
+  auto with datatypes.
+Qed.
+
+Theorem sat_incl n1 n2 c1 c2 cs s :
+  incl c1 c2 -> sat ((n1,c1):: cs) s -> sat ((n2,c2):: cs) s.
+Proof.
+intros H1 H2 n3 c3; simpl; intros [H3 | H3].
+injection H3; intros; subst n3 c3; apply clause_sat_incl with c1; auto.
+  apply H2 with n1; auto with datatypes.
+apply H2 with n3; auto with datatypes.
+Qed.
 
 (* Satisfiability is preserved by refinement *)
 Theorem sat_refine cs s1 s2 :
@@ -2270,177 +2444,281 @@ assert (U1: 0 < h).
            pattern (div x1 h) at 1; rewrite Eq2...
 Qed.
 
+Lemma iff_impl_l P Q : P <-> Q -> P -> Q.
+Proof. intros []; auto. Qed.
+
+Lemma iff_impl_r P Q : P <-> Q -> Q -> P.
+Proof. intros []; auto. Qed.
+
+Lemma sudoku_def s :
+  sudoku s <->
+ ((length s = size * size) /\
+  (forall p, valid_pos p -> In (get p s) ref_list) /\
+  (forall p, valid_pos p -> ~ clause_sat (anti_literals (L p (get p s))) s)).
+Proof.
+split.
+- intros [Hs1 [Hs2 [Hs3 Hs4]]]; split; auto; split.
+  + intros [x y] [Hpx Hpy].
+    apply Permutation_in with (1 := Hs2 _ Hpx).
+    rewrite get_row; auto.
+    apply nth_In; rewrite length_row; auto.
+  + intros [x y] [Hpx Hpy] [[[x1 y1] z] [Hx1 Hy1]].
+    red in Hy1; subst z.
+    case (iff_impl_l _ _ (clause_merge_in _ _ _) Hx1).
+    {
+      intros tmp; case (iff_impl_l _ _ (lit_rm_in _ _ _ (olist_one _ _ _) 
+                                       (gen_row_ordered _ _)) tmp).
+      clear tmp.
+      intros H1 H2.
+      case (iff_impl_l _ _ (gen_row_correct _ _ _) H2); intros y2 [Hy2 Hsy2].
+      injection Hy2; intros HH HH1 HH2; subst y2 x1.
+      case H1; left; auto.
+      assert (Hy : y = y1).
+      {
+        apply nth_ulist with (a := out) (l := row x s); auto.
+        - rewrite length_row; auto.
+        - rewrite length_row; auto.
+        - apply ulist_perm with (1 := Permutation_sym (Hs2 _ Hpx)).
+          apply ref_list_ulist.
+        - rewrite <- !get_row; auto.
+      }
+      rewrite Hy; auto.
+    }
+    clear Hx1; intros Hx1.
+    case (iff_impl_l _ _ (clause_merge_in _ _ _) Hx1).
+    {
+      intros tmp; case (iff_impl_l _ _ (lit_rm_in _ _ _ (olist_one _ _ _) 
+                                       (gen_column_ordered _ _)) tmp).
+      clear tmp.
+      intros H1 H2.
+      case (iff_impl_l _ _ (gen_column_correct _ _ _) H2); intros y2 [Hy2 Hsy2].
+      injection Hy2; intros HH HH1 HH2; subst y1 y2.
+      case H1; left; auto.
+      assert (Hy : x = x1).
+      {
+        apply nth_ulist with (a := out) (l := column y s); auto.
+        - rewrite length_column; auto.
+        - rewrite length_column; auto.
+        - apply ulist_perm with (1 := Permutation_sym (Hs3 _ Hpy)).
+          apply ref_list_ulist.
+        - rewrite <- !get_column; auto.
+      }
+      rewrite Hy; auto.
+    }
+    clear Hx1; intros Hx1.
+    case (iff_impl_l _ _ (clause_merge_in _ _ _) Hx1).
+    {
+      intros tmp; case (iff_impl_l _ _ (lit_rm_in _ _ _ (olist_one _ _ _) 
+                                       (gen_rect_ordered _ _)) tmp).
+      clear tmp.
+      intros H1 H2.
+      assert (Fxh : div x h < w). {
+        apply div_lt; auto.
+      }
+      assert (Fyw : div y w < h). {
+        apply div_lt; auto; rewrite Nat.mul_comm; auto.
+      }
+      assert (Mxh : mod x h < h). {
+        apply mod_lt; lia.
+      }
+      assert (Myw : mod y w < w). {
+        apply mod_lt; lia.
+      }
+      assert (Fxhyw : div x h * h + div y w < size).
+      {
+        unfold size; nia.
+      }
+      case (iff_impl_l _ _ (gen_rect_correct _ _ _ Fxhyw) H2); 
+        intros x2 [y2 [Hl [Hx2 Hy2]]].
+      rewrite (Nat.mul_comm _ h), div_mult_comp in Hl; try lia.
+      rewrite (Nat.div_small (div _ _)), Nat.add_0_r in Hl; auto.
+      rewrite mod_mult_comp in Hl; try lia.
+      rewrite (Nat.mod_small (div _ _)) in Hl; auto.
+      injection Hl; intros HH HH1 HH2; subst x1 y1.
+      case H1; left; auto.
+      apply f_equal2; auto.
+      rewrite (Nat.div_mod_eq x h) at 1.
+      rewrite (Nat.div_mod_eq y w) at 1.
+      rewrite !get_rect in HH; try (unfold size; nia); auto.
+      rewrite !mod_mult_comp in HH; try lia.
+      rewrite !div_mult_comp in HH; try lia.
+      rewrite (Nat.div_small x2), Nat.add_0_r in HH; auto.
+      rewrite (Nat.div_small y2), Nat.add_0_r in HH; auto.
+      rewrite (Nat.mod_small x2) in HH; auto.
+      rewrite (Nat.mod_small y2) in HH; auto.
+      assert (Hx2y2 : x2 * w + y2 = mod x h * w + mod y w). {
+        apply nth_ulist with (a := out) (l := rect (div x h * h + div y w) s);
+          auto.
+        - rewrite length_rect; auto; unfold size; nia.
+        - rewrite length_rect; auto; unfold size; nia.
+        - apply ulist_perm with (1 := Permutation_sym (Hs4 _ Fxhyw)).
+          apply ref_list_ulist.
+      }
+      assert (F1 : y2 = mod y w). {
+        rewrite <- (mod_small y2 w); auto.
+        rewrite <- (mod_mult_comp y2 x2 w), (Nat.mul_comm _ x2); try lia.
+        rewrite Hx2y2, (Nat.mul_comm _ w), mod_mult_comp; try lia.
+        rewrite mod_small; auto.
+      }
+      assert (F2 : x2 = mod x h) by nia.
+      subst x2 y2; auto.
+    }
+    clear Hx1.
+    intros tmp; case (iff_impl_l _ _ (lit_rm_in _ _ _ (olist_one _ _ _) 
+                                       (gen_cell_ordered _)) tmp).
+    clear tmp.
+    intros H1 H2.
+    case H1; left.
+    case (iff_impl_l _ _ (gen_cell_correct _ _ _) H2).
+    intros z [Hz _]; injection Hz; intros Hz1 Hz2 Hz3; subst z x1 y1; auto.
+- intros [Hp1 [Hp2 Hp3]].
+  split; auto; split; [|split].
+  + intros i Hi; apply ulist_eq_permutation; auto.
+    * apply (NoDup_nth (row i s) out).
+      intros i1 j1 Hi1 Hj1 Hi1j1.
+      rewrite length_row in Hi1, Hj1; auto.
+      rewrite <- !get_row in Hi1j1; auto.
+      case (Nat.eqb_spec i1 j1); auto; intros i1Dj1.
+      case (Hp3 (Pos i i1)).
+      --split; auto.
+      --exists (L (Pos i j1) (get (Pos i i1) s)); split; auto.
+        ++apply clause_merge_in; left.
+          apply lit_rm_in.
+          **apply olist_one.
+          **apply gen_row_ordered.
+          **split.
+            --- intros [H3 | H3]; auto.
+                injection H3; auto.
+            --- apply gen_row_correct; exists j1; split; auto.
+        ++red; rewrite Hi1j1; auto.
+    * intros l Hl.
+      case (gen_row_sat i l s); auto; intros _ Hl1.
+      case (Hl1 Hl); intros l1 [Hl1_1 Hl1_2].
+      case (gen_row_correct l1 i l); auto; intros Hl2 _.
+      case (Hl2 Hl1_1); intros j [Hl3 Hj].
+      rewrite Hl3 in Hl1_2; red in Hl1_2; rewrite <- Hl1_2.
+      apply Hp2; auto; split; auto.
+    * rewrite length_row; auto.
+      rewrite ref_list_length; auto.
+  + intros; apply ulist_eq_permutation; auto.
+    * apply (NoDup_nth (column i s) 0).
+      intros i1 j1 Hi1 Hj1 Hi1j1.
+      rewrite length_column in Hi1, Hj1; auto.
+      rewrite <- !get_column in Hi1j1; auto.
+      case (Nat.eqb_spec i1 j1); auto; intros i1Dj1.
+      case (Hp3 (Pos i1 i)).
+      --split; auto.
+      --exists (L (Pos j1 i) (get (Pos i1 i) s)); split; auto.
+        ++apply clause_merge_in; right.
+          apply clause_merge_in; left.
+          apply lit_rm_in.
+            **apply olist_one.
+            **apply gen_column_ordered.
+            **split.
+              --- intros [H3 | H3]; auto.
+                  injection H3; auto.
+              --- apply gen_column_correct; exists j1; split; auto.
+        ++red; rewrite Hi1j1; auto.
+    * intros l Hl.
+      case (gen_column_sat i l s); auto; intros _ Hl1.
+      case (Hl1 Hl); intros l1 [Hl1_1 Hl1_2].
+      case (gen_column_correct l1 i l); auto; intros Hl2 _.
+      case (Hl2 Hl1_1); intros j [Hl3 Hj].
+      rewrite Hl3 in Hl1_2; red in Hl1_2; rewrite <- Hl1_2.
+      apply Hp2; split; auto.
+    * rewrite length_column, ref_list_length; auto. 
+  + intros; apply ulist_eq_permutation; auto.
+    * apply (NoDup_nth (rect i s) 0).
+      intros i1 j1 Hi1 Hj1 Hi1j1.
+      rewrite length_rect in Hi1, Hj1; auto.
+      rewrite <- !get_rect_rev in Hi1j1; auto.
+      case (Nat.eqb_spec i1 j1); auto; intros i1Dj1.
+      assert (Fx1 : div i h < w). {
+        apply div_lt; auto.
+      }
+      assert (Fx2 : div i1 w < h). {
+        apply div_lt; auto; rewrite Nat.mul_comm; auto.
+      }
+      assert (Fx3 : mod i h < h). {
+        apply mod_lt; lia.
+      }
+      assert (Fx4 : mod i1 w < w). {
+        apply mod_lt; lia.
+      }
+      assert (Fx5 : div j1 w < h). {
+        apply div_lt; auto; rewrite Nat.mul_comm; auto.
+      }
+      assert (Fx6 : mod j1 w < w). {
+        apply mod_lt; lia.
+      }
+      case (Hp3 (Pos (div i h * h + div i1 w) (mod i h * w + mod i1 w))).
+      --split; try (unfold size; nia).
+      --exists 
+            (L (Pos (div i h * h + div j1 w) (mod i h * w + mod j1 w))
+              (get (Pos (div i h * h + div j1 w) (mod i h * w + mod j1 w)) s)).
+        split; try (unfold lit_sat; auto).
+        apply clause_merge_in; right.
+        apply clause_merge_in; right.
+        apply clause_merge_in; left.
+        apply lit_rm_in.
+        ++apply olist_one.
+        ++apply gen_rect_ordered.
+        ++split; auto.
+          **intros HH; case HH; auto.
+            clear HH; intros HH; injection HH.
+            intros HH1 HH2 HH3.
+            case i1Dj1.
+            rewrite (Nat.div_mod_eq i1 w).
+            rewrite (Nat.div_mod_eq j1 w); lia.
+          **rewrite (Nat.mul_comm _ h), div_mult_comp ; try lia.
+            rewrite (Nat.mul_comm _ w), div_mult_comp ; try lia.
+            rewrite (Nat.div_small (div _ _)); auto.
+            rewrite (Nat.div_small (mod _ _)); auto.
+            rewrite !Nat.add_0_r.
+            apply gen_rect_correct; try (unfold size; nia).
+            exists (div j1 w); exists (mod j1 w); repeat split; auto.
+            rewrite (Nat.mul_comm _ h), div_mult_comp ; try lia.
+            rewrite mod_mult_comp ; try lia.
+            rewrite (Nat.div_small (mod _ _)); auto.
+            rewrite (Nat.mod_small (mod _ _)); auto.
+            rewrite !Nat.add_0_r.
+            rewrite !(Nat.mul_comm _ h), !(Nat.mul_comm _ w) in Hi1j1.
+            rewrite Hi1j1; auto.
+    * intros l Hl.
+      case (@In_nth _ _ _ 0 Hl); intros j [Hj Hn].
+      rewrite length_rect in Hj; auto.
+      rewrite <- Hn, <-get_rect_rev; auto.
+      apply Hp2; auto.
+      assert (Fx1 : div i h < w). {
+        apply div_lt; auto.
+      }
+      assert (Fx2 : div j w < h). {
+        apply div_lt; auto; rewrite Nat.mul_comm; auto.
+      }
+      assert (Fx3 : mod i h < h). {
+        apply mod_lt; lia.
+      }
+      assert (Fx4 : mod j w < w). {
+        apply mod_lt; lia.
+      }
+      split; auto; unfold size; nia.
+    * rewrite length_rect, ref_list_length; auto.
+Qed.
+
+(* 
 Theorem anti_literals_sat p z s :
   sudoku s -> valid_pos p -> get p s = z -> 
   ~ clause_sat (anti_literals (L p z)) s.
 Proof with auto with arith.
-generalize ref_list_ulist; intros Eq1.
-destruct p as (x, y); simpl; intros H1 (U1, U2) H2 (l, (H3, H4)).
-assert (U3: 0 < h).
-- generalize U1; unfold size; case h; simpl...
-  intros tmp; contradict tmp...
-- assert (U4: 0 < w).
-  + generalize U1; unfold size; case w; simpl...
-    rewrite Nat.mul_0_r; intros tmp; contradict tmp...
-  + generalize div_lt; intros U5.
-    generalize mod_lt; intros U6.
-    repeat match goal with
-           | H: In ?X (clause_merge ?Y ?Z) |- _  =>
-             case (clause_merge_in X Y Z); intros tmp _; case (tmp H);
-             clear tmp H; auto; intros H
-           end.
-    * case H1; clear H1; intros V1 (V2, _).
-      case (gen_row_correct l x z); intros tmp _; case tmp; auto; clear tmp.
-      --apply (rm_incl _ lit_test) with
-            (l1 := L (Pos x y) z::nil)
-            (l2 := gen_row x z)...
-      --intros y1 (H5, H6); subst l.
-        simpl in H4; absurd (y = y1).
-        ++intros H7; apply (rm_not_in _ lit_test) with (a := L (Pos x y) z)
-                                               (l1 := L (Pos x y) z::nil)
-                                               (l2 := gen_row x z); subst; 
-                                               auto with datatypes.
-          **exact lit_test_trans.
-          **intros; apply lit_test_anti_sym.
-          **exact lit_test_exact.
-          **apply olist_one.
-          **apply gen_row_ordered.
-        ++apply nth_ulist with (a := 0) (l := row x s)...
-          **rewrite length_row...
-          **rewrite length_row...
-          **apply ulist_perm with ref_list...
-            apply Permutation_sym...
-          **repeat rewrite <- get_row; try rewrite H2...
-    * case H1; clear H1; intros V1 (_, (V2, _)).
-      case (gen_column_correct l y z); intros tmp _; case tmp; auto; clear tmp.
-      --apply (rm_incl _ lit_test) with
-          (l1 := L (Pos x y) z::nil)
-          (l2 := gen_column y z)...
-      --intros x1 (H5, H6); subst l.
-        simpl in H4; absurd (x = x1).
-        ++intros H7; apply (rm_not_in _ lit_test) with (a := L (Pos x y) z)
-                                               (l1 := L (Pos x y) z::nil)
-                                               (l2 := gen_column y z); subst;
-                                              auto with datatypes.
-          **exact lit_test_trans.
-          **intros; apply lit_test_anti_sym.
-          **exact lit_test_exact.
-          **apply olist_one.
-          **apply gen_column_ordered.
-        ++apply nth_ulist with (a := 0) (l := column y s)...
-          **rewrite length_column...
-          **rewrite length_column...
-          **apply ulist_perm with ref_list...
-            apply Permutation_sym...
-          **repeat rewrite <- get_column; try rewrite H2...
-    * case (gen_rect_correct l (div x h * h + div y w) z).
-      --apply rect_aux1...
-      --intros tmp _; case tmp; auto; clear tmp.
-        ++apply (rm_incl _ lit_test) with
-              (l1 := L (Pos x y) z::nil)...
-        ++intros x1 (y1, (H5, (H6, H7))); subst l.
-          simpl in H4.
-          match type of H4 with
-          | get (Pos ?X ?Y) _ = _ =>
-            generalize H3 H4; clear H3 H4;
-            replace (Pos X Y) with
-             (Pos (h * div x h + x1) (w * div y w + y1));
-            [intros H3 H4 | idtac]
-          end.
-          **match type of H4 with
-            | get (Pos ?X ?Y) _ = _ =>
-              assert (X = x /\ Y = y)
-            end.
-            --- apply rect_aux2...
-                +++ unfold size; rewrite (Nat.mul_comm w); apply mult_lt_plus...
-                    apply div_lt; rewrite  Nat.mul_comm...
-                +++ rewrite get_rect in H4...
-                    *** rewrite get_rect in H2...
-                        generalize H4; clear H4.
-                        repeat rewrite (fun x =>  Nat.mul_comm x h).
-                        repeat ((rewrite mod_mult_comp || 
-                                 rewrite div_mult_comp); auto).
-                        rewrite (div_is_0 x1 h)...
-                        rewrite (div_is_0 y1 w)...
-                        repeat rewrite  Nat.add_0_r.
-                        intros H4.
-                        apply nth_ulist with 
-                           (a:= 0) (l := rect (div x h * h + div y w) s).
-                        ----rewrite length_rect...
-                            ++++unfold size; apply mult_lt_plus...
-                            ++++unfold size; rewrite (Nat.mul_comm h); 
-                                   apply mult_lt_plus...
-                                apply div_lt; rewrite  Nat.mul_comm...
-                            ++++case H1...
-                        ----rewrite length_rect...
-                            ++++unfold size; apply mult_lt_plus...
-                            ++++unfold size; rewrite (Nat.mul_comm h);
-                                  apply mult_lt_plus...
-                                apply div_lt; rewrite  Nat.mul_comm...
-                            ++++case H1...
-                        ----apply ulist_perm with ref_list.
-                            ++++apply Permutation_sym; case H1...
-                                intros _ (_, (_, tmp)); apply tmp; clear tmp.
-                                unfold size; rewrite (Nat.mul_comm h); 
-                                  apply mult_lt_plus...
-                                apply div_lt; rewrite  Nat.mul_comm...
-                            ++++apply ref_list_ulist.
-                        ----repeat rewrite (fun x =>  Nat.mul_comm x h).
-                            unfold out in H4; rewrite H4...
-                            repeat rewrite (Nat.mul_comm h)...
-                    *** unfold size; repeat rewrite (Nat.mul_comm h);
-                          apply mult_lt_plus...
-                    *** unfold size; rewrite (Nat.mul_comm w);
-                          apply mult_lt_plus...
-                        apply div_lt; rewrite  Nat.mul_comm...
-                +++ repeat rewrite div_mult_comp; auto with arith.
-                    rewrite (div_is_0 x1); auto with arith.
-                    rewrite (div_is_0 y1); auto with arith.
-            --- case H; clear H; intros V1 V2; rewrite V1 in H3;
-                  rewrite V2 in H3.
-                match goal with
-                | H:(In ?X _) |- _ =>
-                  apply (rm_not_in _ lit_test) with (a := X)
-                                      (l1 := X::nil)
-                                      (l2 := gen_rect (div x h * h + 
-                                                       div y w) z);
-                  auto with datatypes
-                end.
-                +++ exact lit_test_trans.
-                +++ intros; apply lit_test_anti_sym.
-                +++ exact lit_test_exact.
-                +++ apply olist_one.
-                +++ apply gen_rect_ordered.
-          **repeat rewrite (fun x =>  Nat.mul_comm x h).
-            repeat ((rewrite mod_mult_comp || rewrite div_mult_comp); auto).
-            rewrite (div_is_0 (div y w) h)...
-            --- rewrite (mod_small (div y w) h)...
-                apply div_lt; rewrite (Nat.mul_comm w)...
-            --- apply div_lt; rewrite (Nat.mul_comm w)...
-    * case (gen_cell_correct l x y); auto; intros tmp; case tmp; auto;
-         clear tmp.
-      --apply (rm_incl _ lit_test) with
-            (l1 := L (Pos x y) z::nil)
-            (l2 := gen_cell (Pos x y))...
-      --intros z1 (H5, H6); subst l.
-        intros H7.
-        simpl in H4.
-        apply (rm_not_in _ lit_test) with (a := L (Pos x y) z)
-                                    (l1 := L (Pos x y) z::nil)
-                                    (l2 := gen_cell (Pos x y)); subst;
-            auto with datatypes.
-        ++exact lit_test_trans.
-        ++intros; apply lit_test_anti_sym.
-        ++exact lit_test_exact.
-        ++apply olist_one.
-        ++apply gen_cell_ordered.
+intros Hs.
+case (iff_impl_l _ _ (sudoku_def s) Hs); intros H1 [H2 H3] H4 H5.
+rewrite <- H5.
+apply H3; auto.
 Qed.
+*)
 
 Definition lit_in_clauses l (cs : clauses) :=
   exists nc, In nc cs /\ In l (snd nc).
-
-Lemma iff_impl_l P Q : P <-> Q -> P -> Q.
-Proof. intros []; auto. Qed.
 
 Lemma lit_in_clause_clauses_update l1 l2 cs :
   ordered cs ->
@@ -2655,13 +2933,13 @@ Definition invariant cs s :=
           ~ clause_sat (anti_literals (L p (get p s1))) s1)))).
 
 Theorem invariant_clauses_update n p z c cs s :
-  invariant ((n, L p z :: c) :: cs) s ->
+  invariant ((n, c) :: cs) s -> In (L p z) c ->
   invariant (clauses_update (L p z) (anti_literals (L p z)) cs) (update p z s).
 Proof with auto with arith datatypes.
-intros (V1, (V2, (V3, (V4, (V5, V6))))).
+intros (V1, (V2, (V3, (V4, (V5, V6))))) Hc.
 assert (H : valid_lit (L p z) s)...
 {
-  apply (V2 n (L p z :: c))...
+  apply (V2 n c)...
 }
 assert (V1' : ordered cs).
 {
@@ -2690,7 +2968,7 @@ split; [|split; [|split; [|split;[|split]]]].
       subst z2.
       generalize (anti_literals_swap _ _ _ _ Hp1 Hz Hx1); intros Hx2.
       case (V5 p2 (L p z)); auto.
-      exists (n, L p z :: c); simpl; auto.
+      exists (n, c); simpl; auto.
   + rewrite update_diff_get in Hc1, Hi1; try apply valid_pos2n...
     destruct Hc1 as ((p2,z2), (Hx1, Hx2)).
     red in Hx2.
@@ -2698,7 +2976,7 @@ split; [|split; [|split; [|split;[|split]]]].
     * rewrite update_get in Hx2; try apply valid_pos2n...
       subst z2.
       case (V5 p1 (L p z)); auto.
-      exists (n, L p z :: c); simpl; auto.
+      exists (n, c); simpl; auto.
     * rewrite update_diff_get in Hx2; try apply valid_pos2n...
       --subst z2.
         case (anti_literals_in_rev1 _ _ _ _ Hi1 Hp1 Hx1); intros Hy1 Hy2.
@@ -2734,44 +3012,83 @@ split; [|split; [|split; [|split;[|split]]]].
     apply refine_update...
   }
   split.
-  + intros Hs1.
+  + intros Hs.
+    case (iff_impl_l _ _ (sudoku_def s1) Hs).
+    intros Hs1 [Hs2 Hs3].
     split. 
     * apply clauses_update_sat_rev...
       --apply anti_literals_ordered.
-      --intros l HIl Hl.
-        case (anti_literals_sat p z s1)...
-        exists l...
+      --intros [p1 z1] HIl Hl.
+        red in Hl; subst z1.
+        case (Hs3 p1).
+        ++case (anti_literals_in_rev1 _ _ _ _ Hz Hv HIl); auto.
+        ++exists (L p z); auto; split; auto.
+          apply anti_literals_swap; auto.
       --destruct (V6 s1 Hrr) as (Hrr1, _).
-        destruct (Hrr1 Hs1) as (Hrr2, _).
+        destruct (Hrr1 Hs) as (Hrr2, _).
         intros n1 c1 Hn1c1.
         apply (Hrr2 n1 c1)...
-    * destruct (V6 s1 Hrr) as (Hrr1, _).
-      destruct (Hrr1 Hs1)...
+    * intros p1 Hp1 _; apply Hs3; auto.
   + intros (Hs, Hp).
-    apply V6...
-    split...
+    apply V6; auto.
+    split; auto.
     intros n1 c1; simpl; intros [H1|H1].
     * injection H1; intros HL Hn.
-      exists (L p z); split...
+      exists (L p z); split; auto.
       rewrite <-HL...
     * apply clauses_update_sat with (4 := Hs) (5 := H1)...
       apply anti_literals_ordered...
 Qed.
 
 Theorem invariant_clauses_update1 p z cs s :
+  ~ clause_sat (anti_literals (L p z)) s -> 
   valid_lit (L p z) s -> invariant cs s ->
   invariant (clauses_update (L p z) (anti_literals (L p z)) cs) (update p z s).
 Proof with auto with arith datatypes.
-intros H (V1, (V2, (V3, V4))).
+intros Hc H (V1, (V2, (V3, (V4, (V5, V6))))).
 case H; intros Hg (Hv, Hz).
 set (cs1 := clauses_update _ _ _).
-split; [|split; [|split]].
+split; [|split; [|split; [|split;[|split]]]].
 - apply clauses_update_ordered...
   apply anti_literals_ordered...
 - apply clauses_update_valid...
   + apply anti_literals_ordered...
   + intros; apply anti_literals_in...
 -  rewrite length_update...
+- intros p1 Hv1.
+  case (pos_dec p p1); intros Heq; try (subst p1).
+  + rewrite (update_get p z s); try apply valid_pos2n...
+    intros _; contradict Hc.
+    destruct Hc as [[p1 z1] [Hc1 Hc2]].
+    case (anti_literals_in_rev1 _ _ _ _ Hz Hv Hc1); intros Hz1 Hp1.
+    exists (L p1 z1); split; auto.
+    red; red in Hc2; rewrite <- Hc2.
+    rewrite update_diff_get; auto.
+    intros Hp1E; subst p1.
+    rewrite (update_get p z s) in Hc2; try apply valid_pos2n...
+    subst z1.
+    case (anti_literals_not_in p z); auto.
+  + rewrite update_diff_get; auto.
+    intros Hp1 Hc1.
+    destruct Hc1 as [[p2 z2] [Hc1 Hc2]].
+    case (anti_literals_in_rev1 _ _ _ _ Hp1 Hv1 Hc1); intros Hz1 Hp2.
+    case (pos_dec p p2); intros Heq1; try (subst p2).
+    * red in Hc2; rewrite update_get in Hc2; try apply valid_pos2n...
+      subst z2.
+      case Hc; exists (L p1 (get p1 s)); split; auto.
+      --apply anti_literals_swap; auto.
+      --red; auto.
+    * case (V4 p1); auto.
+      exists (L p2 z2); split; auto.
+      red in Hc2; rewrite update_diff_get in Hc2; auto.
+- intros p1 l Hp1.
+  case (pos_dec p p1); intros Heq; try (subst p1).
+  + rewrite (update_get p z s); try apply valid_pos2n...
+    intros H1 H2; apply lit_not_in_clause_clauses_update; auto.
+  + rewrite update_diff_get; auto.
+    intros H1 H2 H3.
+    case (V5 p1 l); auto.
+    apply lit_in_clause_clauses_update with (l2 := L p z); auto.
 - intros s1 Hr1.
   assert (Hget : get p s1 = z).
   {
@@ -2792,19 +3109,22 @@ split; [|split; [|split]].
     split. 
     * apply clauses_update_sat_rev...
       --apply anti_literals_ordered.
-      --intros l HIl Hl.
-        case (anti_literals_sat p z s1)...
-        exists l...
-      --destruct (V4 s1 Hrr) as (Hrr1, _).
-        destruct (Hrr1 Hs1) as (Hrr2, _).
-        intros n1 c1 Hn1c1.
-        apply (Hrr2 n1 c1)...
-    * destruct (V4 s1 Hrr) as (Hrr1, _).
-      destruct (Hrr1 Hs1)...
+      --intros [p1 z1] HIl Hl.
+        red in Hl; subst z z1.
+        case (iff_impl_l _ _ (sudoku_def s1) Hs1); intros H1 [H2 H3].
+        case (H3 p)...
+        exists (L p1 (get p1 s1)); split...
+        red; auto.
+      --destruct (V6 s1 Hrr) as (Hrr1, _).
+        destruct (Hrr1 Hs1) as (Hrr2, _)...
+    * intros p1 Hp1 Hr.
+      case (iff_impl_l _ _ (sudoku_def s1) Hs1); intros H1 [H2 H3].
+      apply H3; auto.
   + intros (Hs, Hp).
-    apply V4...
+    apply V6...
     split...
-    apply clauses_update_sat with (4 := Hs)...
+    intros n1 c1; intros H1.
+    apply clauses_update_sat with (4 := Hs) (5 := H1)...
     apply anti_literals_ordered...
 Qed.
 
@@ -2813,7 +3133,7 @@ Theorem invariant_refine n p z c cs s :
     (forall s1, refine (update p z s) s1 -> ~ sudoku s1) ->
     invariant ((n, c) :: cs) s.
 Proof with auto with datatypes.
-intros (V1, (V2, (V3, V4))) H0.
+intros (V1, (V2, (V3, (V4, (V5, V6))))) H0.
 assert (H : valid_lit (L p z) s).
 {
   apply (V2 n (L p z :: c))...
@@ -2842,11 +3162,25 @@ split.
   - apply (V2 n2)...
 }
 split...
+split...
+split...
+  {
+    intros p1 l1 Hp1 Hv1 Hl1 Hc.
+    case (V5 p1 l1); auto.
+    destruct Hc as [[n1 c1] [Hc1 Hc2]].
+    simpl in Hc1; case Hc1; intros Hx.
+    - injection Hx; intros; subst c1 n1.
+      exists (n, L p z :: c); split; auto.
+      * left; auto.
+      * right; auto.
+    - exists (n1, c1); split; auto.
+      right; auto.
+  } 
 intros s2 Hrs2; split; [intros Hss2|intros [Hs2 Hp2]].
 - split.
   + assert (Heq2: sat ((n, L p z :: c) :: cs) s2).
     {
-      case (V4 s2)...
+      case (V6 s2)...
       intros Hx1 _.
       case (Hx1 Hss2)...
     }
@@ -2870,9 +3204,9 @@ intros s2 Hrs2; split; [intros Hss2|intros [Hs2 Hp2]].
                     intros _ (tmp, _)...
       -- exists l...
     * apply (Heq2 n2 c2)...
-  + case (V4 s2 Hrs2); intros Hx1 _.
+  + case (V6 s2 Hrs2); intros Hx1 _.
     case (Hx1 Hss2)...
-- case (V4 s2 Hrs2); auto; intros _ tmp; apply tmp; clear tmp.
+- case (V6 s2 Hrs2); auto; intros _ tmp; apply tmp; clear tmp.
   split...
   intros n2 c2; simpl; intros [HH | HH].
   + injection HH; intros; subst; clear HH.
@@ -2885,6 +3219,7 @@ Theorem invariant_init_c s :
   length s = size * size -> empty s -> invariant init_c s.
 Proof.
 intros Hs Hs1.
+unfold init_c.
 split.
 {
   apply init_c_ordered.
@@ -2894,41 +3229,30 @@ split.
   apply valid_init_c; auto.
 }
 split; auto.
+split.
+{
+  intros p Hp Hv; case (Hs1 p); auto.
+}
+split.
+{
+  intros p l Hp Hv; case (Hs1 p); auto.
+}
 intros s1 (_, (Hs2, _)).
 generalize (init_c_sat s1 Hs2); intros Hs3.
-generalize ref_list_ulist; intros F0.
-generalize ref_list_length; intros F1.
-Admitted.
-(*
-apply iff_sym; apply iff_trans with (1 := Hs3); clear Hs3.
-split; intros (V1, (V2, (V3, V4))); repeat split; auto.
-- intros; apply Permutation_sym; apply ulist_eq_permutation; auto.
-  rewrite length_row; auto.
-- intros; apply Permutation_sym; apply ulist_eq_permutation; auto.
-  rewrite length_column; auto.
-- intros; apply Permutation_sym; apply ulist_eq_permutation; auto.
-  rewrite length_rect; auto.
-- intros i Hi x Hx; apply Permutation_in with ref_list; auto;
-    apply Permutation_sym; auto.
-- intros i Hi x Hx; apply Permutation_in with ref_list; auto;
-    apply Permutation_sym; auto.
-- intros i Hi x Hx; apply Permutation_in with ref_list; auto;
-    apply Permutation_sym; auto.
-- intros (x, y) (Hx, Hy); apply Permutation_in with (row x s1); auto.
-  case (in_ex_nth _ (get (Pos x y) s1) out (row x s1)).
-  intros _ tmp; apply tmp; clear tmp; auto.
-  exists y; split; auto.
-  + rewrite length_row; auto.
-  + unfold get, row; simpl.
-    rewrite jump_add; rewrite <- jump_nth.
-    apply sym_equal; apply take_nth; auto.
+apply iff_trans with (1 := sudoku_def s1); split.
+- intros [H1 [H2 H3]]; split; auto.
+  apply Hs3; auto.
+- intros [H1 H2].
+  assert (H3 : forall p : pos, valid_pos p -> In (get p s1) ref_list). {
+    apply Hs3; auto.
+  }
+ split; auto; split; auto.
 Qed.
-*)
 
 Theorem invariant_equiv cs s1 s2 :
   refine s1 s2 -> refine s2 s1 -> invariant cs s1 -> invariant cs s2.
 Proof.
-intros H1 H2 (H3, (H4, (H5, H6))).
+intros H1 H2 (H3, (H4, (H5, (H6, (H7, H8))))).
 split; auto.
 split.
 {
@@ -2938,37 +3262,65 @@ split.
 {
   case H2; auto.
 }
-intros s3 H7; split; intros H8.
-- case (H6 s3); auto.
-  apply refine_trans with (1 := H1); auto.
-- case (H6 s3); auto.
-  apply refine_trans with (1 := H1); auto.
+split; auto.
+{
+  intros p Hp Hv [l [Hc1 Hc2]].
+  destruct H2 as [H11 [H12 H13]].
+  case (H6 p); auto.
+  - rewrite <- H13; auto.
+  - exists l; split; auto.
+    + rewrite <- H13; auto.
+    + destruct l as [[x y] z].
+      case (anti_literals_in_rev1 _ _ _ _ Hv Hp Hc1); intros Hz Hpx.
+      red; rewrite <- H13; auto.
+      red in Hc2; rewrite Hc2; auto.
+}
+split.
+{
+  intros p l Hp Hv Hl.
+  destruct H2 as [H11 [H12 H13]].
+  apply (H7 p l); auto.
+  - rewrite <- H13; auto.
+  - rewrite <- H13; auto.  
+}
+intros s3 Hrs3.
+assert (F1 : refine s1 s3).
+{
+  apply refine_trans with (2 := Hrs3); auto.
+}
+apply iff_trans with (1 := H8 s3 F1); auto.
+split; auto.
 Qed.
 
 Theorem invariant_gen_init_clauses s :
-  length s = size * size -> invariant (gen_init_clauses s) s.
+  length s = size * size -> 
+  (forall p, valid_pos p -> In (get p s) ref_list ->   
+        ~ clause_sat (anti_literals (L p (get p s))) s) 
+  -> invariant (gen_init_clauses s) s.
 Proof with auto with arith.
 revert s.
 assert (forall s s1 cs p, valid_pos p -> length s = size * size ->
+    (forall p, valid_pos p -> In (get p s) ref_list ->   
+        ~ clause_sat (anti_literals (L p (get p s))) s) -> 
     invariant cs (prestrict p s) -> s1 = jump (pos2n p) s ->
     invariant (gen_init_clauses_aux s1 p cs) s).
 {
   intros s s1; generalize s; elim s1; auto; clear s s1.
-  intros s cs p H H0 H1 H2; rewrite prestrict_all in H1...
+  intros s cs p H H0 H1 H2 H3; rewrite prestrict_all in H2...
   - case (Nat.le_gt_cases (length s) (pos2n p))...
-    intros H3; absurd (length (jump (pos2n p) s) = length (@nil nat)).
+    intros H4; absurd (length (jump (pos2n p) s) = length (@nil nat)).
     + generalize (length_jump _ (pos2n p) s).
-      rewrite <- H2; simpl.
-      intros H4; assert (Eq1: length s = pos2n p)...
-      contradict H3; rewrite Eq1...
+      rewrite <- H3; simpl.
+      intros H5; assert (Eq1: length s = pos2n p)...
+      contradict H4; rewrite Eq1...
     + f_equal...
   - intros a s1; unfold gen_init_clauses_aux; lazy beta; 
        fold gen_init_clauses_aux; case s1; clear s1.
-    + intros Rec s cs p H0 H1 H2 H3.
+    + intros Rec s cs p H0 H1 H2 H3 H4.
       assert (F1: pos2n p < length s).
       {
         case (Nat.le_gt_cases (length s) (pos2n p)); auto; intros H5.
-        rewrite (jump_too_far _ (pos2n p) s) in H3; try discriminate...
+        rewrite (jump_too_far _ (pos2n p) s) in H4; try discriminate...
       }
       unfold gen_init_clauses_aux; lazy beta; fold gen_init_clauses_aux.
       case (In_dec eq_nat a ref_list); intros H5.
@@ -2976,15 +3328,32 @@ assert (forall s s1 cs p, valid_pos p -> length s = size * size ->
         --rewrite prestrict_update...
           ++replace (get p s)  with a.
             **apply invariant_clauses_update1...
+              {
+                assert (Fa : get p s = a).
+                {
+                  unfold get; rewrite <- H4; auto.
+                }
+                intros [[p1 z1] [Hl1 Hl2]].
+                case (H2 p); try rewrite Fa; auto.
+                exists (L p1 z1); split; auto.
+                case (anti_literals_in_rev1 _ _ _ _ H5 H0 Hl1); intros Hz1 Hp1.
+                red in Hl2.
+                case (Nat.leb_spec (pos2n p) (pos2n p1)); intros Hlp1.
+                - rewrite <-Hl2 in Hz1.
+                  rewrite prestrict_get_default in Hz1; auto.
+                  case out_not_in_refl; auto.
+                - red.
+                  rewrite prestrict_get in Hl2; auto.
+              }
               simpl; split...
               rewrite prestrict_get_default...
               apply out_not_in_refl.
-            **unfold get; rewrite <- H3...
+            **unfold get; rewrite <- H4...
           ++rewrite next_pos...
         --apply prestrict_all...
           case (Nat.le_gt_cases (length s) (pos2n (next p))); auto; intros H6.
           rewrite (length_jump nat (pos2n p)).
-          ++rewrite <- H3; simpl; rewrite next_pos...
+          ++rewrite <- H4; simpl; rewrite next_pos...
           ++rewrite next_pos in H6...
       * apply invariant_equiv with (prestrict p s)...
         --split...
@@ -3002,16 +3371,16 @@ assert (forall s s1 cs p, valid_pos p -> length s = size * size ->
             case (Nat.le_gt_cases (pos2n p) (pos2n p1)); intros Hp2.
             **intros HH; contradict HH; unfold get.
               rewrite <-(Nat.sub_add (pos2n p) (pos2n p1)); auto with arith;
-              rewrite Nat.add_comm, jump_add; rewrite <- H3; 
+              rewrite Nat.add_comm, jump_add; rewrite <- H4; 
               case (pos2n p1 - pos2n p); simpl; auto; intros; rewrite jump_nil; 
               apply out_not_in_refl.
             **rewrite prestrict_get...
-    + intros b s1 Rec s cs p H0 H1 H2 H3.
+    + intros b s1 Rec s cs p H0 H1 H2 H3 H4.
       assert (F0: b :: s1 = jump (pos2n (next p)) s).
       {
         rewrite next_pos.
         replace (S (pos2n p)) with ((pos2n p) + 1)...
-        * rewrite jump_add; rewrite <- H3; simpl...
+        * rewrite jump_add; rewrite <- H4; simpl...
         * rewrite Nat.add_comm...
       }
       assert (F1: pos2n (next p) < length s).
@@ -3019,17 +3388,34 @@ assert (forall s s1 cs p, valid_pos p -> length s = size * size ->
         case (Nat.le_gt_cases (length s) (pos2n (next p))); auto; intros H5.
         rewrite (jump_too_far _ (pos2n (next p)) s) in F0; try discriminate...
       }
-      case (In_dec eq_nat a ref_list); intros H4.
+      case (In_dec eq_nat a ref_list); intros H5.
       * apply Rec...
         --apply valid_pos_next...
           rewrite <- H1...
         --rewrite prestrict_update...
           replace (get p s)  with a.
           ++apply invariant_clauses_update1...
+            {
+              assert (Fa : get p s = a).
+              {
+                unfold get; rewrite <- H4; auto.
+              }
+              intros [[p1 z1] [Hl1 Hl2]].
+              case (H2 p); try rewrite Fa; auto.
+              exists (L p1 z1); split; auto.
+              case (anti_literals_in_rev1 _ _ _ _ H5 H0 Hl1); intros Hz1 Hp1.
+              red in Hl2.
+              case (Nat.leb_spec (pos2n p) (pos2n p1)); intros Hlp1.
+              - rewrite <-Hl2 in Hz1.
+                rewrite prestrict_get_default in Hz1; auto.
+                case out_not_in_refl; auto.
+              - red.
+                rewrite prestrict_get in Hl2; auto.
+            }
             split; [idtac | split]...
             rewrite prestrict_get_default...
             apply out_not_in_refl.
-          ++unfold get; rewrite <- H3...
+          ++unfold get; rewrite <- H4...
       * apply Rec...
         --apply valid_pos_next...
           rewrite <- H1...
@@ -3058,26 +3444,165 @@ assert (forall s s1 cs p, valid_pos p -> length s = size * size ->
                         ----apply out_not_in_refl.
                         ----rewrite next_pos...
                       *** rewrite prestrict_get...
-                        ----unfold get; rewrite <- Hp2; rewrite <- H3; simpl.
-                            intros HH; case H4...
+                        ----unfold get; rewrite <- Hp2; rewrite <- H4; simpl.
+                            intros HH; case H5...
                         ----rewrite <- Hp2; rewrite next_pos...
                    +++ repeat rewrite prestrict_get...
                        rewrite next_pos...
 }
 case (Lt.le_lt_or_eq_stt 0 size); auto with arith; intros H1.
-- intros s Hs; unfold gen_init_clauses; apply H; simpl...
-  rewrite prestrict_0.
-  apply invariant_init_c.
-  + rewrite mk_0_length...
-  + apply empty_mk_0.
-- rewrite <- H1; simpl.
-  intros s; case s; simpl.
-  + intros _; unfold gen_init_clauses; simpl.
+- intros s Hs Hp; unfold gen_init_clauses; apply H; auto.
+  + red; auto.
+  + rewrite prestrict_0.
+    apply invariant_init_c.
+    * rewrite mk_0_length...
+    * apply empty_mk_0.
+- rewrite <- H1.
+  intros s; case s.
+  + intros _ Hp; unfold gen_init_clauses; simpl.
     apply invariant_init_c.
     * rewrite <- H1...
     * apply empty_nil.
   + intros; discriminate.
 Qed.
+
+Theorem check_init_state_correct s :
+  length s = size * size ->
+  if check_init_state s then
+    (forall p, valid_pos p -> In (get p s) ref_list ->   
+          ~ clause_sat (anti_literals (L p (get p s))) s)
+  else
+    (exists p, valid_pos p /\ In (get p s) ref_list /\   
+          clause_sat (anti_literals (L p (get p s))) s).
+Proof with auto with arith.
+revert s.
+assert (forall s s1 p1,
+    length s = size * size ->
+    (forall p : pos, valid_pos p -> In (get p s) ref_list -> 
+      pos2n p < pos2n p1 -> 
+      ~ clause_sat (anti_literals (L p (get p s))) s) ->
+    s1 = jump (pos2n p1) s ->
+    valid_pos p1 ->
+    if check_init_state_aux s1 p1 s
+    then 
+    forall p : pos, valid_pos p -> In (get p s) ref_list -> 
+      ~ clause_sat (anti_literals (L p (get p s))) s
+    else 
+    exists p : pos, valid_pos p /\ In (get p s) ref_list /\ 
+      clause_sat (anti_literals (L p (get p s))) s).
+{
+  intros s s1; generalize s; elim s1; auto; clear s s1.
+  - intros s p1 Hl Hs Hn Hv.
+    unfold check_init_state_aux.
+    intros p Hp Hz.
+    apply Hs; auto.
+    case (Nat.leb_spec (pos2n p1) (pos2n p)); auto; intros H1.
+    unfold get in Hz.
+    rewrite <- (Nat.sub_add _ _ H1), Nat.add_comm, jump_add, <- jump_nth in Hz.
+    case out_not_in_refl.
+    rewrite <- Hn in Hz; simpl in Hz.
+    generalize Hz; case minus; auto.
+  - intros z s1 IH s p Hl Hs Hzs1 Hp.
+    unfold check_init_state_aux; fold check_init_state_aux.
+    case In_dec; intros Hiz.
+    + case clause_satb_spec.
+      * intros Hcs; exists p; split; [|split]; auto.
+      --case (Nat.leb_spec (length s) (pos2n p)); intros Hls.
+        ++rewrite jump_too_far in Hzs1; auto.
+          discriminate Hzs1.
+        ++unfold get; rewrite <- Hzs1; simpl; auto.
+      --unfold get; rewrite <- Hzs1; simpl; auto.
+      * intros H1.
+        destruct s1 as [|z1 s1].
+        --intros p1 Hp1 Hz1.
+          case (Nat.leb_spec (pos2n p1) (pos2n p)); intros Hp2.
+          ++case (Nat.leb_spec (pos2n p) (pos2n p1)); intros Hp3.
+            **assert (Hpp : pos2n p1 = pos2n p) by lia.
+              rewrite valid_pos_eq with (3 := Hpp); auto.
+              unfold get; rewrite <- Hzs1; auto.
+            **apply Hs; auto.
+          ++unfold get in Hz1.
+            case out_not_in_refl; generalize Hz1.
+            assert (Hp3 : pos2n p <= pos2n p1) by lia.
+            rewrite <- (Nat.sub_add _ _ Hp3).
+            rewrite Nat.add_comm, jump_add, <- jump_nth, <-Hzs1.
+            assert (Hp4 : 0 < pos2n p1 - pos2n p) by lia.
+            destruct (pos2n p1 - pos2n p); try lia.
+            simpl; case n; auto.
+        --assert (F1 : z1 :: s1 = jump (pos2n (next p)) s). {
+            rewrite next_pos, <-Nat.add_1_r, jump_add, <- Hzs1; auto.
+          }
+          assert (F2 : valid_pos (next p)). {
+            apply valid_pos_next; auto.
+            case (Nat.leb_spec (size * size) (pos2n (next p))); auto.
+            intros Hx.
+            rewrite jump_too_far in F1; try lia.
+            discriminate F1.
+          }
+          assert (F3 : (forall p1 : pos,
+                         valid_pos p1 -> In (get p1 s) ref_list ->
+                         pos2n p1 < pos2n (next p) ->
+                         ~ clause_sat (anti_literals (L p1 (get p1 s))) s)). {
+            rewrite next_pos.
+            intros p1 Hp1 Hv1 Hp2.
+            case (Nat.eqb_spec (pos2n p1) (pos2n p)); intros Hp1p.
+            - rewrite valid_pos_eq with (3 := Hp1p); auto.
+              unfold get; rewrite <- Hzs1; auto.
+            - apply Hs; auto; lia.
+          }
+          generalize (IH s (next p) Hl F3 F1 F2).
+          case check_init_state_aux; auto.
+    + destruct s1 as [|z1 s1].
+      * intros p1 Hp1 Hz1.
+        case (Nat.leb_spec (pos2n p1) (pos2n p)); intros Hp2.
+        --case (Nat.leb_spec (pos2n p) (pos2n p1)); intros Hp3.
+          ++assert (Hpp : pos2n p1 = pos2n p) by lia.
+            case Hiz.
+            unfold get in Hz1; rewrite Hpp, <-Hzs1 in Hz1; auto.
+          ++apply Hs; auto. 
+        --unfold get in Hz1.
+          case out_not_in_refl; generalize Hz1.
+          assert (Hp3 : pos2n p <= pos2n p1) by lia.
+          rewrite <- (Nat.sub_add _ _ Hp3).
+          rewrite Nat.add_comm, jump_add, <- jump_nth, <-Hzs1.
+          assert (Hp4 : 0 < pos2n p1 - pos2n p) by lia.
+          destruct (pos2n p1 - pos2n p); try lia.
+          simpl; case n; auto.
+      * assert (F1 : z1 :: s1 = jump (pos2n (next p)) s). {
+          rewrite next_pos, <-Nat.add_1_r, jump_add, <- Hzs1; auto.
+        }
+        assert (F2 : valid_pos (next p)). {
+          apply valid_pos_next; auto.
+          case (Nat.leb_spec (size * size) (pos2n (next p))); auto.
+          intros Hx.
+          rewrite jump_too_far in F1; try lia.
+          discriminate F1.
+        }
+        assert (F3 : (forall p1 : pos,
+                        valid_pos p1 -> In (get p1 s) ref_list ->
+                       pos2n p1 < pos2n (next p) ->
+                       ~ clause_sat (anti_literals (L p1 (get p1 s))) s)). {
+          rewrite next_pos.
+          intros p1 Hp1 Hv1 Hp2.
+          case (Nat.eqb_spec (pos2n p1) (pos2n p)); intros Hp1p.
+          - case Hiz.
+            generalize Hv1.
+            rewrite valid_pos_eq with (3 := Hp1p); auto.
+            unfold get; rewrite <- Hzs1; auto.
+          - apply Hs; auto; lia.
+        }
+        generalize (IH s (next p) Hl F3 F1 F2).
+        case check_init_state_aux; auto.
+}
+destruct s as [|a s].
+- intros Hs.
+  unfold check_init_state, check_init_state_aux.
+  intros p Hp Hpp; case out_not_in_refl.
+  generalize Hpp; unfold get; simpl; rewrite jump_nil; auto.
+- intros Hs; apply H; auto.
+  + unfold pos2n; lia.
+  + unfold valid_pos; simpl in Hs; destruct size; try lia.
+Qed. 
 
 Theorem try_one_sat s n c cs f :
   invariant ((n, c) :: cs) s ->
@@ -3097,9 +3622,11 @@ intros H H1; generalize H; elim c; simpl;
 - intros H s1 Hs1 H2.
   absurd (clause_sat nil s1).
   + intros H3; case H3; simpl; intros k (tmp, _); auto.
-  + case H; simpl.
-    intros _ (_, (_, tmp)); case (tmp s1); auto; clear tmp.
-    intros tmp _; apply (tmp H2 n nil); auto with datatypes.
+  + destruct H as [H11 [H12 [H13 [H14 [H15 H16]]]]].
+    case (H16 _ Hs1); intros tmp _.
+    case (tmp H2); auto.
+    intros HH _.
+    apply (HH n); left; auto.
 - intros (p1, z1) c1 Rec H3.
   assert (H : valid_lit (L p1 z1) s).
   {
@@ -3111,7 +3638,7 @@ intros H H1; generalize H; elim c; simpl;
     assert (U1: invariant Y X);
     [idtac | generalize (H1 X Y U1); case (f X Y)]
   end.
-  + apply invariant_clauses_update with (1 := H3).
+  + apply invariant_clauses_update with (1 := H3); left; auto.
   + intros s1 tmp; case tmp; auto; clear tmp.
     * apply length_clauses_update; auto.
     * intros Hs Hs1; split; auto.
@@ -3142,26 +3669,29 @@ Proof.
 revert s cs; elim n; simpl; clear n.
 - intros s cs; case cs; simpl; auto; clear cs.
   intros _ H; case H; clear H.
-  intros _ (_, (H0, H1)); split.
-  + case (H1 s).
+  intros _ (_, (H0, (H1, (H2, H3)))); split.
+  + case (H3 s).
     * split; auto.
     * intros _ tmp; apply tmp; clear tmp.
+      split; auto.
       intros n2 c2 Hn2; case Hn2.
   + split; auto.
   + intros p l H; contradict H; auto with arith.
 - intros _ c H s cs; case cs; clear cs.
-  + intros _ (_, (H0, (H1, H2))); split.
-    * case (H2 s).
+  +   intros _ (H0, (H1, (H2, (H3, (H4, H5))))); split.
+    * case (H5 s).
       --split; auto.
       --intros _ tmp; apply tmp; clear tmp.
+        split; auto.
         intros n2 c2 Hn2; case Hn2.
     * split; auto.
   + intros (n1, c1); case c1; simpl.
-    * intros cs1 H0 (H1, (H2, (H3, H4))) s1 Hs1 Hs2.
+    * intros cs1 H0 (H1, (H2, (H3, (H4, (H5, H6))))) s1 Hs1 Hs2.
       absurd (clause_sat nil s1).
       --intros HH; case HH; simpl; intuition.
-      --case (H4 s1); auto.
-        intros tmp _; apply (tmp Hs2 n1); auto with datatypes.
+      --case (H6 s1); auto.
+        intros tmp _; case (tmp Hs2); intros HH _.
+        apply (HH n1); left; auto.
     * intros (p, z) c2 cs1 H0 H1.
       match goal with
       | |- context [find_one_aux ?X ?Y ?Z] =>
@@ -3175,7 +3705,8 @@ revert s cs; elim n; simpl; clear n.
       end; try clear tmp1 tmp2.
       --apply Nat.le_trans with (length cs1); auto with arith.
         apply length_clauses_update; auto.
-      --apply invariant_clauses_update with (1 := H1); auto.
+      --apply invariant_clauses_update with (1 := H1); auto;
+        left; auto.
       --intros s1 (Hs1, Hs2); split; auto.
         apply refine_trans with (2 := Hs2).
         apply refine_update; auto.
@@ -3240,7 +3771,8 @@ Theorem try_all_sat s n c cs f :
           refine s s1 -> sudoku s1 ->  sat ((n, c) :: cs) s1 ->
           exists s2, In s2 (try_all s c cs f) /\ refine s2 s1).
 Proof with auto with datatypes.
-intros H0 VV VV1 H; generalize H0; elim c; simpl; clear c H0.
+intros H0 VV VV1 H.
+ generalize H0; elim c; simpl; clear c H0.
 - intros H0; split...
   + apply olist_nil.
   + split...
@@ -3303,18 +3835,25 @@ intros H0 VV VV1 H; generalize H0; elim c; simpl; clear c H0.
           **case F1; intuition.
           **apply valid_pos2n...
             case F1; intuition.
-      --intros l Hl Hl1; case (anti_literals_sat p z s2)...
-        ++case F1; intuition.
-        ++simpl; case HH; intros _ (_, tmp); rewrite <- tmp...
-          **apply update_get...
-            apply valid_pos2n...
-            case F1; intuition.
-          **case F1; intuition.
-          **rewrite update_get...
-            --- case F1; intuition.
-            --- apply valid_pos2n...
-                case F1; intuition.
-        ++exists l...
+      --intros [p1 z1] Hl Hl1.
+        red in Hl1; subst z1.
+        case (iff_impl_l _ _ (sudoku_def s2) HH0); intros Hv1 [Hv2 Hv3].
+        assert (Hp : valid_pos p). {
+          case F1; intros _ []; auto.
+        }
+        case (Hv3 p); auto.
+        exists (L p1 (get p1 s2)); split.
+        ++assert (Hz : get p s2 = z). {
+          case HH; intros _ [_ HH2].
+          rewrite <- HH2; auto.
+          **rewrite update_get; auto.
+            apply valid_pos2n; auto.
+          **rewrite update_get; auto.
+            --- case F1; intros _ []; auto.
+            --- apply valid_pos2n; auto.
+          }
+          rewrite Hz; auto.
+        ++red; auto.  
     * intros H1 (H2, H3).
       split...
       --unfold merges; apply merge_olist...
@@ -3393,63 +3932,477 @@ intros H0 VV VV1 H; generalize H0; elim c; simpl; clear c H0.
                   exact test_exact.
 Qed.
 
+Lemma clause_sat_cons l c  s :
+  clause_sat (l :: c) s -> lit_sat l s \/ clause_sat c s.
+Proof.
+intros [l1 [[Hl|H1] H2]]; try subst l1; auto.
+right; exists l1; auto.
+Qed.
+
+Theorem try_all_sat1 s n c1 c cs f :
+  invariant ((n, c1) :: cs) s -> incl c c1 ->
+  (forall s cs1,
+    length cs1 <= length cs ->
+    invariant cs1 s ->
+    olist _ (lexico _ test) (f s cs1) /\
+    (forall s1, ((sudoku s1 /\ refine s s1) <-> In s1 (f s cs1)))) ->
+    olist _ (lexico _ test) (try_all s c cs f) /\
+    (forall s1,   
+         ((refine s s1 /\ sudoku s1 /\ clause_sat c s1) <-> 
+           In s1 (try_all s c cs f))).
+Proof with auto with datatypes.
+intros [V1 [V2 [V3 [V4 [V5 V6]]]]] H1 VV.
+generalize H1; elim c; simpl; clear c H1.
+- intros c .
+  split; auto.
+  + apply olist_nil.
+  + intros s1; split; [intros [_ [_ [l [[] _]]]]|intros []].
+- intros [p z] c IH Hic.
+  destruct IH as [IH1 IH2]; [intros x Hx; apply Hic; right; auto|].
+  assert (V1s : ordered cs). {
+    intros n2 c2 Hn2c2; apply (V1 n2); right; auto.
+  }
+  assert (V2s : valid_lit (L p z) s). {
+    apply (V2 n c1); auto with datatypes.
+  }
+  destruct V2s as [NIps [Hp Hz]].
+  case (VV (update p z s) 
+           (clauses_update (L p z) (anti_literals (L p z)) cs)); auto.
+  + rewrite length_clauses_update; auto.
+  + apply invariant_clauses_update with (n := n) (c := c1);
+    repeat (split; auto).
+    apply Hic; left; auto.
+  + intros Ho Hr; split.
+    * apply merge_olist; auto. 
+      --intros; apply lexico_trans...
+        ++exact test_trans.
+        ++intros; apply test_anti_sym...
+        ++exact test_compat_l.
+      --intros; apply lexico_anti_sym...
+        intros; apply test_anti_sym...
+      --intros; apply lexico_exact with (weight := test)...
+        exact test_exact.
+    * intros s1; split.
+      --intros [Hr1 [Hs1 Hcs]].
+        case (clause_sat_cons _ _ _ Hcs); intros Hl.
+        ++assert (Hr2 : refine (update p z s) s1). {
+            split;[|split]; auto.
+            **rewrite length_update; auto.
+            **case Hr1; intros _ []; auto.
+            **intros p2 Hp2.
+              case (pos_dec p2 p); intros Hp2p.
+              --- subst p2; rewrite update_get; auto; apply valid_pos2n; auto.
+              --- rewrite update_diff_get; auto.
+                  intros Hp3; destruct Hr1 as [_ [_ HH]].
+                  apply HH; auto.
+          }
+          apply merge_incl_l; apply Hr; auto.
+        ++apply merge_incl_r; auto.
+          **apply lexico_exact; auto; apply test_exact.
+          **apply IH2; auto.
+      --intros HH; case (merge_inv _ _ _ _ _ HH); intros HH1.
+        case (iff_impl_r _ _ (Hr _) HH1); intros Hs1 Hr2.
+        ++split; [|split]; auto.
+          **apply refine_trans with (2 := Hr2).
+            apply refine_update; auto.
+          **exists (L p z); split; [left;auto |].
+            red; destruct Hr2 as [_ [_ HH2]]; rewrite <- HH2; auto.
+            --- rewrite update_get; auto; apply valid_pos2n; auto.
+            --- rewrite update_get; auto; apply valid_pos2n; auto.
+        ++case (iff_impl_r _ _ (IH2 _) HH1); intros Hr2 [Hs1 Hc2].
+          split; [|split]; auto.
+          case Hc2; intros l [Hl1 Hl2]; exists l; split; auto; right; auto.
+Qed.
+
+Theorem sudoku_refine_id s1 s2 : sudoku s1 -> refine s1 s2 -> s1 = s2.
+Proof with auto with arith.
+intros Hs [Hr1 [Hr2 Hr3]].
+apply list_nth_eq with (r := out).
+- rewrite Hr2...
+- intros n; case (Nat.le_gt_cases (length s1) n); intros H4.
+  + repeat rewrite nth_default...
+    rewrite Hr2; rewrite <- Hr1...
+  + replace n with (pos2n (Pos (div n size) (mod n size))).
+    * repeat rewrite (fun l x => (jump_nth nat l (pos2n x))).
+      apply Hr3...
+      --split...
+        ++apply div_lt...
+          rewrite <- Hr1...
+        ++apply mod_lt...
+          generalize H4; rewrite Hr1; case size...
+          intros HH; contradict HH...
+      --assert (F1 : div n size < size). 
+        {
+          apply div_lt...
+          rewrite <- Hr1...
+        }
+        assert (F2: mod n size < size).
+        {
+          apply mod_lt...
+          generalize H4; rewrite Hr1; case size; simpl...
+          intros tmp; contradict tmp...
+        }
+        generalize (iff_impl_l _ _ (sudoku_def s1) Hs); intros [_ [HH _]].
+        apply HH.
+        split; auto.
+    * simpl; apply sym_equal; apply div_mod_correct.
+      generalize H4; rewrite Hr1; case size; simpl...
+      intros tmp; contradict tmp...
+Qed.
+
 Theorem find_all_aux_sat n s cs :
-  length cs <= length n -> length s = size * size ->
-  valid cs s -> ordered cs ->
+  length cs <= length n ->
+  invariant cs s ->
   olist _ (lexico _ test) (find_all_aux n s cs) /\
   (forall s1,
-    In s1 (find_all_aux n s cs) -> refine s s1 /\  sat cs s1) /\
-  (forall s1,
-    refine s s1 -> sudoku s1 -> sat cs s1 ->
-    (exists s2, refine s2 s1 /\ In s2 (find_all_aux n s cs))).
+    In s1 (find_all_aux n s cs) <-> (refine s s1 /\  sudoku s1)).
 Proof with auto with arith datatypes.
-revert s cs; elim n; clear n.
-intros s cs; case cs; simpl; auto; clear cs.
-- intros _ H H0 HH1; split...
+revert s cs; elim n; clear n; unfold find_all_aux; fold find_all_aux.
+- intros s [|]; simpl; try lia.
+  intros _ (V1, (V2, (V3, (V4, (V5, V6))))); split.
   + apply olist_one.
-  + split...
-    * intros s1 [H2 | H2]; subst.
-      --split...
-        ++red...
-        ++intros n2 c2; simpl; intros HH; case HH.
-      --case H2.
-    * intros s1 H1 H2 H3; exists s...
-- intros p l H; contradict H...
-- intros a n Rec s cs; case cs; clear cs.
-  + simpl; intros _ H0; split...
+  + assert (Hs : sudoku s). {
+    apply V6; auto.
+    * split; auto.
+    * split; auto.
+      red; intros n c [].
+    }
+    intros s1; split; [intros [Hss1|[]]| intros [Hr Hs1]].
+    * subst s1; split; auto; split; auto.
+    * left; apply sudoku_refine_id; auto.
+- intros a n Rec s [|[n1 [|l c1]] cs].
+  + simpl; intros _ (V1, (V2 , (V3, (V4, (V5, V6))))); split...
     * apply olist_one...
-    * split...
-      --simpl; intros s1 [Hs1 | Hs1]; subst.
-        ++split...
-          **split...
-          **intros n2 c2; intros HH; case HH.
-        ++case Hs1.
-      --intros s1 Hs1 Hs2 Hs3; exists s...
-  + intros (n1, c1) cs; case c1;
-    unfold find_all_aux; lazy beta; fold find_all_aux.
-    * intros H H0 HH1; split...
-      --apply olist_nil.
-      --split...
-        ++simpl; intros s1 Hl; case Hl.
-        ++intros s1 _ _ H2; case (H2 n1 nil)...
-          intros x (tmp, _); case tmp.
-    * intros l c2 H0 H1 H2 HH1; simpl in H0.
-      case (try_all_sat s n1 (l :: c2) cs (find_all_aux n))...
-      --intros n3 c3 Hn3; apply (HH1 n3)...
-      --intros s1 cs1 Hs1 Hs2 Hs3 Hs4 Hs5 Hs6.
-        case (Rec s1 cs1)...
-        ++apply Nat.le_trans with (1 := Hs1)...
-        ++intros H3 (H4, H5).
-          split...
-          split...
-          **intros s2 HH; case (H4 s2)...
-          **intros s2 V1 V2 V3; case (H5 s2)...
-            intros s3 (V4, V5); exists s3; split...
-      --intros V1 (V2, V3).
-        split...
-        split...
-        intros s1 V4 V5 V6; case (V3 s1)...
-        intros s2 (V7, V8); exists s2...
+    * assert (Hs : sudoku s). {
+        apply V6; auto.
+        --split; auto.
+        --split; auto.
+          red; intros n1 c [].
+      }
+      intros s1; split; [intros [Hss1|[]]| intros [Hr Hs1]].
+      --subst s1; split; auto; split; auto.
+      --left; apply sudoku_refine_id; auto.
+  + simpl; intros _ (V1, (V2 , (V3, (V4, (V5, V6))))); split...
+    * apply olist_nil.
+    * intros s1; split; [intros []|intros [Hr Hs1]].
+      case (iff_impl_l _ _ (V6 _ Hr) Hs1); intros HH _.
+      case (HH n1 nil); [left; auto|intros l [[]]].
+  + intros Hl Hi.
+    assert (F1 : length cs <= length n). {
+      simpl in Hl; auto with arith.
+    }
+    case (try_all_sat1 s n1 (l :: c1) (l :: c1) cs (find_all_aux n)); auto.
+    * intros x; auto.
+    * intros s1 cs1 Hl1 Hi1.
+      case (Rec s1 cs1); auto. 
+      --apply le_trans with (1 := Hl1); auto.
+      --intros H1 H2; split; auto.
+        intros s2; split.
+        ++intros [V1 V2]; apply H2; split; auto.
+        ++intros H3; case (iff_impl_l _ _ (H2 _) H3); auto.
+    * intros H1 H2; split; auto.
+      intros s1; split.
+      --intros Hs1; case (iff_impl_r _ _ (H2 _) Hs1).
+        intros Hx1 [Hx2 Hx3]; split; auto.
+      --intros [Hx1 Hx2].
+        apply H2; split; auto; split; auto.
+        destruct Hi as [Vx1 [Vx2 [Vx3 [Vx4 [Vx5 Vx6]]]]].
+        case (iff_impl_l _ _ (Vx6 _ Hx1) Hx2); intros HH _.
+        case (HH n1 (l :: c1)); [left; auto|intros l1 [Hl1 Hl2]].
+        exists l1; split; auto.
+Qed.
+
+Theorem refine_update_inv p v s1 s2 :
+  ~ In (get p s1) ref_list -> length s1 = size * size -> valid_pos p ->
+  refine s1 s2 -> get p s2 = v -> refine (update p v s1) s2.
+Proof.
+intros Hi Hl Hv Hr Hg.
+split; auto.
+  rewrite length_update; auto.
+split.
+  case Hr; intros _ (HH, _); auto.
+intros p1 H1p1 H2p1; case (pos_dec p1 p); intros HH.
+  subst p1; rewrite update_get; auto.
+  apply valid_pos2n; auto.
+generalize H2p1.
+rewrite update_diff_get; auto.
+intros HH2; case Hr; intros _ (_, HH1); apply HH1; auto.
+Qed.
+
+Theorem try_just_one_sat s n c cs f :
+  invariant  ((n, c) :: cs) s -> 
+    (forall s cs1,
+       length cs1 <= length cs -> 
+       invariant cs1 s ->
+       match f s cs1 with
+         jNone => forall s1, refine s s1 -> ~ sudoku s1
+       | jOne s1 => refine s s1 /\  sudoku s1 /\
+                    (forall s2, refine s s2 -> sudoku s2 -> s1 = s2)
+       | jMore s1 s2 => 
+                    refine s s1 /\ sudoku s1 /\
+                    refine s s2 /\ sudoku s2 /\
+                    s1 <> s2
+       end) ->
+    match try_just_one s c cs f with
+           jNone => forall s1, refine s s1 -> ~ sudoku s1
+       | jOne s1 => refine s s1 /\  sudoku s1 /\
+                    (forall s2, refine s s2 -> sudoku s2 -> s1 = s2)
+       | jMore s1 s2 => 
+                    refine s s1 /\ sudoku s1 /\
+                    refine s s2 /\ sudoku s2 /\
+                    s1 <> s2
+    end.
+Proof.
+revert s n cs f; elim c; simpl; clear c; simpl; auto.
+- intros s n cs f [V1 [V2 [V3 [V4 [V5 V6]]]]] Hf s1 Hr Hs1.
+  case (iff_impl_l _ _ (V6 _ Hr) Hs1); intros HH _.
+  case (HH n nil); [left; auto| intros l [[]]].
+- intros (p1, z1) c1 Rec s n cs f (V1, (V2, (V3, (V4, (V5, V6))))) Hf.
+  set (s1 := update p1 z1 s).
+  set (cs1 := clauses_update (L p1 z1) (anti_literals (L p1 z1)) cs).
+  assert (F1 : length cs1 <= length cs).
+    apply length_clauses_update; auto.
+  assert (F2 : invariant cs1 s1). {
+    apply invariant_clauses_update1; auto.
+    generalize V4.
+    
+    apply V4.
+    split; [|split; [|split; [|split;[|split]]]]; auto.
+    - apply clauses_update_ordered; auto.
+      + apply anti_literals_ordered.
+      + intros n1 c Hn1c; apply (V1 n1 c); right; auto.
+    - apply clauses_update_valid; auto with datatypes.
+      apply (V2 n (L p1 z1::c1)); auto with datatypes.
+      intros n1 c Hn1c; apply (V1 n1 c); right; auto.
+      apply anti_literals_ordered.
+      apply anti_literals_in.
+      intros n2 c2 Hnc2; apply (V2 n2 c2); auto with datatypes.
+    - unfold s1; rewrite length_update; auto.
+    - intros p Hp Hz.
+      generalize (invariant_clauses_update1 p1 z1 cs s).
+      fold s1; fold cs1.
+    Search clause_sat.
+       generalize clauses_update_sat.
+  assert (F3 : valid cs1 s1).
+    apply clauses_update_valid; auto with datatypes.
+      apply (V2 n (L p1 z1::c1)); auto with datatypes.
+      intros n1 c Hn1c; apply (V1 n1 c); right; auto.
+      apply anti_literals_ordered.
+      apply anti_literals_in.
+      intros n2 c2 Hnc2; apply (V2 n2 c2); auto with datatypes.
+assert (F1):
+assert (F4: ordered cs1).
+  apply clauses_update_ordered; auto.
+  apply anti_literals_ordered.
+assert (F5: valid_lit (L p1 z1) s).
+  apply (V2 n (L p1 z1::c1)); auto with datatypes.
+case F5; intros _ (F15, F25).
+assert (F6: get p1 s1 = z1).
+  apply update_get; auto.
+  apply valid_pos2n; auto.
+  intros n1 c Hn1c; apply (V1 n1 c); right; auto.
+
+generalize (Hf s1 _ F1).
+ F1 F2 F3 F4 F7 F8); case 
+assert (F7: forall s2 : list nat, 
+             refine s1 s2 -> sat cs1 s2 -> sat cs s2).
+  intros s2 H1s2 H2s2.
+  apply clauses_update_sat with (4 := H2s2); auto.
+    apply anti_literals_ordered.
+  case H1s2; intros _ (_, HH); simpl; rewrite <- HH; auto.
+  rewrite F6; auto.
+assert (F8: forall s2 : list nat, 
+           refine s1 s2 -> sudoku s2 -> sat cs s2 -> sat cs1 s2).
+  intros s2 H1s2 H2s2 H3s2.
+  apply clauses_update_sat_rev; auto.
+      apply anti_literals_ordered.
+      case H1s2; intros _ (_, HH); simpl; rewrite <- HH; auto.
+      rewrite F6; auto.
+    intros [p2 z2] H1l H2l.
+    case (iff_impl_l _ _ (sudoku_def _) H2s2); intros _ [_ HH].
+    case (HH p1); auto.
+    destruct H1s2 as [_ [_ VV]].
+    rewrite <- VV; auto; rewrite F6; auto.
+    exists (L p2 z2); split; auto.
+generalize (Rec1 s1 cs1 F1 F2 F3 F4 F7 F8); case f.
+    intros Rec2.
+    assert (F9: valid ((n, c1):: cs) s).
+      red; simpl; intros n2 c2 [Hc2 | Hc2].
+        injection Hc2; intros; subst n2 c2.
+        intros l2 Hl2; apply (Hv n (L p1 z1::c1)); auto with datatypes.
+      apply (Hv n2 c2); auto with datatypes.
+    generalize (Rec s n cs f F9 Hl Ho Rec1); case try_just_one.
+        intros HH s2 H1s2 H2s2 H2s3.
+        assert (tmp: clause_sat (L p1 z1 :: c1) s2).
+          apply H2s3 with n; auto with datatypes.
+        case tmp; clear tmp; simpl; intros l1 [[H1l1 | H1l1] H2l1].
+          case (Rec2 s2); auto.
+            apply refine_update_inv; auto.
+              case F5; auto.
+            rewrite <- H1l1 in H2l1; auto.
+          intros n2 c2 Hnc2; apply H2s3 with n2; auto with datatypes.
+        case (HH s2); auto.
+        intros n2 c2; simpl; intros [Hnc2 | Hnc2].
+          injection Hnc2; intros; subst n2 c2.
+          exists l1; auto.
+        apply H2s3 with n2; auto with datatypes.
+      intros l (H1l, (H2l, H3l)).
+      split; auto; split; auto.
+        apply sat_incl with (2 := H2l); auto with datatypes.
+      intros s2 H1s2 H2s2 H2s3.
+      assert (tmp: clause_sat (L p1 z1 :: c1) s2).
+        apply H2s3 with n; auto with datatypes.
+      case tmp; clear tmp; simpl; intros l1 [[H1l1 | H1l1] H2l1].
+        case (Rec2 s2); auto.
+          apply refine_update_inv; auto.
+            case F5; auto.
+          rewrite <- H1l1 in H2l1; auto.
+        intros n2 c2 Hnc2; apply H2s3 with n2; auto with datatypes.
+      apply H3l; auto.
+      intros n2 c2; simpl; intros [Hnc2 | Hnc2].
+        injection Hnc2; intros; subst n2 c2.
+        exists l1; auto.
+      apply H2s3 with n2; auto with datatypes.
+    intros s2 s3 (H1s23, (H2s23, (H3s23, (H4s23, H5s23)))).
+    repeat (split; auto).
+      apply sat_incl with (2 := H2s23); auto with datatypes.
+    apply sat_incl with (2 := H4s23); auto with datatypes.
+  intros s2 (H1s2, (H2s2, H3s2)).
+  assert (F9: valid ((n, c1):: cs) s).
+    red; simpl; intros n2 c2 [Hc2 | Hc2].
+      injection Hc2; intros; subst n2 c2.
+      intros l2 Hl2; apply (Hv n (L p1 z1::c1)); auto with datatypes.
+    apply (Hv n2 c2); auto with datatypes.
+  generalize (Rec s n cs f F9 Hl Ho Rec1); case try_just_one.
+      intros HH; split; auto.
+        apply refine_trans with (2 := H1s2); auto.
+        apply refine_update; auto.
+        case F5; auto.
+      split; auto.
+        intros n2 c2; simpl; intros [Hnc2 | Hnc2].
+          injection Hnc2; intros; subst n2 c2.
+          exists (L p1 z1); split; auto with datatypes.
+          simpl; rewrite <-F6.
+          apply sym_equal; case H1s2; intros _ (_, tmp); apply tmp; auto.
+          rewrite F6; auto.
+        apply H2s2 with n2; auto with datatypes.
+      intros s3 H1s3 H2s3 H3s3.
+      assert (tmp: clause_sat (L p1 z1 :: c1) s3).
+        apply H3s3 with n; auto with datatypes.
+      case tmp; clear tmp; simpl; intros l1 [[H1l1 | H1l1] H2l1].
+        apply H3s2; auto.
+          apply refine_update_inv; auto.
+            case F5; auto.
+          rewrite <- H1l1 in H2l1; auto.
+        intros n2 c2 Hnc2; apply H3s3 with n2; auto with datatypes.
+      case (HH s3); auto.
+      intros n2 c2; simpl; intros [Hnc2 | Hnc2].
+        injection Hnc2; intros; subst n2 c2.
+        exists l1; auto.
+      apply H3s3 with n2; auto with datatypes.
+    intros s3 (H1s3, (H2s3, H3s3)).
+    generalize (list_nat_eq_correct s2 s3); case list_nat_eq; intros Hs23.
+      subst s3; split; auto; split; auto.
+        apply sat_incl with (2 := H2s3); auto with datatypes.
+      intros s4 H1s4 H2s4 H3s4.
+      assert (tmp: clause_sat (L p1 z1 :: c1) s4).
+        apply H3s4 with n; auto with datatypes.
+      case tmp; clear tmp; simpl; intros l1 [[H1l1 | H1l1] H2l1].
+        apply H3s2; auto.
+          apply refine_update_inv; auto.
+            case F5; auto.
+          rewrite <- H1l1 in H2l1; auto.
+        intros n2 c2 Hnc2; apply H3s4 with n2; auto with datatypes.
+      apply H3s3; auto.
+      intros n2 c2; simpl; intros [Hnc2 | Hnc2].
+        injection Hnc2; intros; subst n2 c2.
+        exists l1; auto.
+      apply H3s4 with n2; auto with datatypes.
+    split; auto.
+      apply refine_trans with (2 := H1s2); auto.
+      apply refine_update; auto.
+      case F5; auto.
+    split.
+      intros n2 c2; simpl; intros [Hnc2 | Hnc2].
+        injection Hnc2; intros; subst n2 c2.
+        exists (L p1 z1); split; auto with datatypes.
+        simpl; rewrite <- F6.
+        apply sym_equal; case H1s2; intros _ (_, HH); apply HH; auto.
+        rewrite F6; auto.
+      apply H2s2 with n2; auto.
+    split; auto; split; auto.
+    apply sat_incl with (2 := H2s3); auto with datatypes.
+  intros s3 s4 (H1s34, (H2s34, (H3s34, (H4s34, H5s34))));
+   split; auto; split; auto.
+  apply sat_incl with (2 := H2s34); auto with datatypes.
+  split; auto; split; auto.
+  apply sat_incl with (2 := H4s34); auto with datatypes.
+intros s3 s4 (H1s34, (H2s34, (H3s34, (H4s34, H5s34))));
+ split; auto.
+  apply refine_trans with (2 := H1s34); auto.
+  apply refine_update; auto.
+  case F5; auto.
+split; auto.
+  intros n2 c2; simpl; intros [Hnc2 | Hnc2].
+    injection Hnc2; intros; subst n2 c2.
+    exists (L p1 z1); split; auto with datatypes.
+    simpl; rewrite <- F6.
+    apply sym_equal; case H1s34; intros _ (_, HH); apply HH; auto.
+    rewrite F6; auto.
+  apply H2s34 with n2; auto.
+split; auto.
+  apply refine_trans with (2 := H3s34); auto.
+  apply refine_update; auto.
+  case F5; auto.
+split; auto.
+intros n2 c2; simpl; intros [Hnc2 | Hnc2].
+  injection Hnc2; intros; subst n2 c2.
+  exists (L p1 z1); split; auto with datatypes.
+  simpl; rewrite <- F6.
+  apply sym_equal; case H3s34; intros _ (_, HH); apply HH; auto.
+  rewrite F6; auto.
+apply H4s34 with n2; auto.
+Qed.
+
+Theorem find_just_one_aux_sat n s cs : 
+   length cs <= length n -> length s = size * size ->
+       valid cs s -> ordered cs ->
+    match find_just_one_aux n s cs with 
+         jNone => forall s1, refine s s1 -> sudoku s1 -> ~ sat cs s1
+       | jOne s1 => refine s s1 /\  sat cs s1 /\
+                    (forall s2,
+                      refine s s2 -> sudoku s2 -> sat cs s2 
+                         -> refine s1 s2)
+       | jMore s1 s2 =>  refine s s1 /\ sat cs s1 /\
+                         refine s s2 /\ sat cs s2 /\
+                         s1 <> s2
+    end.
+Proof.
+revert s cs; elim n; simpl; clear n.
+  intros s cs; case cs; simpl; auto; clear cs.
+    intros _ HH _ _; repeat (split; auto).
+    intros n c HH1; inversion HH1.
+  intros p l HH; inversion HH.
+intros _ s Hrec s1 [| [n1 p1] cs].
+  repeat (split; auto).
+  intros n c HH1; inversion HH1.
+case p1.
+  intros _ _ _ _ s2 _ _ HH.
+  case (HH n1 nil); auto with datatypes.
+  intros u (Hu, _); inversion Hu.
+intros l ls Hs Hl Hv Ho.
+apply try_just_one_sat; auto.
+  intros n c Hnc; apply (Ho n c); auto with datatypes.
+intros s2 cs1 H1s H1l H1v H1o H1r H1ri.
+assert (H2l: length cs1 <= length s).
+  apply Nat.le_trans with (1:= H1s).
+  inversion Hs; auto with arith.
+generalize (Hrec s2 cs1 H2l H1l H1v H1o).
+case find_just_one_aux; auto.
+- intros HH s3 H1s3 H2s3 H3s3; case (HH s3); auto.
+- intros s3 (H1s3, (H2s3, H3s3)); auto.
+- intros s3 s4 (H1s34, (H2s3s4, (H3s34, (H4s34, H5s34)))).
+  repeat (split; auto).
 Qed.
 
 
@@ -3457,25 +4410,40 @@ Qed.
 (*    Main theorems about sudoku                                              *)
 (******************************************************************************)
 
-Theorem init_c_sudoku s : length s = size * size -> (sat init_c s <-> sudoku s).
+Theorem init_c_sudoku s : 
+ length s = size * size -> 
+ (forall p, valid_pos p -> 
+    In (get p s) ref_list -> ~ clause_sat (anti_literals (L p (get p s))) s) ->
+ (sat init_c s <-> sudoku s).
 Proof with auto.
-generalize (ref_list_ulist); intros Eq1.
-generalize (ref_list_length); intros Eq2.
-intros H; case (init_c_sat s); auto; intros HH0 HH1; split; intros H1.
-- case HH0; clear HH0 HH1; auto; intros HH0 (HH1, (HH2, HH3)); unfold sudoku.
-  split...
-  repeat split; intros i U; apply Permutation_sym; apply ulist_eq_permutation...
-  + rewrite length_row...
-  + rewrite length_column...
-  + rewrite length_rect...
-- apply HH1; clear HH0 HH1.
-  case H1; clear H1; intros H0 (H1, (H2, H3)).
-  repeat split; try (intros i Hi j Hj; apply Permutation_in with (2 := Hj);
-                     try apply Permutation_sym; auto).
-  intros (x, y) (HH1, HH2).
-  apply Permutation_in with (row x s)...
-  rewrite get_row; try apply nth_In; try rewrite length_row...
+intros Hs Hv.
+apply iff_trans with (1 := init_c_sat s Hs).
+apply iff_trans with (2 := (iff_sym (sudoku_def s))).
+split; auto.
+intros [H1 [H2 H3]]; auto.
 Qed.
+
+Theorem clause_sat_not_sudoku s s1 p :
+  length s = size * size -> valid_pos p  -> In (get p s) ref_list ->
+  clause_sat (anti_literals (L p (get p s))) s ->
+  refine s s1 -> ~ sudoku s1.
+Proof.
+intros Hs Hp Hn [l [Hl1 Hl2]] Hr Hss.
+case (iff_impl_l _ _ (sudoku_def s1) Hss); intros Hx1 [Hx2 Hx3].
+case (Hx3 p); auto.
+assert (Fx : get p s1 = get p s). {
+  destruct Hr as [_ [_ HH]]; rewrite <- HH; auto.
+}
+exists l; split; auto.
++ rewrite Fx; auto.
++ destruct l as [p1 z1].
+  rewrite <- Hl2; red; auto.
+  generalize (anti_literals_in_rev1 _ _ _ _ Hn Hp Hl1); intros [Hy1 Hy2].
+  destruct Hr as [_ [_ HH]].
+  rewrite <- HH; auto.
+  rewrite Hl2; auto.
+Qed.
+
 
 Theorem find_one_correct s :
   length s = size * size ->
@@ -3485,98 +4453,77 @@ Theorem find_one_correct s :
   end.
 Proof.
 intros Hs; unfold find_one.
-match goal with 
-| |- context [find_one_aux ?X ?Y ?Z] =>
-  generalize (find_one_aux_sat X Y Z);
-  case (find_one_aux X Y Z); auto
-end.
-- intros s1 H; case H; auto with arith; clear H.
-  apply invariant_gen_init_clauses; auto.
-- intros HH s1 H1 H2; case HH with s1; auto.
-  apply invariant_gen_init_clauses; auto.
-Qed.
-
-Theorem sudoku_refine_id s1 s2 : sudoku s1 -> refine s1 s2 -> s1 = s2.
-Proof with auto with arith.
-intros H (H1, (H2, H3)).
-apply list_nth_eq with (r := out).
-- rewrite H2...
-- intros n; case (Nat.le_gt_cases (length s1) n); intros H4.
-  + repeat rewrite nth_default...
-    rewrite H2; rewrite <- H1...
-  + replace n with (pos2n (Pos (div n size) (mod n size))).
-    * repeat rewrite (fun l x => (jump_nth nat l (pos2n x))).
-      unfold get in H3; apply H3...
-      --split...
-        ++apply div_lt...
-          rewrite <- H1...
-        ++apply mod_lt...
-          generalize H4; rewrite H1; case size...
-          intros HH; contradict HH...
-      --assert (F1 : div n size < size). 
-        {
-          apply div_lt...
-          rewrite <- H1...
-        }
-        assert (F2: mod n size < size).
-        {
-          apply mod_lt...
-          generalize H4; rewrite H1; case size; simpl...
-          intros tmp; contradict tmp...
-        }
-        case H; intros _ (HH, _).
-        apply Permutation_in with  (l := row (div n size) s1)...
-        unfold row.
-        match goal with
-        | |- (In ?X ?Y) =>
-          case (in_ex_nth _ X out Y); intros _ tmp; apply tmp; clear tmp;
-          exists (mod n size); split; auto
-        end.
-        ++rewrite length_take...
-          apply Nat.add_le_mono_l with (div n size * size).
-          repeat rewrite (fun x y => Nat.add_comm (x * y)).
-          rewrite <- length_jump; rewrite H1.
-          **pattern size at 1; rewrite <- Nat.mul_1_l; 
-              rewrite <- Nat.mul_add_distr_r.
-            apply Nat.mul_le_mono_r...
-          **apply Nat.mul_le_mono_r...
-        ++simpl pos2n.
-          rewrite jump_add; rewrite <- jump_nth.
-          apply sym_equal; apply take_nth...
-    * simpl; apply sym_equal; apply div_mod_correct.
-      generalize H4; rewrite H1; case size; simpl...
-      intros tmp; contradict tmp...
+generalize (check_init_state_correct _ Hs).
+case check_init_state.
+- intros Hc;
+  match goal with 
+  | |- context [find_one_aux ?X ?Y ?Z] =>
+    generalize (find_one_aux_sat X Y Z);
+    case (find_one_aux X Y Z); auto
+  end.
+  + intros s1 H; case H; auto with arith; clear H.
+    apply invariant_gen_init_clauses; auto.
+  + intros HH s1 H1 H2; case HH with s1; auto.
+    apply invariant_gen_init_clauses; auto.
+- intros [p [Hp1 [Hp2 Hp3]]] s1 Hss1.
+  apply clause_sat_not_sudoku with (4 := Hp3); auto.
 Qed.
 
 Theorem find_all_correct s s1 :
-  refine s s1 -> (sudoku s1 <-> In s1 (find_all s)).
+  length s = size * size ->
+  (refine s s1 /\ sudoku s1) <-> In s1 (find_all s).
 Proof.
-intros Hs; unfold find_all.
-assert (F0: length s = size * size).
-{
-  case Hs; intuition.
-}
-match goal with
-| |- context [find_all_aux ?X ?Y ?Z] =>
-  case (find_all_aux_sat X Y Z); auto with arith
-end.
-- apply gen_init_clauses_valid; auto.
-- apply gen_init_clauses_ordered; auto.
-- intros V1 (V2, V3); split; intros V4.
-  + case (V3 s1); auto.
-    * case (invariant_gen_init_clauses s); auto.
-      intros _ (_, (_, tmp)); case (tmp s1); auto; clear tmp.
-    * intros s2 (V5, V6).
-      case (V2 s2); auto.
-      intros V7 V8.
-      case (invariant_gen_init_clauses s); auto.
-      intros _ (_, (_, tmp)); case (tmp s2); auto; clear tmp.
-      intros _ tmp; generalize (tmp V8); clear tmp V8; intros V8.
-      replace s1 with s2; auto.
-      apply sudoku_refine_id; auto.
-  + case (V2 s1); auto; intros V5 V6.
-    case (invariant_gen_init_clauses s); auto.
-    intros _ (_, (_, tmp)); case (tmp s1); auto; clear tmp.
+intros Hs; generalize (check_init_state_correct _ Hs).
+unfold find_all; case check_init_state.
+- intros Hp; apply iff_sym; apply find_all_aux_sat; auto.
+  apply invariant_gen_init_clauses; auto.
+- intros [p [Hp1 [Hp2 [[p1 z1] [Hl1 Hl2]]]]].
+  split; [intros [Hr Hs1]|intros []].
+  case (iff_impl_l _ _ (sudoku_def s1) Hs1); intros _ [_ HH].
+  case (HH p); auto.
+  destruct Hr as [V1 [V2 V3]].
+  rewrite <- V3; auto.
+  case (anti_literals_in_rev1 _ _ _ _ Hp2 Hp1 Hl1); intros Hz1 Hpp1.
+  exists (L p1 z1); split; auto.
+  red; rewrite <- V3; auto.
+  red in Hl2; rewrite Hl2; auto.
+Qed.
+
+Theorem find_just_one_correct s :
+  length s = size * size ->
+    match find_just_one s with 
+     jNone => forall s1, refine s s1 -> ~sudoku s1
+   | jOne s1 => refine s s1 /\ sudoku s1 /\
+               (forall s2, refine s s2 -> sudoku s2 -> s1 = s2)
+   | jMore s1 s2 =>  refine s s1 /\ sudoku s1 /\
+                     refine s s2 /\ sudoku s2 /\
+                     s1 <> s2
+   end.
+Proof.
+intro  Hs; unfold find_just_one.
+generalize (check_init_state_correct _ Hs); case check_init_state.
+- intros Hp.
+  set (cs := gen_init_clauses s).
+  generalize (find_just_one_aux_sat cs s cs
+             (Nat.le_refl _) Hs (gen_init_clauses_valid s Hs)
+             (gen_init_clauses_ordered s)).
+  case (invariant_gen_init_clauses s); auto.
+  intros H1i (H2i, (H3i, (H4i, (H5i, H6i)))).
+  case find_just_one_aux.
+  + intros HH s1 H1 H2; case (HH s1); auto.
+    case (iff_impl_l _ _ (H6i s1 H1) H2); auto.
+  + intros s1 (H1s1, (H2s1, H3s1)); split; auto; split; auto.
+    apply H6i; auto; split; auto.
+    case (H4i s1); auto.
+  intros; apply sudoku_refine_id; auto.
+  case (H4i s1); auto.
+  apply H3s1; auto.
+  case (H4i s2); auto.
+- intros s1 s2 (H1s12, (H2s12, (H3s12, (H4s12, H5s12)))).
+  split; auto; split; auto.
+    case (H4i s1); auto.
+  split; auto; split; auto.
+  case (H4i s2); auto.
 Qed.
 
 End check.
